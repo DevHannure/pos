@@ -25,7 +25,7 @@ a, .btn-link{text-decoration:none;}
 .listNone{list-style-type: none; padding:0px;}
 
 .cusnav{padding:0px;position: fixed; top:0px; left:0px; right:0px; background-color:#FFF; z-index:111;}
-.sticky .cusnav{background-color:#FFF; box-shadow:0 2px 8px rgb(0 0 0 / 15%);}
+.fixedNav .cusnav{background-color:#FFF; box-shadow:0 2px 8px rgb(0 0 0 / 15%);}
 .mainNav .navbar-nav .nav-link{color: #151515; font-size:13px; font-weight: 600; padding-left:0.5rem; padding-right:0.5rem; text-transform: uppercase;}
 
 .deviderList {margin:0px; padding:0px;}

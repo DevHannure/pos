@@ -453,7 +453,7 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
                       <DatePicker className="form-control" calendarClassName="yearwiseCal"  dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
                       startDate={chkIn} endDate={chkOut}
                       onChange={dateChange} 
-                      showMonthDropdown showYearDropdown withPortal  />
+                      showMonthDropdown showYearDropdown withPortal />
                       <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" />
                     </div>
                   </div>

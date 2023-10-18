@@ -1,5 +1,5 @@
 "use client"
-import React, {useState } from 'react';
+import React, {useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleXmark, faStar, faFilter, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
@@ -100,6 +100,12 @@ const multiValueContainer = ({ selectProps, data }) => {
 };
 
 export default function ModifySearch({Type, HtlReq, filterOpen}) {
+  useEffect(() => {
+    let w = window.innerWidth;
+    if (w < 960) {
+      setCalNum(1)
+    } 
+  }, []);
 
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState(HtlReq ? [{
@@ -130,7 +136,8 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
     setIsLoading(false);
   };
   
-
+  
+  const [calNum, setCalNum] = useState(2);
   const [chkIn, setChkIn] = useState(new Date());
   const [chkOut, setChkOut] = useState(new Date(new Date().setDate(new Date().getDate() + 1)));
   
@@ -450,7 +457,7 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
                   <div className="col">
                     <label>Check In - Check Out Date</label>
                     <div className="calendarIconMain">
-                      <DatePicker className="form-control" calendarClassName="yearwiseCal"  dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
+                      <DatePicker className="form-control" calendarClassName="yearwiseCal"  dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
                       startDate={chkIn} endDate={chkOut}
                       onChange={dateChange} 
                       showMonthDropdown showYearDropdown withPortal />

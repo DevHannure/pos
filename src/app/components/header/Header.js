@@ -12,10 +12,6 @@ export default function Header() {
   }
 
   useEffect(() => {
-    let w = window.innerWidth;
-    if (w < 960) {
-      setShowDropdown(false)
-    } 
     document.addEventListener("scroll", handleScrollss);
     return () => document.removeEventListener("scroll", handleScrollss);
   }, []);

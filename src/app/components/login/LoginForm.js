@@ -85,7 +85,8 @@ export default function LoginForm() {
           email, 
           password,
           redirect:false,
-          callbackUrl:"/",
+          callbackUrl: `${window.location.origin}`
+          //callbackUrl:"/",
         })
         if(res.error){
           console.log("Invalid Credentials");

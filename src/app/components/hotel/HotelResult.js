@@ -120,7 +120,7 @@ export default function HotelResult() {
                         <td>EANRapid</td>
                         <td>Available</td>
                         <td>28.89</td>
-                        <td align="right"><Link href="/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
                       </tr>
 
                       <tr>
@@ -132,7 +132,7 @@ export default function HotelResult() {
                         <td>EANRapid</td>
                         <td>Available</td>
                         <td>41.50</td>
-                        <td align="right"><Link href="/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
                       </tr>
 
                       <tr>
@@ -144,7 +144,7 @@ export default function HotelResult() {
                         <td>EANRapid</td>
                         <td>Available</td>
                         <td>45.55</td>
-                        <td align="right"><Link href="/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
                       </tr>
 
                       <tr>
@@ -156,7 +156,7 @@ export default function HotelResult() {
                         <td>EANRapid</td>
                         <td>Available</td>
                         <td>28.71</td>
-                        <td align="right"><Link href="/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
                       </tr>
                     </tbody>
                   </table>

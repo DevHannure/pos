@@ -4,8 +4,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPowerOff } from "@fortawesome/free-solid-svg-icons";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Header() {
+  // const { data, status  } = useSession();
+  // console.log("session", data)
+  // console.log("session", status)
   const [fixedClass, setFixedClass] = useState(false);
   const handleScrollss = () => {
     setFixedClass(window.scrollY > 30)
@@ -37,7 +41,9 @@ export default function Header() {
               <div className="text-end">
                 <ul className="deviderList">
                   <li>Mir Ali Khan,  United Arab Emirates {process.env.NEXT_PUBLIC_SHORTCODE}</li>
-                  <li><FontAwesomeIcon icon={faPowerOff} /> Logout</li>
+                  <li><Link className="text-dark" onClick={() => signOut({
+                callbackUrl: '/login'
+            })} href="/login"><FontAwesomeIcon icon={faPowerOff} /> Logout</Link></li>
                 </ul>
               </div>
               <ul className="navbar-nav justify-content-end">

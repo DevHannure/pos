@@ -1,0 +1,20 @@
+.cusnav{position: relative;}
+.loginBanner{position:relative;}
+.mainLoginForm{position:relative;padding:100px 0px;}
+.loginForm{background:rgba(255,255,255,1); padding:30px; border-radius:10px; box-shadow:0 2px 8px rgb(0 0 0 / 20%);}
+.topCol {border-right:2px dashed #ebe7e7; padding:10px 10px 0px; min-height:120px; margin:15px 0px;}
+.midColumn {height:220px; border-radius:12px; margin:15px 0px; overflow:hidden; position:relative; text-align:center; color:#FFF; font-size:18px;}
+
+.secondCol{background:#06377a; overflow:inherit; padding:40px 20px 0px;}
+.secondCol:before {display:inline-block; width:0; height:0; vertical-align:middle; content:""; border-top:16px solid transparent; border-right:16px solid #06377a; border-bottom:16px solid transparent; top:45%; left:-16px; position:absolute;}
+
+.fourCol{background:#580556; overflow:inherit; padding:40px 20px 0px;}
+.fourCol:before {display:inline-block; width:0; height:0; vertical-align:middle; content:""; border-top:16px solid transparent; border-left:16px solid #580556; border-bottom:16px solid transparent; top:45%; right:-16px; position:absolute;}
+
+.sixCol{background:#ebb405; overflow:inherit; padding:40px 20px 0px;}
+.sixCol:before {display:inline-block; width:0; height:0; vertical-align:middle; content:""; border-left:16px solid transparent; border-right:16px solid transparent; border-bottom:16px solid #ebb405;  top:-16px; left:45%; position:absolute;}
+
+@media only screen and (min-width: 240px) and (max-width:960px) {
+.topCol{border-right:none;border-bottom:2px dashed #ebe7e7;}
+.secondCol:before,.fourCol:before,.sixCol:before{display:none;}
+}

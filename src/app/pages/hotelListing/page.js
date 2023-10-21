@@ -1,9 +1,9 @@
 "use client"
-import MainLayout from '../layouts/mainLayout';
+import MainLayout from '../../layouts/mainLayout';
 import React, {useState } from 'react';
-import ModifySearch from '../components/hotel/ModifySearch'
-import HotelFilter from '../components/hotel/HotelFilter';
-import HotelResult from '../components/hotel/HotelResult';
+import ModifySearch from '../../components/hotel/ModifySearch'
+import HotelFilter from '../../components/hotel/HotelFilter';
+import HotelResult from '../../components/hotel/HotelResult';
 
 export default function HotelListing() {
   const [filterChoose, setFilterChoose] = useState(false);

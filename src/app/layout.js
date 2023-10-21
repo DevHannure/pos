@@ -5,6 +5,9 @@ import Script from 'next/script'
 
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
+import AuthProvider from './provider/NextAuthProvider';
+
+
 config.autoAddCss = false;
 import (`./assets/css/style${process.env.NEXT_PUBLIC_SHORTCODE}.css`)
 const inter = Inter({ subsets: ['latin'] })
@@ -21,7 +24,8 @@ export default function RootLayout({ children }) {
         <link rel="icon" href={`/images/favicon${process.env.NEXT_PUBLIC_SHORTCODE}.ico`} sizes="any" />
       </head>
       <body>
-        {children}
+       <AuthProvider>{ children }</AuthProvider>
+        
       </body>
       <Script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"/>
     </html>

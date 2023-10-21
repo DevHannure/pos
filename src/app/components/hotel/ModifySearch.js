@@ -561,7 +561,7 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
           <div className="row gx-3">
             <div className="col text-end">
               <div className="mb-3 mt-lg-0 mt-3">
-                <Link href="/hotelListing" className="btn btn-warning px-4 py-2 fw-semibold">Search</Link>
+                <Link href="/pages/hotelListing" className="btn btn-warning px-4 py-2 fw-semibold">Search</Link>
               </div>
             </div>
           </div>
@@ -725,7 +725,7 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
           </div>
           <div className="col-auto align-self-end">
             <div className="mb-3 mt-lg-0 mt-3">
-              <Link href="/hotelListing" className="btn btn-warning px-4 py-2 fw-semibold">Search</Link>
+              <Link href="/pages/hotelListing" className="btn btn-warning px-4 py-2 fw-semibold">Search</Link>
             </div>
           </div>
         </div>

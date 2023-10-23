@@ -4,8 +4,14 @@ import Link from 'next/link'
 import (`../assets/css/login${process.env.NEXT_PUBLIC_SHORTCODE}.css`)
 import Footer from "../components/footer/Footer";
 import LoginForm from "../components/login/LoginForm";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "../api/auth/[...nextauth]/route";
 
-export default function Login() {
+export default async function Login() {
+  const session = await getServerSession(authOptions);
+  console.log("aa", session)
+  if (session) redirect("/");
   return (
     <LoginLayout>
       <header>

@@ -5,8 +5,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useSearchParams } from 'next/navigation';
 
 export default function LoginForm() {
+  const params = useSearchParams()
+
+  useEffect(() => {
+    if(params?.get("error") && params?.get("error") !== ""){
+      toast.error(params.get("error"),{theme: "colored"})
+    }
+  }, [params]);
+
   const router = useRouter();
   const [loginLoading, setLoginLoading] = useState(false)
   const [email, setEmail] = useState(''); 
@@ -89,12 +98,12 @@ export default function LoginForm() {
           //callbackUrl:"/",
         })
         if(res.error){
-          console.log("Invalid Credentials");
+          //console.log("Invalid Credentials");
           toast.error("Invalid Credentials",{theme: "colored"})
           setLoginLoading(false)
           return;
         }
-        toast.success("Login Successful!",{theme: "colored"})
+        //toast.success("Login Successful!",{theme: "colored"})
         setLoginLoading(false)
         router.replace("/")
       } catch(error){

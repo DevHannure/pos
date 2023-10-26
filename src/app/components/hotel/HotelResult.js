@@ -7,7 +7,6 @@ import { faStar, faCaretRight, faCheck } from "@fortawesome/free-solid-svg-icons
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { GoogleMap, InfoWindow, Marker, useJsApiLoader } from "@react-google-maps/api";
-
 import DataTable from 'react-data-table-component';
 
 const columns = [

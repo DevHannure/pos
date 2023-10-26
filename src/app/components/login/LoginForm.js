@@ -205,7 +205,7 @@ export default function LoginForm() {
 
     {otpEmailForm &&
     <div className="loginForm">
-      <p className="fs-5 mb-3">Enter your email id and we'll send you an OTP code to reset your password</p>
+      <p className="fs-5 mb-3">Enter your email id and we&#39;ll send you an OTP code to reset your password</p>
       <div className="mb-4">
         <input type="text" className="form-control" placeholder="Enter your email id" value={otpEmail} onChange={(e) => otpEmailChange(e.target.value)}  />
         {errorOtpEmail.otpEmail && <div className='text-danger m-1'>{errorOtpEmail.otpEmail}</div>}

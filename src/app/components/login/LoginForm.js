@@ -1,7 +1,6 @@
 "use client"
 import React, {useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -17,6 +16,9 @@ export default function LoginForm() {
   }, [params]);
 
   const router = useRouter();
+  const [loginForm, setLoginForm] = useState(true)
+  const [otpEmailForm, setOtpEmailForm] = useState(false)
+
   const [loginLoading, setLoginLoading] = useState(false)
   const [email, setEmail] = useState(''); 
   const [password, setPassword] = useState(''); 
@@ -131,14 +133,57 @@ export default function LoginForm() {
       // }
     
     } 
-    else { 
-      console.log('Form has errors. Please correct them.'); 
-    } 
   }; 
+
+  const [otpEmailLoading, setOtpEmailLoading] = useState(false)
+  const [otpEmail, setOtpEmail] = useState(''); 
+  const [errorOtpEmail, setErrorOtpEmail] = useState({}); 
+  const otpEmailChange= (value) => {
+    let valItem = value
+    let errors = {}; 
+    if(!valItem){
+      errors.otpEmail = 'Email is required.'; 
+    }
+    else if (!/\S+@\S+\.\S+/.test(valItem)) { 
+      errors.otpEmail = 'Email is invalid.'; 
+    } 
+    setOtpEmail(valItem);
+    setErrorOtpEmail(errors);  
+  }
+
+  const validateOtpEmailForm = () => { 
+    let errors = {}; 
+    if (!otpEmail) { 
+        errors.otpEmail = 'Email is required.'; 
+    } 
+    else if (!/\S+@\S+\.\S+/.test(otpEmail)) { 
+        errors.otpEmail = 'Email is invalid.'; 
+    } 
+    setErrorOtpEmail(errors); 
+    if(Object.keys(errors).length === 0){
+      return true;
+    }
+    else{
+      return false
+    }
+  }; 
+
+  const otpEmailSubmit = async() => {
+    let valid = validateOtpEmailForm();
+    if (valid) { 
+      alert("valid")
+    } 
+    else{
+      alert("invalid")
+    }
+  };
+
+  
 
   return (
     <>
     <ToastContainer />
+    {loginForm &&
     <div className="loginForm">
       <h3 className="fs-5 mb-3">Agent Login</h3>
       <div className="mb-4">
@@ -150,12 +195,28 @@ export default function LoginForm() {
         {errors.password && <div className='text-danger m-1'>{errors.password}</div>} 
       </div>
       <div className="mb-2 text-end">
-        <Link href="#" className="text-dark">Reset Password</Link>
+        <span className="curpointer" onClick={()=> (setOtpEmailForm(true), setLoginForm(false) )}>Reset Password</span>
       </div>
       <div className="mb-1">
         <button type="button" className="btn btn-warning px-5 fw-semibold" onClick={handleSubmit} disabled={loginLoading}>{loginLoading ? 'Validating' : 'Login'}</button>
       </div>
     </div>
+    }
+
+    {otpEmailForm &&
+    <div className="loginForm">
+      <p className="fs-5 mb-3">Enter your email id and we'll send you an OTP code to reset your password</p>
+      <div className="mb-4">
+        <input type="text" className="form-control" placeholder="Enter your email id" value={otpEmail} onChange={(e) => otpEmailChange(e.target.value)}  />
+        {errorOtpEmail.otpEmail && <div className='text-danger m-1'>{errorOtpEmail.otpEmail}</div>}
+      </div>
+      <div className="mb-1">
+        <button type="button" className="btn btn-warning px-4 fw-semibold" onClick={otpEmailSubmit} disabled={otpEmailLoading}>{otpEmailLoading ? 'Sending' : 'Send'}</button>
+        <button type="button" className="btn btn-light fw-semibold ms-2" onClick={()=> (setOtpEmailForm(false), setLoginForm(true) )}>Cancel</button>
+      </div>
+    </div>
+    }
+
     </>
   )
 }

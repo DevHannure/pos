@@ -305,6 +305,8 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
       })
       setRmCountArr(array);
     }
+
+    
     
     return(
       <>
@@ -417,6 +419,15 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
 
   const [modifyCollapse, setModifyCollapse] = useState(false);
 
+  const totalGuest = () => {
+    let array = [...rmCountArr];
+    let guest = 0
+    array.forEach((v) => {
+      guest = guest + parseInt(v.adtVal) + parseInt(v.chdVal)
+    })
+    return guest
+  }
+
   return (
   <>
   <ToastContainer />
@@ -475,7 +486,7 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
               <div className="mb-2">
                 <label>Room Information</label>
                 <div className="dropdown">
-                  <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">2 Guest(s) in {rmCountArr.length} Room(s)</button>
+                  <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{totalGuest()} Guest(s) in {rmCountArr.length} Room(s)</button>
                   <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
                     <PaxDropdown />
                   </div>

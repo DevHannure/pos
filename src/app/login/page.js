@@ -35,7 +35,7 @@ export default async function Login() {
                   <li className="nav-item"><Link className="nav-link fs-6" href="/login">&nbsp; Home &nbsp;</Link></li>
                   <li className="nav-item"><a className="nav-link fs-6" href="https://aoryx.ae/about-arabian-oryx-travel-tourism-llc-dubai/" target="_blank">&nbsp; About us &nbsp;</a></li>
                   <li className="nav-item"><a className="nav-link fs-6" href="https://aoryx.ae/contact-arabian-oryx-travel-and-tourism-dubai-uae/" target="_blank">&nbsp; Contact us &nbsp;</a></li>
-                  <li className="nav-item"><Link className="nav-link fs-6" href="#">&nbsp; Sign up &nbsp;</Link></li>
+                  <li className="nav-item"><Link className="nav-link fs-6" href="/agentRegistration">&nbsp; Sign up &nbsp;</Link></li>
                 </ul>
               </div>
             </div>

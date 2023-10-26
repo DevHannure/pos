@@ -1,3 +1,5 @@
+"use client"
+import React, { useState } from 'react';
 import Image from 'next/image'
 import Link from 'next/link';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -5,6 +7,85 @@ import { faStar, faCaretRight, faCheck } from "@fortawesome/free-solid-svg-icons
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { GoogleMap, InfoWindow, Marker, useJsApiLoader } from "@react-google-maps/api";
+
+import DataTable from 'react-data-table-component';
+
+const columns = [
+  {
+      name: 'Room Types',
+      selector: row => row.roomTypes,
+      cell: (row) => (
+        <div className='d-column'>
+        <div>{row.roomTypes}</div>
+        <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
+        </div>
+      ),
+      width: "250px",
+      sortable: true,
+  },
+  {
+      name: 'Board Basis',
+      selector: row => row.boardBasis,
+      sortable: true,
+  },
+  {
+    name: 'Suppliers',
+    selector: row => row.suppliers,
+    sortable: true,
+  },
+  {
+    name: 'Status',
+    selector: row => row.status,
+    sortable: true,
+  },
+  {
+    name: 'Price',
+    selector: row => row.price,
+    sortable: true,
+  },
+  {
+    button: true,
+    cell: () => (
+      <><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></>
+    )
+  }
+  
+];
+
+const data = [
+  {
+      id: 1,
+      roomTypes:'A Shared Dormitory, Multiple Beds',
+      boardBasis: 'Room only',
+      suppliers: 'EANRapid',
+      status: 'Available',
+      price:'28.89',
+  },
+  {
+    id: 2,
+    roomTypes:'Shared dormitory',
+    boardBasis: 'Room only',
+    suppliers: 'EANRapid',
+    status: 'Available',
+    price:'41.50',
+  },
+  {
+    id: 3,
+    roomTypes:'Shared Dormitory',
+    boardBasis: 'Room only',
+    suppliers: 'EANRapid',
+    status: 'Available',
+    price:'45.55',
+  },
+  {
+    id: 4,
+    roomTypes:'Shared Dormitory, Multiple Beds',
+    boardBasis: 'Room only',
+    suppliers: 'EANRapid',
+    status: 'Available',
+    price:'28.71',
+  }
+]
 
 const images = [
   {
@@ -24,11 +105,35 @@ const images = [
 
 
 export default function HotelResult() {
+  const _ = require("lodash");
+
+  
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_MAPAPIKEY
   });
   
+  const [roomData, setRoomData] = useState([{}])
+
+  console.log("roomData", roomData)
+  
+  const roomDetail = (hotelCode) => {
+    let roomRes = []
+    const roomItems = {...roomData}
+
+    if (_.isEmpty(roomData[0][hotelCode])) {
+      let response = {"name": 'Hotel Name'+ hotelCode}
+      roomRes = response
+      console.log("roomRes", roomRes)
+      
+      if (_.isEmpty(roomData[0])) {
+        roomItems[0] = {}
+      }
+      roomItems[0][hotelCode] = roomRes
+      setRoomData(roomItems)
+    }
+  }
 
   return (
     <>
@@ -65,108 +170,139 @@ export default function HotelResult() {
           <div className="col-lg-2 text-end">Total Result Found: 722</div>
 
         </div>
-        {Array.apply(null, { length: 50 }).map((e, i) => (
-          <div className="htlboxcol rounded p-2 mb-3 shadow-sm" key={i}>
-            <div className="row gx-2 curpointer collapsed" data-bs-toggle="collapse" data-bs-target={`#room${i}`}>
-              <div className="col-md-5">
-                <div className="blue fw-semibold fs-6">Robin Hostel</div>
-              </div>
-              <div className="col-md-4">
-                <div className="d-flex">
-                  <div>
-                    <FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" />
-                  </div>
-                  <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.5-13387-4.png" alt="rating" width={100} height={17} /></div>
-                  <div className="ms-3 fw-semibold fs-6">Dubai</div>
+
+        <div className='htlboxcol rounded p-2 mb-3 shadow-sm'>
+          <div className='row gx-2 collapsed'>
+            <div className="col-md-5 placeholder-glow"><span className="placeholder col-7"></span></div>
+            <div className='col-md-4'>
+              <div className="d-flex">
+                <div>
+                  <FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" />
                 </div>
-              </div>
-              <div className="col-md-2 col-10"><div className="blue fw-semibold fs-6">USD 28.89</div></div>
-              <div className="col-md-1 col-2 text-center">
-                <button className="btn btn-success py-0 togglePlus" type="button"></button>
+                <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.5-13387-4.png" alt="rating" width={100} height={17} /></div>
+                <div className="ms-3 fw-semibold fs-6">Dubai</div>
               </div>
             </div>
-
-            <div className="collapse" id={`room${i}`}>
-              <div className="mt-1">
-                <div className="d-flex flex-row">
-                  <div className="hotelImg rounded">
-                    <Image src="https://static.giinfotech.ae/medianew/thumbnail/1393721/Reception_18ef2790_z.jpg" alt="hotel" width={140} height={95} />
-                  </div>
-                  <div className="ps-3 pt-2">
-                    <div><strong>Address:</strong> <span className="fs-6">Robin Hostel,</span><br /> Opposite Gates D6 & D7 DXB D Gate, Concourse D, Terminal 1, Dubai</div>
-                    <div className="mt-1"><a href="#htlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> View Location</a> &nbsp; <a href="#htlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> Photos</a> &nbsp; <a href="#htlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> Details</a></div>
-                  </div>
-                </div>
-
-                <div className="table-responsive mt-3">
-                  <table className="table align-middle fn12">
-                    <thead>
-                      <tr className="table-light">
-                        <th className="text-nowrap">Room Types</th>
-                        <th className="text-nowrap">Board Basis</th>
-                        <th>Suppliers</th>
-                        <th>Status</th>
-                        <th>Price(USD)</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <div>Shared Dormitory, Multiple Beds</div>
-                          <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
-                        </td>
-                        <td>Room only</td>
-                        <td>EANRapid</td>
-                        <td>Available</td>
-                        <td>28.89</td>
-                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <div>Shared dormitory</div>
-                          <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
-                        </td>
-                        <td>Room only</td>
-                        <td>EANRapid</td>
-                        <td>Available</td>
-                        <td>41.50</td>
-                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <div>Shared Dormitory</div>
-                          <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
-                        </td>
-                        <td>Room only</td>
-                        <td>EANRapid</td>
-                        <td>Available</td>
-                        <td>45.55</td>
-                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                          <div>Shared Dormitory, Multiple Beds</div>
-                          <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
-                        </td>
-                        <td>Room only</td>
-                        <td>EANRapid</td>
-                        <td>Available</td>
-                        <td>28.71</td>
-                        <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <div className='col-md-2 col-10 placeholder-glow'><span className="placeholder col-7"></span></div>
+            <div className='col-md-1 col-2 text-center'><button className="btn btn-success py-0 togglePlus" type="button"></button></div>
           </div>
-        ))
-        }
+        </div>
 
+        <div id="myGroup">
+          {Array.apply(null, { length: 50 }).map((e, i) => (
+            <div className="htlboxcol rounded p-2 mb-3 shadow-sm" key={i}>
+              <div className="row gx-2 curpointer collapsed" data-bs-toggle="collapse" data-bs-target={`#room${i}`} onClick={() => roomDetail(`hotelCode${i}`)}>
+                <div className="col-md-5">
+                  <div className="blue fw-semibold fs-6">Robin Hostel</div>
+                </div>
+                <div className="col-md-4">
+                  <div className="d-flex">
+                    <div>
+                      <FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" />
+                    </div>
+                    <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.5-13387-4.png" alt="rating" width={100} height={17} /></div>
+                    <div className="ms-3 fw-semibold fs-6">Dubai</div>
+                  </div>
+                </div>
+                <div className="col-md-2 col-10"><div className="blue fw-semibold fs-6">USD 28.89</div></div>
+                <div className="col-md-1 col-2 text-center">
+                  <button className="btn btn-success py-0 togglePlus" type="button"></button>
+                </div>
+              </div>
+
+              
+              <div data-bs-parent="#myGroup" className="collapse" id={`room${i}`}>
+              
+              {roomData[0]?.[`hotelCode${i}`]?.name}
+              
+                <div className="mt-1">
+                  <div className="d-flex flex-row">
+                    <div className="hotelImg rounded">
+                      <Image src="https://static.giinfotech.ae/medianew/thumbnail/1393721/Reception_18ef2790_z.jpg" alt="hotel" width={140} height={95} />
+                    </div>
+                    <div className="ps-3 pt-2">
+                      <div><strong>Address:</strong> <span className="fs-6">Robin Hostel,</span><br /> Opposite Gates D6 & D7 DXB D Gate, Concourse D, Terminal 1, Dubai</div>
+                      <div className="mt-1"><a href="#htlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> More Details</a> 
+                      {/* &nbsp; <a href="#htlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> Photos</a> &nbsp; <a href="#htlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> Details</a> */}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="fn12">
+                    <DataTable columns={columns} data={data} fixedHeader fixedHeaderScrollHeight="300px" />
+                  </div>
+                  {/*<div className="table-responsive mt-3">
+                 
+                     <table className="table align-middle fn12">
+                      <thead>
+                        <tr className="table-light">
+                          <th className="text-nowrap">Room Types</th>
+                          <th className="text-nowrap">Board Basis</th>
+                          <th>Suppliers</th>
+                          <th>Status</th>
+                          <th>Price(USD)</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>
+                            <div>Shared Dormitory, Multiple Beds</div>
+                            <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
+                          </td>
+                          <td>Room only</td>
+                          <td>EANRapid</td>
+                          <td>Available</td>
+                          <td>28.89</td>
+                          <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        </tr>
+
+                        <tr>
+                          <td>
+                            <div>Shared dormitory</div>
+                            <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
+                          </td>
+                          <td>Room only</td>
+                          <td>EANRapid</td>
+                          <td>Available</td>
+                          <td>41.50</td>
+                          <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        </tr>
+
+                        <tr>
+                          <td>
+                            <div>Shared Dormitory</div>
+                            <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
+                          </td>
+                          <td>Room only</td>
+                          <td>EANRapid</td>
+                          <td>Available</td>
+                          <td>45.55</td>
+                          <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        </tr>
+
+                        <tr>
+                          <td>
+                            <div>Shared Dormitory, Multiple Beds</div>
+                            <div><a href="#showFbModal" data-bs-toggle="modal">Fare Breakup</a> &nbsp;|&nbsp; <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a></div>
+                          </td>
+                          <td>Room only</td>
+                          <td>EANRapid</td>
+                          <td>Available</td>
+                          <td>28.71</td>
+                          <td align="right"><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></td>
+                        </tr>
+                      </tbody>
+                    </table> 
+                  </div>*/}
+                </div>
+              </div>
+            
+
+            </div>
+          ))
+          }
+        </div>
         <div className="mt-4">
           <nav>
             <ul className="pagination pagination-sm justify-content-center m-0">

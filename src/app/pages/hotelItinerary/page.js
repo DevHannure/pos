@@ -11,6 +11,50 @@ export default function HotelItinerary() {
       <div className="middle">
         <div className="container-fluid">
           <div className="pt-3">
+
+            <div className='row placeholder-glow'>
+              <div className="mb-2 col-lg-8 order-lg-1 order-2">
+                <div className="bg-white rounded shadow-sm p-2">
+                  <div className="placeholder col-8 m-h-15 mb-2"></div>
+                  <div className="placeholder col-5"></div>
+                  <hr className='my-4' />
+                  <div className="placeholder col-3 mb-3 m-h-2"></div>
+                  <div className="placeholder col-3 mb-3 m-h-2 mx-3"></div>
+                  <div className="placeholder col-3 mb-3 m-h-2"></div>
+                  <div className="placeholder col-8 m-h-15"></div>
+                  <hr className='my-4' />
+                  <div className="placeholder col-3 mb-3 m-h-2"></div>
+                  <div className="placeholder col-3 mb-3 m-h-2 mx-3"></div>
+                  <div className="placeholder col-3 mb-3 m-h-2"></div>
+                  <div className="placeholder col-8 m-h-15"></div>
+                  <hr className='my-4' />
+                </div>
+
+              </div>
+              <div className="mb-2 col-lg-4 order-lg-2 order-1">
+                <div className="bg-white rounded shadow-sm border p-2 py-2 mb-3">
+                  <div className='d-sm-flex flex-row'>
+                    <div className="hotelImg rounded d-none d-sm-block placeholder" style={{width:160,height:115}}>
+                    </div>
+                    <div className='ps-sm-2 w-100'>
+                      <div className="placeholder col-8 mb-2"></div>
+                      <div className="placeholder col-5 mb-3"></div>
+                      <div className="placeholder col-8"></div>
+                    </div>
+                  </div>  
+                  <hr className='my-2' />
+                  <div className="placeholder col-8 mb-2"></div>
+                  <div className="placeholder col-5"></div>
+                  <div className="placeholder col-8"></div>
+                  <hr className='my-2' />
+                  <div className="placeholder col-5 mb-2"></div>
+                  <div className="placeholder col-8"></div>
+                  <div className="placeholder col-6"></div>
+                </div>
+                
+              </div>
+            </div>
+
             <div className="row">
               <div className="mb-2 col-lg-8 order-lg-1 order-2">
                 <div className="bg-white rounded shadow-sm p-2">
@@ -28,7 +72,6 @@ export default function HotelItinerary() {
                         <hr className='my-2' />
                         <div><strong className='blue'>Check-in:</strong> Tue, 16 Jan 2024 &nbsp; <strong className='blue'>Check-out:</strong> Wed, 17 Jan 2024</div> 
                       </div>
-
                     </div>
                   </div> */}
 
@@ -114,9 +157,6 @@ export default function HotelItinerary() {
                     <button className='btn btn-light'><FontAwesomeIcon icon={faArrowLeftLong} className='fn12' /> Back</button>
                     <button className='btn btn-warning'>Continue <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button>
                   </div>
-                  
-
-
                 </div>
               </div>
               

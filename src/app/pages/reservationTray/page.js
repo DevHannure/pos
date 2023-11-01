@@ -4,30 +4,50 @@ import Image from 'next/image';
 import MainLayout from '../../layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSort } from "@fortawesome/free-solid-svg-icons";
-//import { Tooltip } from 'bootstrap/dist/js/bootstrap.esm.min.js';
-//import { Tooltip } from 'bootstrap';
-//import bootstrap from "bootstrap";
+
 
 export default function ReservationTray() {
   const refDiv = useRef(null);
   const [dimensions, setDimensions] = useState(null);
 
   useEffect(() => {
-   
+    if (window.innerWidth < 992) {
 
-    // const bootstrap = import("bootstrap/dist/js/bootstrap.bundle.min.js");
-    // var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    //   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    //     return new bootstrap.Tooltip(tooltipTriggerEl)
-    // })
+      // close all inner dropdowns when parent is closed
+      document.querySelectorAll('.dropdown-toggle').forEach(function(everydropdown){
+        everydropdown.addEventListener('hidden.bs.dropdown', function () {
+          // after dropdown is hidden, then find all submenus
+            this.querySelectorAll('.submenu').forEach(function(everysubmenu){
+              // hide every submenu as well
+              everysubmenu.style.display = 'none';
+            });
+        })
+      });
     
-    // async function loadBootstrap() {
-    // const bootstrap = await import("bootstrap/dist/js/bootstrap.bundle.min.js");
-    // Array.from(document.querySelectorAll('span[data-bs-toggle="tooltip"]'))
-    // .forEach(tooltipNode => new bootstrap.Tooltip(tooltipNode))   
-    // }
-    // loadBootstrap();
+      document.querySelectorAll('.dropdown-menu a').forEach(function(element){
+       
+        element.addEventListener('click', function (e) {
+          console.log("s", element)
+            let nextEl = this.nextElementSibling;
+            if(nextEl && nextEl.classList.contains('submenu')) {	
+              // prevent opening link if link needs to open dropdown
+              //e.preventDefault();
+              alert("kk")
 
+              if(nextEl.style.display == 'block'){
+                nextEl.style.display = 'none';
+                //alert("hi")
+              } else {
+                
+                nextEl.style.display = 'block';
+                //alert("bye")
+              }
+    
+            }
+        });
+      })
+    }
+      
     setDimensions(refDiv.current.offsetWidth)
     function handleWindowResize() {
       setDimensions(refDiv.current.offsetWidth)
@@ -37,29 +57,6 @@ export default function ReservationTray() {
       window.removeEventListener('resize', handleWindowResize);
     };
   }, []);
-
-  const tooltipRef = useRef(null);
-  // useEffect(() => {
-  //   async function loadBootstrap() {
-  //     //const bootstrap = await import("bootstrap/dist/js/bootstrap.bundle.min.js");
-  //     const bootstrap = bootstrap;
-  //     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  //     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  //       return new bootstrap.Tooltip(tooltipTriggerEl)
-  //     });
-  //   }
-
-  //   loadBootstrap();
-  // }, []);
-
-  //useEffect(() => {
-    //async function loadBootstrap() {
-      //const bootstrap = await import("bootstrap/dist/js/bootstrap");
-      //Array.from(document.querySelectorAll('span[data-bs-toggle="tooltip"]'))
-      //.forEach(tooltipNode => new Tooltip(tooltipNode))   
-    //}
-    //loadBootstrap();
-  //}, []);
 
   return (
     <MainLayout>
@@ -90,8 +87,7 @@ export default function ReservationTray() {
                       <div className='divCell text-nowrap'>PR</div>
                     </div>
 
-                    
-
+                    <>
                     <div className='divRow'>
                       <div className='divCell collapsed' data-bs-toggle="collapse" data-bs-target="#detailsub1"><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
                       <div className='divCell'>369854</div>
@@ -139,13 +135,13 @@ export default function ReservationTray() {
                                 <div className='divCell'>Status</div>
                               </div>
 
-                              <div className='divRow'>
+                              <div className='divRow dropend position-static'>
                                 <div className='divCell text-center'><input type="checkbox" /></div>
-                                <div className='divCell text-nowrap'>1056250</div>
-                                <div className='divCell'>C Central Resort The Palm, Dubai <span><span className="circleicon refund" ref={tooltipRef} data-bs-toggle="tooltip" title="This is a tooltip message" data-bs-title="Welcome to GeeksforGeeks">R</span></span></div>
+                                <div className='divCell text-nowrap dropdown-toggle' data-bs-toggle="dropdown" data-bs-auto-close="outside">1056250</div>
+                                <div className='divCell'>C Central Resort The Palm, Dubai <span><span className="circleicon refund" title="Refundable">R</span></span></div>
                                 <div className="divCell">2Xsuperior Room Double With Hotel Private Beach Access / <br />Half Board,Free Valet Parking,Free Self Parking,Free Wifi</div>
                                 <div className='divCell'>Hotels</div>
-                                <div className='divCell text-nowrap'>28 Oct 2023</div>
+                                <div className='divCell text-nowrap dropdown-toggle' data-bs-toggle="dropdown" data-bs-auto-close="outside">28 Oct 2023</div>
                                 <div className='divCell text-nowrap'>29 Oct 2023</div>
                                 <div className='divCell text-nowrap'>4 Adults</div>
                                 <div className='divCell text-nowrap'>Time Limit</div>
@@ -160,35 +156,29 @@ export default function ReservationTray() {
                                 <div className='divCell text-nowrap'>AED 2396.49</div>
                                 <div className='divCell text-nowrap'>AED 2396.49</div>
                                 <div className='divCell text-nowrap'>Cust.Confirmed</div>
+                                <ul className="dropdown-menu">
+                                <li> <a className="dropdown-item" href="#"> Dropdown item 1 </a></li>
+                                <li> <a className="dropdown-item" href="#"> Dropdown item 2 &raquo; </a>
+                                  <ul className="submenu dropdown-menu">
+                                    <li><a className="dropdown-item" href="#">Submenu item 1</a></li>
+                                    <li><a className="dropdown-item" href="#">Submenu item 2</a></li>
+                                    <li><a className="dropdown-item" href="#">Submenu item 4</a></li>
+                                    <li><a className="dropdown-item" href="#">Submenu item 5</a></li>
+                                  </ul>
+                                </li>
+                                <li><a className="dropdown-item" href="#"> Dropdown item 3 </a></li>
+                                <li><a className="dropdown-item" href="#"> Dropdown item 4 </a></li>
+                              </ul>
                               </div>
-                   
-
+                              
                              
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    <div className='divRow'>
-                      <div className='divCell collapsed'><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
-                      <div className='divCell'>369854</div>
-                      <div className='divCell'>27 Oct 2023</div>
-                      <div className='divCell'>Mr.Danilov family</div>
-                      <div className='divCell'>Imaginative Agency</div>
-                      <div className='divCell'>0</div>
-                      <div className='divCell'>Noujath Noushad</div>
-                      <div className='divCell'>Cancelled</div>
-                      <div className='divCell'>9125.00</div>
-                      <div className='divCell'>2500.00</div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></div>
-                      <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
-                    </div>
+                    </>
+                   
                   </div>
                 </div>
               </div>

@@ -3,8 +3,9 @@ import {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import MainLayout from '../../layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort } from "@fortawesome/free-solid-svg-icons";
-
+import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function ReservationTray() {
   const refDiv = useRef(null);
@@ -12,37 +13,24 @@ export default function ReservationTray() {
 
   useEffect(() => {
     if (window.innerWidth < 992) {
-
-      // close all inner dropdowns when parent is closed
-      document.querySelectorAll('.dropdown-toggle').forEach(function(everydropdown){
+      document.querySelectorAll('.dropReserve').forEach(function(everydropdown){
         everydropdown.addEventListener('hidden.bs.dropdown', function () {
-          // after dropdown is hidden, then find all submenus
             this.querySelectorAll('.submenu').forEach(function(everysubmenu){
-              // hide every submenu as well
               everysubmenu.style.display = 'none';
             });
         })
       });
     
-      document.querySelectorAll('.dropdown-menu a').forEach(function(element){
-       
+      document.querySelectorAll('.dropReserve .dropdown-menu a').forEach(function(element){
         element.addEventListener('click', function (e) {
-          console.log("s", element)
             let nextEl = this.nextElementSibling;
             if(nextEl && nextEl.classList.contains('submenu')) {	
-              // prevent opening link if link needs to open dropdown
-              //e.preventDefault();
-              alert("kk")
-
+              e.preventDefault();
               if(nextEl.style.display == 'block'){
                 nextEl.style.display = 'none';
-                //alert("hi")
               } else {
-                
                 nextEl.style.display = 'block';
-                //alert("bye")
               }
-    
             }
         });
       })
@@ -135,39 +123,77 @@ export default function ReservationTray() {
                                 <div className='divCell'>Status</div>
                               </div>
 
-                              <div className='divRow dropend position-static'>
+                              <div className='divRow dropend dropReserve'>
                                 <div className='divCell text-center'><input type="checkbox" /></div>
-                                <div className='divCell text-nowrap dropdown-toggle' data-bs-toggle="dropdown" data-bs-auto-close="outside">1056250</div>
-                                <div className='divCell'>C Central Resort The Palm, Dubai <span><span className="circleicon refund" title="Refundable">R</span></span></div>
-                                <div className="divCell">2Xsuperior Room Double With Hotel Private Beach Access / <br />Half Board,Free Valet Parking,Free Self Parking,Free Wifi</div>
-                                <div className='divCell'>Hotels</div>
-                                <div className='divCell text-nowrap dropdown-toggle' data-bs-toggle="dropdown" data-bs-auto-close="outside">28 Oct 2023</div>
-                                <div className='divCell text-nowrap'>29 Oct 2023</div>
-                                <div className='divCell text-nowrap'>4 Adults</div>
-                                <div className='divCell text-nowrap'>Time Limit</div>
-                                <div className='divCell'>Details</div>
-                                <div className='divCell text-nowrap'>Expedia</div>
-                                <div className='divCell text-nowrap'>Xml</div>
-                                <div className='divCell text-nowrap'>AED 2470.61</div>
-                                <div className='divCell text-nowrap'>AED 0.00</div>
-                                <div className='divCell text-nowrap'>AED 2470.61</div>
-                                <div className='divCell text-nowrap'>AED 2396.49</div>
-                                <div className='divCell text-nowrap'>AED 0.00</div>
-                                <div className='divCell text-nowrap'>AED 2396.49</div>
-                                <div className='divCell text-nowrap'>AED 2396.49</div>
-                                <div className='divCell text-nowrap'>Cust.Confirmed</div>
-                                <ul className="dropdown-menu">
-                                <li> <a className="dropdown-item" href="#"> Dropdown item 1 </a></li>
-                                <li> <a className="dropdown-item" href="#"> Dropdown item 2 &raquo; </a>
-                                  <ul className="submenu dropdown-menu">
-                                    <li><a className="dropdown-item" href="#">Submenu item 1</a></li>
-                                    <li><a className="dropdown-item" href="#">Submenu item 2</a></li>
-                                    <li><a className="dropdown-item" href="#">Submenu item 4</a></li>
-                                    <li><a className="dropdown-item" href="#">Submenu item 5</a></li>
-                                  </ul>
-                                </li>
-                                <li><a className="dropdown-item" href="#"> Dropdown item 3 </a></li>
-                                <li><a className="dropdown-item" href="#"> Dropdown item 4 </a></li>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">1056250</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">C Central Resort The Palm, Dubai <span><span className="circleicon refund" title="Refundable" data-bs-toggle="tooltip">R</span></span></div>
+                                <div className="divCell dropdown-toggle arrowNone" data-bs-toggle="dropdown" data-bs-auto-close="outside">2Xsuperior Room Double With Hotel Private Beach Access / <br />Half Board,Free Valet Parking,Free Self Parking,Free Wifi</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">Hotels</div>
+                                <div className='divCell text-nowrap dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">28 Oct 2023</div>
+                                <div className='divCell text-nowrap dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">29 Oct 2023</div>
+                                <div className='divCell text-nowrap dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">4 Adults</div>
+                                <div className='divCell'>
+                                  <div style={{width:120}}>
+                                    <div className='row gx-0'>
+                                      <div className='col-9'><DatePicker className="border-end-0 rounded-end-0 form-control form-control-sm px-1" dateFormat="dd MMM yyyy" selected={new Date()} monthsShown={2} /></div>
+                                      <div className='col-3'><button className="rounded-start-0 btn btn-outline-secondary btn-sm"><FontAwesomeIcon icon={faFloppyDisk} /></button></div>
+                                    </div>
+                                  </div>
+                                  {/* <div className='input-group input-group-sm position-static' style={{width:120}}>
+                                    <input className="border-end-0 form-control px-1" value="03 Nov 2023" />
+                                    <button className="btn btn-outline-secondary input-group-text"><FontAwesomeIcon icon={faFloppyDisk} /></button>
+                                  </div> */}
+                                </div>
+                                <div className='divCell'><span className="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="Disabled popover">Details</span></div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">Expedia</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside"><span className='badge bg-primary fn12 fw-semibold'> Xml </span></div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 2470.61</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 0.00</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 2470.61</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 2396.49</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 0.00</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 2396.49</div>
+                                <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">AED 2396.49</div>
+                                <div className='divCell text-nowrap dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">Cust.Confirmed</div>
+                                <ul className="dropdown-menu fn14">
+                                  <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;LPO</a>
+                                    <ul className="submenu dropdown-menu fn14">
+                                      <li><a href="#" className="dropdown-item">Servicewise</a></li>
+                                      <li><a href="#" className="dropdown-item">Supplierwise</a></li>
+                                    </ul>
+                                  </li>
+                                  <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Service Voucher</a></li>
+                                  <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Invoice Report</a></li>
+                                  <li><hr className="dropdown-divider my-1" /></li>
+                                  <li><a href="#" className="dropdown-item disabled"><FontAwesomeIcon icon={faTag} className='fn12 blue' /> &nbsp;Reprice</a></li>
+                                  <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faShuffle} className='fn12 blue' /> &nbsp;Switch Supplier</a></li>
+                                  <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faCircleInfo} className='fn12 blue' /> &nbsp;Amendment History</a></li>
+                                  <li><hr className="dropdown-divider my-1" /></li>
+                                  <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faPencil} className='fn12 blue' /> &nbsp;Edit Service</a>
+                                    <ul className="submenu dropdown-menu fn14">
+                                      <li><a href="#" className="dropdown-item disabled">Amendment</a></li>
+                                      <li><hr className="dropdown-divider my-1" /></li>
+                                      <li><a href="#" className="dropdown-item disabled">Edit Guest Information</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">Edit Payable</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">Edit Selling</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">Edit Service Date</a></li>
+                                      <li><a href="#" className="dropdown-item">Edit VAT Information</a></li>
+                                    </ul>
+                                  </li>
+                                  <li><hr className="dropdown-divider my-1" /></li>
+                                  <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faSliders} className='fn12 blue' /> &nbsp;Change Status</a>
+                                    <ul className="submenu dropdown-menu fn14">
+                                      <li><a href="#" className="dropdown-item disabled">On Request</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">Sent to Supplier</a></li>
+                                      <li><a href="#" className="dropdown-item">Supplier Confirmation</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">Customer ReConfirmation</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">Not Available</a></li>
+                                      <li><a href="#" className="dropdown-item disabled">On Cancellation</a></li>
+                                      <li><a href="#" className="dropdown-item">Cancelled</a></li>
+                                      <li><a href="#" className="dropdown-item">Hotel Confirmation Number</a></li>
+                                    </ul>
+                                  </li>
+                                  
                               </ul>
                               </div>
                               

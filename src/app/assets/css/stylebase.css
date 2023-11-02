@@ -8,6 +8,7 @@ label{margin-bottom:0.3rem;}
 th, strong{font-weight:600;}
 .fn9{font-size:9px;}
 .fn12{font-size:12px;}
+.fn13{font-size:13px;}
 .fn14{font-size:14px;}
 .h-0 {height:0;}
 .m-h-15 {min-height:1.5rem;}
@@ -74,7 +75,7 @@ a, .btn-link{text-decoration:none;}
 .react-datepicker-wrapper{width:100%;}
 .react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle::after{border-bottom-color:#FFF !important;}
 .react-datepicker__navigation{background-color:#f19b0f !important;}
-.react-datepicker__navigation-icon::before{border-color:#FFF !important;top:11px !important;}
+.react-datepicker__navigation-icon::before{border-color:#FFF !important;top:40% !important;}
 .react-datepicker__navigation-icon--previous::before{right:-3px !important;}
 .react-datepicker__navigation-icon--next::before{left:-3px !important;} 
 .react-datepicker__day--outside-month {visibility:hidden !important; color:transparent !important; pointer-events:none; background-color:transparent !important;}
@@ -144,25 +145,20 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .circleicon {border:1px solid; border-radius:100%; display:inline-block; font-size:8px; font-style:normal; height:14px; line-height:13px; text-align:center; vertical-align:middle; width:14px;}
 .refund {border-color:#0daa44; color:#0daa44;}
 
-
-.dropdown-menu li{ position: relative; 	}
-.dropdown-menu .submenu{ 
-    display: none;
-    position: absolute;
-    left:100%; top:-7px;
-}
-.nav-item .submenu-left{ 
-    right:100%; left:auto;
-}
-.dropdown-menu > li:hover{ background-color: #f1f1f1 }
-.dropdown-menu > li:hover > .submenu{ display: block; }
-
-
+.dropIcon:after{display:inline-block; vertical-align:0; content:""; border-top:0.35em solid transparent; border-right:0; border-bottom:0.35em solid transparent; border-left:0.35em solid; position:absolute; right:6px; top:7px;}
+.arrowNone{white-space: inherit;}
+.dropend .arrowNone:after{display:none;}
+.dropReserve{position:inherit;}
+.dropReserve .dropdown-menu{border-radius:0px;}
+/* .dropReserve .dropdown-menu a{color:#000;} */
+.dropReserve .dropdown-menu li{position: relative; /*padding-top:6px; padding-bottom:6px;*/}
+.dropReserve .dropdown-menu .dropdown-item{padding-top:5px; padding-bottom:5px;}
+.dropdown-menu .submenu{display: none; position:absolute;  left:100%; top:-7px;}
+/* .dropReserve .dropdown-menu > li:hover{background-color: #f1f1f1 } */
+.dropReserve .dropdown-menu > li:hover > .submenu{display: block; }
 
 @media (max-width: 991px) {
-  .dropdown-menu .dropdown-menu{
-      margin-left:0.7rem; margin-right:0.7rem; margin-bottom: .5rem;
-  }
+.dropReserve .dropdown-menu .dropdown-menu{margin-left:0.7rem; margin-right:0.7rem; margin-bottom:.5rem; position:static;}
 }
 
 @media (min-width:960px){

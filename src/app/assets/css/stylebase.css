@@ -28,6 +28,22 @@ a, .btn-link{text-decoration:none;}
 .tablePad0>tbody>tr>td,.tablePad0>tbody>tr>th,.tablePad0>tfoot>tr>td,.tablePad0>tfoot>tr>th,.tablePad0>thead>tr>td,.tablePad0>thead>tr>th{padding:0}
 .nav-underline .nav-link.active, .nav-underline .show > .nav-link{font-weight:normal;}
 .listNone{list-style-type: none; padding:0px;}
+.tooltip-inner{font-size:11px;}
+.popover-body{padding:12px;font-size:13px;}
+
+.mainloader1{display:flex; justify-content:center; align-items: center; position: fixed; left:0px; right: 0px; top:0px; bottom:0px; background:rgba(0,0,0,0.65); z-index: 999;}
+.loader1 {color: #FFF; font-weight:500; font-size:25px; text-transform:capitalize;box-sizing: content-box; height:40px; padding:10px 10px; display:flex;}
+.wordLoad {display:block; height:100%; color: #FFA822; animation: spin_up 4s infinite;}
+@keyframes spin_up {
+10% {transform: translateY(-105%);}
+25% {transform: translateY(-100%);}
+35% {transform: translateY(-205%);}
+50% {transform: translateY(-200%);}
+60% {transform: translateY(-305%);}
+75% {transform: translateY(-300%);}
+85% { transform: translateY(-405%);}
+100% {transform: translateY(-400%);}
+}
 
 .cusnav{padding:0px;position: fixed; top:0px; left:0px; right:0px; background-color:#FFF; z-index:111;}
 .fixedNav .cusnav{background-color:#FFF; box-shadow:0 2px 8px rgb(0 0 0 / 15%);}
@@ -156,14 +172,18 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .dropdown-menu .submenu{display: none; position:absolute;  left:100%; top:-7px;}
 /* .dropReserve .dropdown-menu > li:hover{background-color: #f1f1f1 } */
 .dropReserve .dropdown-menu > li:hover > .submenu{display: block; }
-
 @media (max-width: 991px) {
 .dropReserve .dropdown-menu .dropdown-menu{margin-left:0.7rem; margin-right:0.7rem; margin-bottom:.5rem; position:static;}
 }
-
 @media (min-width:960px){
 .leftFilter .position-relative.collapse{display:block !important;}     
 }
+
+.selectSm__control{min-height:inherit !important;}
+.selectSm__indicator{padding:0 8px !important;}
+.selectSm__value-container{padding:0px !important;}
+.selectSm__multi-value__label{padding:0px !important;}
+.labelribbon:after {left:100%; top:0; border:solid transparent; content:" "; height:0; width:0; position:absolute; pointer-events:none; border-width:13px; border-color:#003263; border-right:10px solid transparent;}
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

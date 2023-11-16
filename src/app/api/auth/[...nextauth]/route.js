@@ -11,32 +11,10 @@ export const authOptions = {
         CredentialsProvider({
             name: 'my-project',
             credentials: {
-                email: {
-                    label: 'email',
-                    type: 'email',
-                    placeholder: 'jsmith@example.com',
-                },
-                password: { label: 'Password', type: 'password' }
+                userDetails: { label: 'UserDetails'}
             },
             async authorize(credentials) {
-                const res = await fetch('https://dummyjson.com/auth/login', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        username: credentials.email,
-                        password: credentials.password,
-                    }),
-                    headers: {'Content-Type': 'application/json',},
-                });
-                const user = await res.json();
-                if (!res.ok) {
-                    throw new Error(user.message);
-                }
-                if (res.ok && user) {
-                    return user;
-                }
-                return null;
-                //const user = {id: "1"};
-                //return user;
+                return JSON.parse(credentials.userDetails);
             }
         }),
     ],
@@ -56,27 +34,6 @@ export const authOptions = {
         
        }
 
-    // callbacks: {
-    //     async jwt({ token, user, account }) {
-    //       if (account && user) {
-    //         return {
-    //           ...token,
-    //           accessToken: user.token,
-    //           refreshToken: user.refreshToken,
-    //         }
-    //       }
-    
-    //       return token
-    //     },
-    
-    //     async session({ session, token }) {
-    //       session.user.accessToken = token.accessToken
-    //       session.user.refreshToken = token.refreshToken
-    //       session.user.accessTokenExpires = token.accessTokenExpires
-    
-    //       return session
-    //     },
-    //   }
    
 }
 

@@ -433,7 +433,7 @@ export default function ModifySearch({Type, HtlReq, filterOpen}) {
   <ToastContainer />
   {Type === 'landing' ?
   <div className="searchPanel">  
-    <Image className="searchImage" src='/images/leftsearchAORYX-bg.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} />
+    <Image className="searchImage" src='/images/leftsearchAORYX-bg.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} priority />
 
     <div className="searchBox">
       <div className="container">

@@ -10,6 +10,7 @@ import { authOptions } from "../api/auth/[...nextauth]/route";
 
 export default async function Login() {
   const session = await getServerSession(authOptions);
+
   console.log("aa", session)
   if (session) redirect("/");
   return (
@@ -43,7 +44,7 @@ export default async function Login() {
         </div>  
       </header>
       <div className="loginBanner">
-        <Image src='/images/loginAORYX.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} />
+        <Image src='/images/loginAORYX.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} priority />
         <div className="mainLoginForm">
           <div className="container">
             <div className="row">

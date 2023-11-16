@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPowerOff } from "@fortawesome/free-solid-svg-icons";
 import { useSession, signOut } from "next-auth/react";
+import Bowser from "bowser";
+import AuthService from '@/app/services/auth.service';
 
 export default function Header() {
-  // const { data, status  } = useSession();
-  // console.log("session", data)
-  // console.log("session", status)
+  const { data, status } = useSession();
+  //console.log("session666", data)
+  //console.log("session", status)
   const [fixedClass, setFixedClass] = useState(false);
   const handleScrollss = () => {
     setFixedClass(window.scrollY > 30)
@@ -20,7 +22,43 @@ export default function Header() {
     return () => document.removeEventListener("scroll", handleScrollss);
   }, []);
 
+  const toTitleCase = str => {
+    let titleCase = str.toLowerCase().split(' ')
+    .map(word => {return word.charAt(0).toUpperCase() + word.slice(1);}).join(' ');
+    return titleCase;
+  };
+  
+  const signOutBtn = async() => {
+    let resLocation =  null;
+    let browserInfo = Bowser.parse(window.navigator.userAgent);
+    await fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+      .then(response => response.json())
+      .then(datak => (resLocation = datak))
+      .catch(err => console.error(err));
+    if(resLocation?.ip_address){
+      let req = {
+        UserCode: data?.user?.userEmail,
+        AppCode: process.env.NEXT_PUBLIC_APPCODE,
+        DeviceInfo:{
+          Url: 'http://localhost:5001/',
+          DeviceName: toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName,
+          BrowserName: browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version,
+          IPAddress: resLocation.ip_address,
+          IPLocation: resLocation.city + ', ' + resLocation.country,
+        }
+      }
+      const responseLogOut = AuthService.logout(req, data?.correlationId);
+      const resLogOUt =  responseLogOut;
+      if(resLogOUt){
+        signOut({
+          callbackUrl: '/login'
+        })
+      }
+    }
+  }
+
   return (
+    <>
     <header className={"headerMain " + (fixedClass ? 'fixedNav': 'absoluteNav')}>
       <div className="cusnav navbar navbar-expand-lg navbar-light">
         <div className="container-fluid">
@@ -40,16 +78,14 @@ export default function Header() {
             <div className="ms-auto mt-2">
               <div className="text-end">
                 <ul className="deviderList">
-                  <li>Mir Ali Khan,  United Arab Emirates {process.env.NEXT_PUBLIC_SHORTCODE}</li>
-                  <li><Link className="text-dark" onClick={() => signOut({
-                callbackUrl: '/login'
-            })} href="/login"><FontAwesomeIcon icon={faPowerOff} /> Logout</Link></li>
+                  <li>{data?.user?.consultantName && toTitleCase(data.user.consultantName)}, {data?.user?.branchName && toTitleCase(data.user.branchName)}</li>
+                  <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
               </div>
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Book</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Cart</Link></li>
-                <li className="nav-item"><Link className="nav-link" href="/pages/reservationTray">My Bookings</Link></li>
+                <li className="nav-item"><Link className="nav-link" href="/pages/booking/reservationTray">My Bookings</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li>
                 {/* <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dashboard</Link>
@@ -66,5 +102,22 @@ export default function Header() {
         </div>
       </div>  
     </header>
+
+    {status!=='authenticated' &&
+    <div className="mainloader1">
+      <div className="loader1">
+        <p>loading</p>
+        <div className="container overflow-hidden">
+          <span className="wordLoad">words</span>
+          <span className="wordLoad">images</span>
+          <span className="wordLoad">user data</span>
+          <span className="wordLoad">services</span>
+          <span className="wordLoad">words</span>
+        </div>
+      </div>
+    </div>
+    }
+    </>
+    
   )
 }

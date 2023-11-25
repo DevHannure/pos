@@ -4,7 +4,7 @@ import ModifySearch from '../../components/hotel/ModifySearch';
 export default function Hotel() {
   return (
     <DefaultLayout>
-      <ModifySearch Type={'landing'} />
+      <ModifySearch Type={'landing'} HtlReq={''} />
     </DefaultLayout>
   )
 }

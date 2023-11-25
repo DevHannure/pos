@@ -10,7 +10,7 @@ import { authOptions } from "../api/auth/[...nextauth]/route";
 
 export default async function AgentRegister() {
   const session = await getServerSession(authOptions);
-  console.log("aa", session)
+  //console.log("aa", session)
   if (session) redirect("/");
   return (
     <LoginLayout>

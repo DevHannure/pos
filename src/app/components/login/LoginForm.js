@@ -105,28 +105,11 @@ export default function BookingItinerary() {
     let valItem = value.replace(/\D/g, '');
     let errors = {}; 
     if(!valItem){
-      errors.otp = 'Please enter the OTP.'; 
+      errors.otp = 'Please enter the OTP'; 
     }
     setOtp(valItem);
     setErrorOtp(errors);  
   }
-
-  const validateOtpForm = () => { 
-    let errors = {}; 
-    if (!otp) { 
-      errors.otp = 'Please enter the OTP'; 
-    }
-    else if (otp!==userDtl?.user?.otp) { 
-      errors.otp = 'The OTP you entered is invalid. Please enter the correct OTP'; 
-    } 
-    setErrorOtp(errors); 
-    if(Object.keys(errors).length === 0){
-      return true;
-    }
-    else{
-      return false
-    }
-  }; 
 
   const [countDown, setCountDown] = useState(0);
   const [runTimer, setRunTimer] = useState(false);
@@ -134,7 +117,7 @@ export default function BookingItinerary() {
   useEffect(() => {
     let timerId;
     if (runTimer) {
-      setCountDown(60 * 2);
+      setCountDown(60 * 15);
       timerId = setInterval(() => {
         setCountDown((countDown) => countDown - 1);
       }, 1000);
@@ -148,7 +131,7 @@ export default function BookingItinerary() {
 
   useEffect(() => {
     if (countDown < 0 && runTimer) {
-      console.log("expired");
+      //console.log("expired");
       setRunTimer(false);
       setCountDown(0);
       setLoginForm(true);
@@ -161,21 +144,41 @@ export default function BookingItinerary() {
   const minutes = String(Math.floor(countDown / 60)).padStart(2, 0);
  
   const otpSubmit = async() => {
-    let valid = validateOtpForm();
-    if (valid) { 
+    if (!otp) { 
+      setErrorOtp({otp:'Please enter the OTP'})
+    } 
+    else { 
       try {
         setOtpLoading(true);
-        debugger;
-        const userDetails = JSON.stringify(userDtl)
-        const res = await signIn("credentials",{
-          userDetails,
-          redirect:true,
-          callbackUrl: `${window.location.origin}`
-        })
-        if(res.error){
-          toast.error("Invalid Credentials",{theme: "colored"})
-          setOtpLoading(false)
-          return;
+        const req = {
+          UserCode: email,
+          AppCode: process.env.NEXT_PUBLIC_APPCODE,
+          OTP: otp,
+          DeviceInfo:{
+            Url: 'http://localhost:5001/',
+            DeviceName: deviceName,
+            BrowserName: browserName,
+            IPAddress: ipAddress,
+            IPLocation: ipLocation,
+          }
+        }
+        const responseVer = AuthService.verifyOTP(req, userDtl?.correlationId);
+        const resVerify = await responseVer;
+        if(resVerify === 'Success'){
+          const userDetails = JSON.stringify(userDtl)
+          const res = await signIn("credentials",{
+            userDetails,
+            redirect:true,
+            callbackUrl: `${window.location.origin}`
+          })
+          if(res.error){
+            toast.error("Invalid Credentials",{theme: "colored"})
+            setOtpLoading(false)
+            return;
+          }
+        }
+        else{
+          toast.error(resVerify,{theme: "colored"})
         }
         setOtpLoading(false)
       } catch(error){
@@ -185,6 +188,7 @@ export default function BookingItinerary() {
   };
 
   const resendOtp = async() => {
+    setRunTimer(false)
     const req = {
       UserCode: email,
       AppCode: process.env.NEXT_PUBLIC_APPCODE,
@@ -196,9 +200,16 @@ export default function BookingItinerary() {
         IPLocation: ipLocation,
       }
     }
+    const responseResendOtp = AuthService.resendOTP(req, userDtl?.correlationId);
+    const resResendOtp = await responseResendOtp;
+    if(resResendOtp === 'Success'){
+      setRunTimer(true)
+      toast.success(`OTP email sent to ${email}`,{theme: "colored"});
+    }
+    else{
+      toast.error(resResendOtp,{theme: "colored"})
+    }
 
-    //const response = AuthService.resendOTP(req, userDtl?.correlationId);
-    //const resUser = await response;
   }
 
   // Submit 
@@ -222,7 +233,7 @@ export default function BookingItinerary() {
       const resUser = await response;
       
       if(resUser?.error === 'Success'){
-        if(resUser?.user?.otp){
+        if(resUser?.user?.isOTPRequired){
           setRunTimer(true)
           setUserDtl(resUser);
           setOtpForm(true);
@@ -411,10 +422,8 @@ export default function BookingItinerary() {
           IPLocation: ipLocation,
         }
       }
-      console.log("req", req)
       const response = AuthService.resetPassword(req);
       const resPass = await response;
-      console.log("resPass", resPass)
       if(resPass==='Success'){
         toast.success('Your password has been changed successfully',{theme: "colored"});
         setResetPassForm(false);
@@ -457,7 +466,7 @@ export default function BookingItinerary() {
       <div>
         <input type="text" className="form-control" placeholder="Enter OTP" value={otp} onChange={(e) => otpChange(e.target.value)}  />
         {errorOtp.otp && <div className='text-danger m-1'>{errorOtp.otp}</div>}
-        <div className='text-end'><button className='btn btn-link fn13 px-0'>Click here to resend OTP</button></div>
+        <div className='text-end'><button className='btn btn-link fn13 px-0' onClick={resendOtp}>Click here to resend OTP</button></div>
       </div>
       <div className="mb-1">
         <button type="button" className="btn btn-warning px-4 fw-semibold" onClick={otpSubmit} disabled={otpLoading}>{otpLoading ? 'Submitting' : 'Submit'}</button>

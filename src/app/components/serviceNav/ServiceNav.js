@@ -8,7 +8,6 @@ import {useSession} from "next-auth/react";
 export default function ServiceNav() {
   const {data} = useSession();
   // const session = await getServerSession(authOptions);
-  //console.log("3", data)
   //const onlineService = data?.userPermissions.find(onlineService => onlineService.featureName === 'IncludeOnlineService');
   const hotelService = data?.userPermissions.find(hotelService => hotelService.featureName === 'IncludeOnlineHotelService');
   const tourService = data?.userPermissions.find(tourService => tourService.featureName === 'IncludeOnlineTourService');

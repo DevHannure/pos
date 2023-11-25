@@ -1,5 +1,6 @@
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API
 
+
 const AuthService = {
 
   login: async function (reqObj) {

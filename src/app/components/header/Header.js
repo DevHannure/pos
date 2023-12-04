@@ -13,18 +13,23 @@ import { doUserInfo } from '@/app/store/commonStore/common';
 export default function Header() {
   const { data, status } = useSession();
   const dispatch = useDispatch();
-  const userInfo = useSelector((state) => state.commonReducer?.userInfo);
+  const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
   // console.log("session666", data)
   // console.log("session", status)
 
-  if(status==='authenticated'){
-    dispatch(doUserInfo(data))
-  }
+  //if(status==='authenticated'){
+    //dispatch(doUserInfo(data))
+  //}
   if(status==='unauthenticated'){
     signOut({
       callbackUrl: '/login'
     })
   }
+  
+  useEffect(() => {
+    dispatch(doUserInfo(data))
+  }, [data]);
+  
   const [fixedClass, setFixedClass] = useState(false);
   const handleScrollss = () => {
     setFixedClass(window.scrollY > 30)
@@ -50,7 +55,7 @@ export default function Header() {
       .catch(err => console.error(err));
     if(resLocation?.ip_address){
       let req = {
-        UserCode: userInfo?.user?.userEmail,
+        UserCode: userInfos?.user?.userEmail,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         DeviceInfo:{
           Url: 'http://localhost:5001/',
@@ -60,7 +65,7 @@ export default function Header() {
           IPLocation: resLocation.city + ', ' + resLocation.country,
         }
       }
-      const responseLogOut = AuthService.logout(req, userInfo?.correlationId);
+      const responseLogOut = AuthService.logout(req, userInfos?.correlationId);
       const resLogOUt =  responseLogOut;
       if(resLogOUt){
         signOut({
@@ -91,7 +96,7 @@ export default function Header() {
             <div className="ms-auto mt-2">
               <div className="text-end">
                 <ul className="deviderList">
-                  <li>{userInfo?.user?.consultantName && toTitleCase(userInfo.user.consultantName)}, {userInfo?.user?.branchName && toTitleCase(userInfo.user.branchName)}</li>
+                  <li>{userInfos?.user?.consultantName && toTitleCase(userInfos.user.consultantName)}, {userInfos?.user?.branchName && toTitleCase(userInfos.user.branchName)}</li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
               </div>

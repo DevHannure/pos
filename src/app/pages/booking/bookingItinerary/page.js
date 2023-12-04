@@ -1,6 +1,6 @@
 "use client"
 import React, {useState} from 'react';
-import MainLayout from '../../../layouts/mainLayout';
+import MainLayout from '@/app/layouts/mainLayout';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faShareSquare, faEnvelope, faPrint, faStar} from "@fortawesome/free-solid-svg-icons";
 

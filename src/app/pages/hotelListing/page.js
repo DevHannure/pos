@@ -1,78 +1,86 @@
 "use client"
-import MainLayout from '../../layouts/mainLayout';
+import MainLayout from '@/app/layouts/mainLayout';
 import React, {useEffect, useState } from 'react';
-import ModifySearch from '../../components/hotel/ModifySearch'
-import HotelFilter from '../../components/hotel/HotelFilter';
-import HotelResult from '../../components/hotel/HotelResult';
+import ModifySearch from '@/app/components/hotel/ModifySearch'
+import HotelFilter from '@/app/components/hotel/HotelFilter';
+import HotelResult from '@/app/components/hotel/HotelResult';
 import DummyHotelResult from '@/app/components/hotel/DummyResult';
 import { useSearchParams  } from 'next/navigation';
 import { useDispatch, useSelector } from "react-redux";
 import HotelService from '@/app/services/hotel.service';
 import { doHotelSearchOnLoad } from '@/app/store/hotelStore/hotel';
-//import { useRouter} from 'next/navigation';
+import AES from 'crypto-js/aes';
+import { enc } from 'crypto-js';
 
 export default function HotelListing() {
-  const dispatch = useDispatch();
-
-  const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
   const searchparams = useSearchParams();
-  const search = searchparams.get('qry')
-  const qry = JSON.parse(search)
+  const search = searchparams.get('qry');
+  let decData = enc.Base64.parse(search).toString(enc.Utf8)
+  let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8)
+  console.log(JSON.parse(bytes))
+  const qry = JSON.parse(bytes);
+  const dispatch = useDispatch();
+  const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
 
   useEffect(()=>{
-    if(qry){
+    //if(qry){
       doHtlResultOnLoad()
-    }
-  },[]);
+    //}
+  },[searchparams]);
 
   const doHtlResultOnLoad = async() =>{
+    dispatch(doHotelSearchOnLoad(null));
     let htlSrchObj = {
-      "CustomerCode": process.env.NEXT_PUBLIC_APPCODE,
+      "CustomerCode": qry.customerCode,
       "SearchParameter": {
-        "CityName": "Dubai",
-        "CountryName": "United Arab Emirates",
-        "DestinationCode": "3037",
-        "CountryCode": "AE",
-        "CheckInDate": "2024-02-24T00:00:00",
-        "CheckOutDate": "2024-02-26T00:00:00",
-        "Currency": "AED",
-        "Nationality": "AE",
-        "Rooms": {
-          "Room": [
-            {
-              "Adult": "2",
-              "RoomIdentifier": "1"
-            }
-          ]
-        }
-      // "DestinationCode": qry.dest_code != null ? qry.dest_code : 0,
-      // "CountryCode": qry.country != null ? qry.country : 0,
-      // "selectedCity": qry.city != null ? qry.city : '',
-      // "selectedCountry": qry.countryName != null ? qry.countryName : '',
-      // "CheckInDate": qry.chk_in != null ? qry.chk_in : '',
-      // "CheckOutDate": qry.chk_out != null ? qry.chk_out : '',
-      // "Currency": process.env.REACT_APP_CURRENCY,
-      // "Nationality": "QATARI",
-      // "paxInfoArr": []
+        "CityName": qry.destination[0].cityName,
+        "CountryName": qry.destination[0].countryName,
+        "DestinationCode": qry.destination[0].destinationCode,
+        "CountryCode": qry.destination[0].countryCode,
+        "CheckInDate": qry.chkIn,
+        "CheckOutDate": qry.chkOut,
+        "Currency": qry.currency,
+        "Nationality": qry.nationality.split('-')[1],
+        "Rooms":{}
       }
     }
+
+    let room = []
+    qry.paxInfoArr.forEach((v, i) => {
+      let paxObj = {
+        Adult: v.adtVal,
+        RoomIdentifier: parseInt(i + 1)
+      }
+
+      if (v.chdVal > 0) {
+        let chdArr = [];
+        v.chdAgesArr.forEach((val, indx) => {
+          if (parseInt(val.chdAgeVal) > 0) {
+            chdArr.push({
+                Identifier: parseInt(indx + 1),
+                Text: val.chdAgeVal
+            })
+          }
+        })
+        if (v.chdVal > 0) {
+          paxObj.Children = {
+            Count: v.chdVal,
+            ChildAge: chdArr
+          }
+        }
+      }
+      room.push(paxObj)
+    })
+    htlSrchObj.SearchParameter.Rooms.Room = room;
+
+    if(qry.hotelName[0]?.hotelCode){
+      htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode
+    }
+
     const responseHtlResult = HotelService.doHotelSearch(htlSrchObj, qry.correlationId);
     const resHtlResult = await responseHtlResult;
     dispatch(doHotelSearchOnLoad(resHtlResult))
-    
-
   }
-
-//   const router = useRouter();
-// const terminalPayload = router.query;
-
-
-
-// const searchParams = useSearchParams();
-// const params = {};
-// for(let [key, value] of searchParams.entries()) {
-//   params[key] = value;
-// }
 
   const [filterChoose, setFilterChoose] = useState(false);
   const chooseFilter = (val) => {
@@ -81,15 +89,15 @@ export default function HotelListing() {
   return (
     <MainLayout>
       <div className="middle">
-        <ModifySearch Type={'result'} HtlReq={''} filterOpen={(val) => chooseFilter(val)} />
+        <ModifySearch Type={'result'} HtlReq={qry} filterOpen={(val) => chooseFilter(val)} />
         <div className="container-fluid">
           {getHtlRes ?
           <div className="d-lg-table w-100">
-            <HotelFilter filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
-            <HotelResult />
+            <HotelFilter HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+            <HotelResult HtlReq={qry} />
           </div>
           :
-          <DummyHotelResult filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+          <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           }
         </div>  
       </div>

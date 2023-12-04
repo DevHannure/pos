@@ -3,13 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
-import { useSearchParams  } from 'next/navigation';
 
 export default function DummyHotelResult(props) {
-  const searchparams = useSearchParams();
-  const search = searchparams.get('qry')
-  const qry = JSON.parse(search)
-
+  const qry = props.HtlReq
   const [filterCollapse, setFilterCollapse] = useState(true);
   useEffect(() => {
     let w = window.innerWidth;
@@ -121,8 +117,8 @@ export default function DummyHotelResult(props) {
                 <div>
                   <FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" />
                 </div>
-                <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} /></div>
-                <div className="ms-3 fw-semibold fs-6">{qry?.city}</div>
+                <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} priority={true} /></div>
+                <div className="ms-3 fw-semibold fs-6">{qry?.destination[0]?.cityName}</div>
               </div>
             </div>
             <div className='col-md-2 col-10 placeholder-glow'><span className="placeholder col-7"></span></div>

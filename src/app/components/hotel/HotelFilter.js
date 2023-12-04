@@ -20,14 +20,24 @@ import { doFilterSort } from '@/app/store/hotelStore/hotel';
 // }
 
 export default function HotelFilter(props) {
+  const qry = props.HtlReq
   const dispatch = useDispatch();
   const [filterCollapse, setFilterCollapse] = useState(true);
+
   useEffect(() => {
+    if(qry && qry.starRating.includes('5') && qry.starRating.includes('4') && qry.starRating.includes('3') && qry.starRating.includes('2') && qry.starRating.includes('1') && qry.starRating.includes('0')){
+      setStartRating([])
+    }
+    else{
+      setStartRating(qry.starRating)
+      filterSort();
+    }
     let w = window.innerWidth;
     if (w < 960) {
       setFilterCollapse(false)
     }
   }, []);
+  
   useEffect(() => {
     setFilterCollapse(props.filterChoose)
   }, [props]);
@@ -154,8 +164,8 @@ export default function HotelFilter(props) {
                   renderThumb={(props, state) => <div {...props} key={state.index}></div>}
                   />
                 <div className="my-1 text-muted d-flex justify-content-between fn12">
-                  <span>USD {priceFilter[0]}</span>
-                  <span>USD {priceFilter[1]}</span>
+                  <span>{qry?.currency} {priceFilter[0]}</span>
+                  <span>{qry?.currency} {priceFilter[1]}</span>
                 </div>
               </div>
             </div>
@@ -268,67 +278,67 @@ export default function HotelFilter(props) {
               <div id="tripAdvisor" className="collapse show mt-1">
                 {Object.values(tripCount).reduce((a, item) => a + (item === '0' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="0" onChange={e => tripChange(e)} checked={triptRating.includes("0")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '0' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="0" onChange={e => tripChange(e)} checked={triptRating.includes("0")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '0' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '0.5' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="0.5" onChange={e => tripChange(e)} checked={triptRating.includes("0.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.5-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '0.5' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="0.5" onChange={e => tripChange(e)} checked={triptRating.includes("0.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.5-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '0.5' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '1' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="1" onChange={e => tripChange(e)} checked={triptRating.includes("1")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/1.0-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '1' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="1" onChange={e => tripChange(e)} checked={triptRating.includes("1")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/1.0-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '1' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '1.5' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="1.5" onChange={e => tripChange(e)} checked={triptRating.includes("1.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/1.5-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '1.5' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="1.5" onChange={e => tripChange(e)} checked={triptRating.includes("1.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/1.5-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '1.5' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '2' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="2" onChange={e => tripChange(e)} checked={triptRating.includes("2")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.0-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '2' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="2" onChange={e => tripChange(e)} checked={triptRating.includes("2")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.0-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '2' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '2.5' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="2.5" onChange={e => tripChange(e)} checked={triptRating.includes("2.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.5-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '2.5' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="2.5" onChange={e => tripChange(e)} checked={triptRating.includes("2.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/2.5-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '2.5' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '3' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="3" onChange={e => tripChange(e)} checked={triptRating.includes("3")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/3.0-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '3' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="3" onChange={e => tripChange(e)} checked={triptRating.includes("3")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/3.0-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '3' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '3.5' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="3.5" onChange={e => tripChange(e)} checked={triptRating.includes("3.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/3.5-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '3.5' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="3.5" onChange={e => tripChange(e)} checked={triptRating.includes("3.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/3.5-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '3.5' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '4' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="4" onChange={e => tripChange(e)} checked={triptRating.includes("4")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/4.0-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '4' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="4" onChange={e => tripChange(e)} checked={triptRating.includes("4")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/4.0-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '4' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '4.5' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="4.5" onChange={e => tripChange(e)} checked={triptRating.includes("4.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/4.5-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '4.5' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="4.5" onChange={e => tripChange(e)} checked={triptRating.includes("4.5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/4.5-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '4.5' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 
                 {Object.values(tripCount).reduce((a, item) => a + (item === '5' ? 1 : 0), 0) !== 0 &&
                 <div className="form-check">
-                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="5" onChange={e => tripChange(e)} checked={triptRating.includes("5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/5.0-13387-4.png" alt="rating" width={100} height={17} /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '5' ? 1 : 0), 0)})</span></label>
+                  <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value="5" onChange={e => tripChange(e)} checked={triptRating.includes("5")} /> <Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/5.0-13387-4.png" alt="rating" width={100} height={17} priority /> <span className="float-end text-black-50 fn12">({Object.values(tripCount).reduce((a, item) => a + (item === '5' ? 1 : 0), 0)})</span></label>
                 </div>
                 }
 

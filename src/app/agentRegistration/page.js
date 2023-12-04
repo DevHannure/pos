@@ -1,12 +1,12 @@
-import LoginLayout from "../layouts/loginLayout"
+import LoginLayout from "@/app/layouts/loginLayout"
 import Image from 'next/image'
 import Link from 'next/link'
 import (`../assets/css/login${process.env.NEXT_PUBLIC_SHORTCODE}.css`)
-import Footer from "../components/footer/Footer";
-import RegisterForm from "../components/register/RegisterForm";
+import Footer from "@/app/components/footer/Footer";
+import RegisterForm from "@/app/components/register/RegisterForm";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export default async function AgentRegister() {
   const session = await getServerSession(authOptions);

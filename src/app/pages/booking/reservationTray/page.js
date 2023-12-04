@@ -1,7 +1,7 @@
 "use client"
 import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
-import MainLayout from '../../../layouts/mainLayout';
+import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";

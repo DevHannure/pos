@@ -1,16 +1,15 @@
-import LoginLayout from "../layouts/loginLayout"
+import LoginLayout from "@/app/layouts/loginLayout"
 import Image from 'next/image'
 import Link from 'next/link'
 import (`../assets/css/login${process.env.NEXT_PUBLIC_SHORTCODE}.css`)
-import Footer from "../components/footer/Footer";
-import LoginForm from "../components/login/LoginForm";
+import Footer from "@/app/components/footer/Footer";
+import LoginForm from "@/app/components/login/LoginForm";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export default async function Login() {
   const session = await getServerSession(authOptions);
-
   //console.log("aa", session)
   if (session) redirect("/");
   return (

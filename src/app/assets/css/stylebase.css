@@ -149,7 +149,7 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .horizontal-slider .example-thumb {top: 1px; width:18px; height:18px;}
 .image-gallery-left-nav .image-gallery-svg, .image-gallery-right-nav .image-gallery-svg{height: 60px !important;}
 
-.fn12 .hbgCLW{font-size:12px; padding-top:5px; padding-bottom:5px;}
+.fn12 .d-column{font-size:12px; padding-top:5px; padding-bottom:5px;}
 .defaultPage .cusnav{background: transparent;}
 .defaultPage .fixedNav .cusnav{background:#FFF;}
 .defaultPage .container-fluid{max-width:1140px;}

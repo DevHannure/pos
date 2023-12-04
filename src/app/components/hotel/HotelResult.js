@@ -195,8 +195,8 @@ export default function HotelResult(props) {
       selector: row => row[0].roomBasisName,
       cell: (row) => (
         <div className='d-column'>
-        <div className='text-capitalize'>{row[0].roomBasisName.toLowerCase()}</div>
-        <div className='fn10 text-success text-capitalize'>{row[0].promotions?.[0]?.text.toLowerCase()}</div>
+          <div className='text-capitalize'>{row[0].roomBasisName.toLowerCase()}</div>
+          <div className='fn10 text-success text-capitalize'>{row[0].promotions?.[0]?.text.toLowerCase()}</div>
         </div>
       ),
       sortable: true,
@@ -226,7 +226,7 @@ export default function HotelResult(props) {
       name: "Price "+`(${qry.currency})`,
       selector: row => row[0].amount,
       cell: (row) => (
-        <div>
+        <div className='d-column'>
           {parseFloat(row.reduce((totalAmt, price) => totalAmt + price.amount, 0)).toFixed(2)}
 
           {row[0].rateType==='Refundable' || row[0].rateType==='refundable' ?
@@ -252,7 +252,7 @@ export default function HotelResult(props) {
     {
       button: true,
       cell: () => (
-        <><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></>
+        <div className='d-column'><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></div>
       )
     }
   ];

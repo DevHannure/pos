@@ -24,6 +24,18 @@ const HotelService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doCombinedRoomDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/hotel/CombinedRoomDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  
   doPriceBreakup: async function (reqObj, correlationId) {
     try {
       const response = await fetch(`${baseUrl}/hotel/PriceBreakup`, {

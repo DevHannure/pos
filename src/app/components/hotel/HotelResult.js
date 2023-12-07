@@ -44,7 +44,6 @@ export default function HotelResult(props) {
   const [roomData, setRoomData] = useState({});
   const [htlCollapse, setHtlCollapse] = useState('');
 //console.log("roomData", roomData)
-  
 
   const roomDetail = async(hotelCollapseCode, hotelCode) => {
     if(hotelCollapseCode!==htlCollapse){
@@ -112,43 +111,45 @@ export default function HotelResult(props) {
       // roomBasisName
       // OfferDesctription
 
-        let newArr = []
+      let newArr = []
 
-        if(qry.paxInfoArr.length === 1){
-          newArr = resHtlRoomDtl?.hotel?.rooms?.b2BRoom.map((item) => {
-            return [item]
-          })
-        }
-        else {
-          //const ids = resHtlRoomDtl.hotel.rooms.b2BRoom.map(v => v);
-          let firstroomarray = []
-          resHtlRoomDtl?.hotel?.rooms?.b2BRoom.forEach((item) => {
-            if( item.roomIdentifier === 1 && item.amount > 0){
-              firstroomarray.push(item)
-            }
-          })
+      if(qry.paxInfoArr.length === 1){
+        newArr = resHtlRoomDtl?.hotel?.rooms?.b2BRoom.map((item) => {
+          return [item]
+        })
+      }
+      else {
+        let firstroomarray = []
+        resHtlRoomDtl?.hotel?.rooms?.b2BRoom.forEach((item) => {
+          if( item.roomIdentifier === 1 && item.amount > 0){
+            firstroomarray.push(item)
+          }
+        })
+        let filterArr = []
+        filterArr = firstroomarray.map(v => {
+          return resHtlRoomDtl.hotel.rooms.b2BRoom.filter(o => o.roomTypeName === v.roomTypeName && o.groupCode === v.groupCode && o.marriageIdentifier === v.marriageIdentifier && o.rateType === v.rateType && o.isPackage === v.isPackage && o.isDynamic === v.isDynamic && o.roomBasisName === v.roomBasisName);
+        });
+        //console.log("filterArr", filterArr)
+        filterArr.map((v) => {
+          if(qry.paxInfoArr.length === v.length){
+            const numAscending = [...v].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
+            newArr.push(numAscending)
+          }
+          else if(qry.paxInfoArr.length < v.length){
+            const uniqueRoom = [...new Map(v.map(k => [k.roomIdentifier, k])).values()]
+            //console.log("uniqueRoom", uniqueRoom)
+            const numAscending = [...uniqueRoom].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
+            newArr.push(numAscending)
+          }
+        })
+      }
+      //console.log("newArr", newArr)
 
-          //console.log("firstroomarray", firstroomarray)
-          let filterArr = []
-          const uniqIds = [ ...new Set(firstroomarray) ];
-          filterArr = uniqIds.map(v => {
-            return resHtlRoomDtl.hotel.rooms.b2BRoom.filter(o => o.roomTypeName === v.roomTypeName && o.groupCode === v.groupCode && o.marriageIdentifier === v.marriageIdentifier && o.rateType === v.rateType && o.isPackage === v.isPackage && o.isDynamic === v.isDynamic && o.roomBasisName === v.roomBasisName);
-          });
-         
-          filterArr.map((v) => {
-            if(qry.paxInfoArr.length === v.length){
-              const numAscending = [...v].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
-              newArr.push(numAscending)
-            }
-          })
-        }
-     //console.log("newArr", newArr)
-
-     if (_.isEmpty(roomData)) {
-      roomItems = {}
-     }
-     roomItems[hotelCode] = newArr
-     setRoomData(roomItems)
+      if (_.isEmpty(roomData)) {
+        roomItems = {}
+      }
+      roomItems[hotelCode] = newArr
+      setRoomData(roomItems)
     }
 
   }
@@ -168,22 +169,23 @@ export default function HotelResult(props) {
       cell: (row) => (
         <div className='d-column'>
           {row.map((r, i) =>
-          <>
-          {r.length===0 ?
-            <div className='text-capitalize'>{r.roomTypeName.toLowerCase()} - {i}</div>
+          <React.Fragment key={i}>
+          {row.length===1 ?
+            <div className='text-capitalize'>{r.roomTypeName.toLowerCase()}</div>
             :
             <div className='text-capitalize mt-1'><span className='fw-semibold'>Room {r.roomIdentifier}</span>: {r.roomTypeName.toLowerCase()}</div>
           }
-
           <div>
+            {/* {row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0)} */}
+
             {r.isPriceBreakupAvailable &&
-            <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(r)}>Fare Breakup</a> 
+            <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(r,)}>Fare Breakup</a> 
             }
             {r.isCancellationPolicyAvailable &&
             <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(r)}>Cancellation Policy</a></>
             }
           </div>
-          </>
+          </React.Fragment>
           )}
         </div>
       ),
@@ -243,7 +245,7 @@ export default function HotelResult(props) {
           <span className="circleicon ms-1" title="Package" data-bs-toggle="tooltip">P</span>
           }
           {row[0].isDynamic &&
-          <span className="ms-1" title="Dynamic" data-bs-toggle="tooltip"><Image src='/images/dynamic-icon.png' alt='Dynamic' width={25} height={28} priority={true} /></span>
+          <span className="circleicon ms-1" title="Dynamic" data-bs-toggle="tooltip">D</span>
           }
         </div>
       ),
@@ -382,7 +384,7 @@ export default function HotelResult(props) {
       }
     }
     return images;
-};
+  };
 
   return (
     <>
@@ -457,7 +459,11 @@ export default function HotelResult(props) {
                 <div className="mt-1">
                   <div className="d-flex flex-row">
                     <div className="hotelImg rounded">
+                      {v.thumbnailImage ?
                       <Image src={`https://static.giinfotech.ae/medianew/${v.thumbnailImage}`} alt={v.productName} width={140} height={95} priority={true} />
+                      :
+                      <Image src='/images/noHotelThumbnail.jpg' alt={v.productName} width={140} height={95} priority={true} />
+                      }
                     </div>
                     <div className="ps-3 pt-2">
                       <div className='fn13'><strong>Address:</strong> <span className="fs-6">{v.productName},</span><br /> {v.address}</div>
@@ -594,12 +600,11 @@ export default function HotelResult(props) {
                   </div>
 
                   <div className={`tab-pane fade py-3 ${htlTab ==='Photos' && 'show active'}`}>
-                  {htlData.hotelDetail?.imageUrls ?
-                    <ImageGallery items={getImages(htlData.hotelDetail?.imageUrls)} />
-                    :
-                    'No Images Found'
-                  }
-
+                    {htlData.hotelDetail?.imageUrls.length ?
+                      <ImageGallery items={getImages(htlData.hotelDetail?.imageUrls)} />
+                      :
+                      <div className='fw-semibold fs-6 mt-2'>Images Not Available</div>
+                    }
                   </div>
 
                   <div className={`tab-pane fade py-3 ${htlTab ==='Map' && 'show active'}`}>

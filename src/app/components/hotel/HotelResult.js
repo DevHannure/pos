@@ -167,26 +167,35 @@ export default function HotelResult(props) {
       name: 'Room Types',
       selector: row => row[0].roomTypeName,
       cell: (row) => (
-        <div className='d-column'>
-          {row.map((r, i) =>
-          <React.Fragment key={i}>
-          {row.length===1 ?
-            <div className='text-capitalize'>{r.roomTypeName.toLowerCase()}</div>
-            :
-            <div className='text-capitalize mt-1'><span className='fw-semibold'>Room {r.roomIdentifier}</span>: {r.roomTypeName.toLowerCase()}</div>
-          }
-          <div>
-            {/* {row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0)} */}
+        // <div className='d-column'>
+        //   {row.map((r, i) =>
+        //   <React.Fragment key={i}>
+        //   {row.length===1 ?
+        //     <div className='text-capitalize'>{r.roomTypeName.toLowerCase()}</div>
+        //     :
+        //     <div className='text-capitalize mt-1'><span className='fw-semibold'>Room {r.roomIdentifier}</span>: {r.roomTypeName.toLowerCase()}</div>
+        //   }
+        //   <div>
+        //     {/* {row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0)} */}
 
-            {r.isPriceBreakupAvailable &&
-            <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(r,)}>Fare Breakup</a> 
-            }
-            {r.isCancellationPolicyAvailable &&
-            <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(r)}>Cancellation Policy</a></>
-            }
-          </div>
-          </React.Fragment>
-          )}
+        //     {r.isPriceBreakupAvailable &&
+        //     <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(r, row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Fare Breakup</a> 
+        //     }
+        //     {r.isCancellationPolicyAvailable &&
+        //     <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(r)}>Cancellation Policy</a></>
+        //     }
+        //   </div>
+        //   </React.Fragment>
+        //   )}
+        // </div>
+        <div className='d-column'>
+          <div className='text-capitalize'>{row[0].roomTypeName.toLowerCase()}</div>
+          {row[0].isPriceBreakupAvailable &&
+          <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(row[0], row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Fare Breakup</a> 
+          }
+          {row[0].isCancellationPolicyAvailable &&
+          <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(row[0], row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Cancellation Policy</a></>
+          }
         </div>
       ),
       width: "250px",
@@ -269,7 +278,7 @@ export default function HotelResult(props) {
   const [hotelData, setHotelData] = useState({});
   const [htlData, setHtlData] = useState(null);
   
-  const fareBreakkup = async(roomVal) => {
+  const fareBreakkup = async(roomVal, rc) => {
     setRoomRow(roomVal)
     setFareBrkData(null);
     const hotelCode = htlCollapse.replace("#room", "");
@@ -284,7 +293,7 @@ export default function HotelResult(props) {
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
         "RateKeys": {
-          "RateKey": [roomVal.rateCode]
+          "RateKey": rc.split(',').slice(1)
         }
       },
       "SessionId": getOrgHtlResult?.generalInfo?.sessionId
@@ -309,7 +318,7 @@ export default function HotelResult(props) {
     }
   }
 
-  const cancelPolicy = async(roomVal) => {
+  const cancelPolicy = async(roomVal, rc) => {
     setRoomRow(roomVal)
     setCanPolData(null);
     const hotelCode = htlCollapse.replace("#room", "");
@@ -324,7 +333,7 @@ export default function HotelResult(props) {
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
         "RateKeys": {
-          "RateKey": [roomVal.rateCode]
+          "RateKey": rc.split(',').slice(1)
         }
       },
       "SessionId": getOrgHtlResult?.generalInfo?.sessionId
@@ -658,12 +667,13 @@ export default function HotelResult(props) {
             <div className="modal-body">
               {roomRow &&
               <div className="mb-3">
-                <div className="fs-6 mb-1 fw-semibold text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()}</div>
                 <div>
+                  <span className="fw-semibold text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()} &nbsp;|&nbsp; </span>
                   {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
-                    <span>Supplier: {roomRow.shortCodeName} &nbsp;|&nbsp;</span>
+                    <span>Supplier: {roomRow.shortCodeName} &nbsp;|&nbsp; </span>
                   }
-                  <span>{qry?.currency} {roomRow.amount}</span>
+                  
+                  <span>{qry?.currency} {fareBrkData?.priceBreakdown.reduce((totalAmount, a) => totalAmount + a.netAmount, 0)}</span>
                   <span className="fn12 align-top ms-1">
                     {roomRow.rateType==='Refundable' || roomRow.rateType==='refundable' ?
                     <span className="text-success">Refundable</span>
@@ -686,6 +696,7 @@ export default function HotelResult(props) {
               <div>
               {fareBrkData.priceBreakdown.map((a, i) => ( 
                 <div key={i} className="row">
+                  <div className="col-md-12 blue fs-6 text-capitalize"><strong>Room {a.roomIdentifier}: {a.roomName.toLowerCase()}</strong></div>
                   <div className="col-md-4">
                     <p className="mb-1"><strong>Fare Summary</strong></p>
                     <table className="table table-bordered">
@@ -759,13 +770,13 @@ export default function HotelResult(props) {
             <div className="modal-body">
               {roomRow &&
               <div className="mb-3">
-                <div className="fs-6 mb-1 fw-semibold text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()}</div>
                 <div>
+                  <span className="fw-semibold text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()} &nbsp;|&nbsp; </span>
                   {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <span>Supplier: {roomRow.shortCodeName} &nbsp;|&nbsp;</span>
                   }
-                  <span>{qry?.currency} {roomRow.amount}</span>
-                  <span className="fn12 align-top ms-1">
+                  {/* <span>{qry?.currency} {roomRow.amount}</span> */}
+                  <span>
                     {roomRow.rateType==='Refundable' || roomRow.rateType==='refundable' ?
                     <span className="text-success">Refundable</span>
                     :
@@ -787,46 +798,48 @@ export default function HotelResult(props) {
               <>
               <div className="table-responsive">
                 {canPolData.rooms.room.map((v, i) => ( 
-                <React.Fragment key={i}>
-                <table className="table table-bordered fn12">
-                  <thead>
-                    <tr className="table-light">
-                      <th>From</th>
-                      <th>To</th>
-                      <th className="text-center">Percentage(%)</th>
-                      <th className="text-center">Nights</th>
-                      <th>Fixed</th>
-                    </tr>
-                  </thead>
-                  {v.policies?.policy?.map((k, i) => ( 
-                  <tbody key={i}>
-                    {k?.type ==='CAN' &&
-                    <>
-                    {k?.condition?.map((m, i) => (
-                    <tr key={i}>
-                      <td>{format(new Date(m.fromDate), 'dd MMM yyyy')}&nbsp; {m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                      <td>{format(new Date(m.toDate), 'dd MMM yyyy')}&nbsp;  {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
-                      <td className="text-center">{m.percentage}</td>
-                      <td className="text-center">{m.nights}</td>
-                      <td>{m.fixed}</td>
-                    </tr>
+                <div key={i}>
+                  <div className="col-md-12 blue fs-6 text-capitalize"><strong>Room {v.roomIdentifier}: {v.roomName.toLowerCase()}</strong></div>
+
+                  <table className="table table-bordered fn12">
+                    <thead>
+                      <tr className="table-light">
+                        <th>From</th>
+                        <th>To</th>
+                        <th className="text-center">Percentage(%)</th>
+                        <th className="text-center">Nights</th>
+                        <th>Fixed</th>
+                      </tr>
+                    </thead>
+                    {v.policies?.policy?.map((k, i) => ( 
+                    <tbody key={i}>
+                      {k?.type ==='CAN' &&
+                      <>
+                      {k?.condition?.map((m, i) => (
+                      <tr key={i}>
+                        <td>{format(new Date(m.fromDate), 'dd MMM yyyy')}&nbsp; {m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
+                        <td>{format(new Date(m.toDate), 'dd MMM yyyy')}&nbsp;  {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                        <td className="text-center">{m.percentage}</td>
+                        <td className="text-center">{m.nights}</td>
+                        <td>{m.fixed}</td>
+                      </tr>
+                      ))}
+                      </>
+                      }
+                    </tbody>
                     ))}
-                    </>
+                  </table>
+                  <>
+                  {v.policies?.policy?.map((p, i) => ( 
+                    <React.Fragment key={i}>
+                    {p?.type ==='CAN' &&
+                      <p>Supplier Information: {p?.textCondition}</p>
                     }
-                  </tbody>
+                    </React.Fragment>
                   ))}
-                </table>
-                <>
-                {v.policies?.policy?.map((p, i) => ( 
-                  <React.Fragment key={i}>
-                  {p?.type ==='CAN' &&
-                    <p>Supplier Information: {p?.textCondition}</p>
-                  }
-                  </React.Fragment>
-                ))}
-                </>
+                  </>
                 
-                </React.Fragment>
+                </div>
                 ))}
               </div>
               </>

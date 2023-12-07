@@ -135,7 +135,7 @@ export default function HotelResult(props) {
             const numAscending = [...v].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
             newArr.push(numAscending)
           }
-          else if(qry.paxInfoArr.length < v.length){
+          if(qry.paxInfoArr.length < v.length){
             const uniqueRoom = [...new Map(v.map(k => [k.roomIdentifier, k])).values()]
             //console.log("uniqueRoom", uniqueRoom)
             const numAscending = [...uniqueRoom].sort((a, b) => a.roomIdentifier - b.roomIdentifier);

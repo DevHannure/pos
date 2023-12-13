@@ -15,8 +15,8 @@ import { enc } from 'crypto-js';
 export default function HotelListing() {
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
-  let decData = enc.Base64.parse(search).toString(enc.Utf8)
-  let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8)
+  let decData = enc.Base64.parse(search).toString(enc.Utf8);
+  let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   //console.log(JSON.parse(bytes))
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();

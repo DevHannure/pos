@@ -1,7 +1,6 @@
 "use client"
 import React, { useState, useEffect} from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faCaretRight, faCheck } from "@fortawesome/free-solid-svg-icons";
 import ImageGallery from 'react-image-gallery';
@@ -12,9 +11,13 @@ import { useSelector, useDispatch } from "react-redux";
 import { doFilterSort } from '@/app/store/hotelStore/hotel';
 import HotelService from '@/app/services/hotel.service';
 import {format} from 'date-fns';
+import AES from 'crypto-js/aes';
+import { enc } from 'crypto-js';
+import { useRouter } from 'next/navigation';
 
 export default function HotelResult(props) {
-  const qry = props.HtlReq
+  const router = useRouter();
+  const qry = props.HtlReq;
   const _ = require("lodash");
 
   const dispatch = useDispatch();
@@ -43,7 +46,6 @@ export default function HotelResult(props) {
   
   const [roomData, setRoomData] = useState({});
   const [htlCollapse, setHtlCollapse] = useState('');
-//console.log("roomData", roomData)
 
   const roomDetail = async(hotelCollapseCode, hotelCode) => {
     if(hotelCollapseCode!==htlCollapse){
@@ -143,15 +145,13 @@ export default function HotelResult(props) {
           }
         })
       }
-      //console.log("newArr", newArr)
-
+      const tempArr = newArr.map(item => ({item:item, hotelCode: hotelCode, }))
       if (_.isEmpty(roomData)) {
         roomItems = {}
       }
-      roomItems[hotelCode] = newArr
+      roomItems[hotelCode] = tempArr
       setRoomData(roomItems)
     }
-
   }
 
   const srtVal = (val) =>{
@@ -165,9 +165,9 @@ export default function HotelResult(props) {
   const columns = [
     {
       name: 'Room Types',
-      selector: row => row[0].roomTypeName,
+      selector: row => row.item[0].roomTypeName,
       cell: (row) => (
-        // <div className='d-column'>
+        // <div>
         //   {row.map((r, i) =>
         //   <React.Fragment key={i}>
         //   {row.length===1 ?
@@ -188,13 +188,13 @@ export default function HotelResult(props) {
         //   </React.Fragment>
         //   )}
         // </div>
-        <div className='d-column'>
-          <div className='text-capitalize'>{row[0].roomTypeName.toLowerCase()}</div>
-          {row[0].isPriceBreakupAvailable &&
-          <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(row[0], row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Fare Breakup</a> 
+        <div>
+          <div className='text-capitalize'>{row.item[0].roomTypeName.toLowerCase()}</div>
+          {row.item[0].isPriceBreakupAvailable &&
+          <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(row.item[0], row.item.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Fare Breakup</a> 
           }
-          {row[0].isCancellationPolicyAvailable &&
-          <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(row[0], row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Cancellation Policy</a></>
+          {row.item[0].isCancellationPolicyAvailable &&
+          <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(row.item[0], row.item.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Cancellation Policy</a></>
           }
         </div>
       ),
@@ -203,30 +203,30 @@ export default function HotelResult(props) {
     },
     {
       name: 'Board Basis',
-      selector: row => row[0].roomBasisName,
+      selector: row => row.item[0].roomBasisName,
       cell: (row) => (
-        <div className='d-column'>
-          <div className='text-capitalize'>{row[0].roomBasisName.toLowerCase()}</div>
-          <div className='fn10 text-success text-capitalize'>{row[0].promotions?.[0]?.text.toLowerCase()}</div>
+        <div>
+          <div className='text-capitalize'>{row.item[0].roomBasisName.toLowerCase()}</div>
+          <div className='fn10 text-success text-capitalize'>{row.item[0].promotions?.[0]?.text?.toLowerCase()}</div>
         </div>
       ),
       sortable: true,
     },
     {
       name: 'Suppliers',
-      selector: row => row[0].shortCodeName,
+      selector: row => row.item[0].shortCodeName,
       sortable: true,
       omit: process.env.NEXT_PUBLIC_APPCODE==='1',
     },
     {
       name: 'Status',
-      selector: row => row[0].availabilityStatus,
+      selector: row => row.item[0].availabilityStatus,
       cell: (row) => (
-        <div className='d-column'>
-        {row[0].availabilityStatus === '1' &&
+        <div>
+        {row.item[0].availabilityStatus === '1' &&
         <div>Available</div>
         }
-        {row[0].availabilityStatus === '0' &&
+        {row.item[0].availabilityStatus === '0' &&
         <div>On Request</div>
         }
         </div>
@@ -235,25 +235,25 @@ export default function HotelResult(props) {
     },
     {
       name: "Price "+`(${qry.currency})`,
-      selector: row => row[0].amount,
+      selector: row => row.item[0].amount,
       cell: (row) => (
-        <div className='d-column'>
-          {parseFloat(row.reduce((totalAmt, price) => totalAmt + price.amount, 0)).toFixed(2)}
+        <div>
+          {parseFloat(row.item.reduce((totalAmt, price) => totalAmt + price.amount, 0)).toFixed(2)}
 
-          {row[0].rateType==='Refundable' || row[0].rateType==='refundable' ?
+          {row.item[0].rateType==='Refundable' || row.item[0].rateType==='refundable' ?
           <span className="circleicon refund ms-1" title="Refundable" data-bs-toggle="tooltip">R</span>
           :
           ''
           }
-          {row[0].rateType==='Non-Refundable' || row[0].rateType==='Non Refundable' || row[0].rateType==='non-refundable' || row[0].rateType==='non refundable' ?
+          {row.item[0].rateType==='Non-Refundable' || row.item[0].rateType==='Non Refundable' || row.item[0].rateType==='non-refundable' || row.item[0].rateType==='non refundable' ?
           <span className="circleicon nonrefund ms-1" title="Non Refundable" data-bs-toggle="tooltip">N</span>
           :
           ''
           }
-          {row[0].isPackage &&
+          {row.item[0].isPackage &&
           <span className="circleicon ms-1" title="Package" data-bs-toggle="tooltip">P</span>
           }
-          {row[0].isDynamic &&
+          {row.item[0].isDynamic &&
           <span className="circleicon ms-1" title="Dynamic" data-bs-toggle="tooltip">D</span>
           }
         </div>
@@ -262,8 +262,9 @@ export default function HotelResult(props) {
     },
     {
       button: true,
-      cell: () => (
-        <div className='d-column'><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></div>
+      cell: (row) => (
+        // <div><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></div>
+        <div><button type="button" className="btn btn-warning py-1" onClick={() => bookNow(row)}>Book</button></div>
       )
     }
   ];
@@ -395,6 +396,56 @@ export default function HotelResult(props) {
     return images;
   };
 
+  const bookNow = async(val) => {
+    // console.log("val", val)
+    // if(val.item[0].rateType==='Non-Refundable' || val.item[0].rateType==='Non Refundable' || val.item[0].rateType==='non-refundable' || val.item[0].rateType==='non refundable'){
+
+    // }
+   // else{
+      let rc = val.item.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0);
+      let repriceObj = {
+        customerCode: qry.customerCode,
+        destination: qry.destination,
+        chkIn: qry.chkIn,
+        chkOut: qry.chkOut,
+        currency: qry.currency,
+        nationality: qry.nationality,
+        correlationId: qry.correlationId,
+        hotelCode: val.hotelCode,
+        groupCode: val.item[0].groupCode,
+        rateKey: rc.split(',').slice(1),
+        paxInfoArr: qry.paxInfoArr,
+        sessionId: getOrgHtlResult.generalInfo.sessionId
+      }
+      let encJson = AES.encrypt(JSON.stringify(repriceObj), 'ekey').toString()
+      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson))
+      router.push(`/pages/hotelBookH2H?qry=${encData}`);
+    //}
+    // let repriceObj = {
+    //   "CustomerCode": qry.customerCode,
+    //   "SearchParameter": {
+    //     "CityName": qry.destination[0].cityName,
+    //     "CountryName": qry.destination[0].countryName,
+    //     "DestinationCode": qry.destination[0].destinationCode,
+    //     "Nationality": qry.nationality.split('-')[1],
+    //     "HotelCode": val.hotelCode,
+    //     "GroupCode": val.item[0].groupCode,
+    //     "CheckInDate": qry.chkIn,
+    //     "CheckOutDate": qry.chkOut,
+    //     "Currency": qry.currency,
+    //     "RateKeys": {
+    //       "RateKey": rc.split(',').slice(1),
+    //     }
+    //   },
+    //   "SessionId": getOrgHtlResult.generalInfo.sessionId
+    // }
+
+    // const responseReprice = HotelService.doReprice(repriceObj, qry.correlationId);
+    // const resReprice = await responseReprice;
+    // console.log("resReprice", resReprice)
+
+  }
+
   return (
     <>
     {getHtlRes?.hotels.b2BHotel.length ?  
@@ -482,11 +533,12 @@ export default function HotelResult(props) {
                     </div>
                   </div>
 
-                  <div className="fn12">
+                  <div className="fn12 roomColumn">
+                    <div className="fs-6 fw-semibold mt-1">Room Rates: {qry.paxInfoArr.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
                     {roomData?.[v.productCode] ?
                     <>
                     {roomData?.[v.productCode]?.length ?
-                    <DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="300px" className='dataScroll' />
+                    <DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="300px" className='dataScroll'  />
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>
                     }
@@ -857,6 +909,17 @@ export default function HotelResult(props) {
               </div>
               }
 
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="modal" id="nonRfndblModal">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-body">
+              
+              Riyaj
             </div>
           </div>
         </div>

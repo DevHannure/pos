@@ -69,6 +69,19 @@ const HotelService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doReprice: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/hotel/Reprice`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  
+
 
 }
 

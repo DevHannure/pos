@@ -11,6 +11,9 @@ th, strong{font-weight:600;}
 .fn12{font-size:12px;}
 .fn13{font-size:13px;}
 .fn14{font-size:14px;}
+.mt-n1 {margin-top: -0.25rem !important;}
+.mt-n2 {margin-top: -0.5rem !important;}
+.mt-n3 {margin-top: -1rem !important;}
 .h-0 {height:0;}
 .m-h-15 {min-height:1.5rem;}
 .m-h-2 {min-height:2rem;}
@@ -149,7 +152,8 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .horizontal-slider .example-thumb {top: 1px; width:18px; height:18px;}
 .image-gallery-left-nav .image-gallery-svg, .image-gallery-right-nav .image-gallery-svg{height: 60px !important;}
 
-.fn12 .d-column{font-size:12px; padding-top:5px; padding-bottom:5px;}
+.roomColumn .rdt_TableCell{font-size:12px; padding-top:5px; padding-bottom:5px;}
+.roomColumn .rdt_TableHeadRow{min-height:42px;}
 .defaultPage .cusnav{background: transparent;}
 .defaultPage .fixedNav .cusnav{background:#FFF;}
 .defaultPage .container-fluid{max-width:1140px;}

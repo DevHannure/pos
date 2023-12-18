@@ -1,14 +1,14 @@
 "use client"
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCaretRight, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faCaretRight, faCheck, faArrowRightLong } from "@fortawesome/free-solid-svg-icons";
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import DataTable from 'react-data-table-component';
 import { useSelector, useDispatch } from "react-redux";
-import { doFilterSort } from '@/app/store/hotelStore/hotel';
+import { doFilterSort, doRoomDtls, doHotelReprice } from '@/app/store/hotelStore/hotel';
 import HotelService from '@/app/services/hotel.service';
 import {format} from 'date-fns';
 import AES from 'crypto-js/aes';
@@ -16,6 +16,8 @@ import { enc } from 'crypto-js';
 import { useRouter } from 'next/navigation';
 
 export default function HotelResult(props) {
+  const noRefundBtn = useRef(null);
+  const soldOutBtn = useRef(null);
   const router = useRouter();
   const qry = props.HtlReq;
   const _ = require("lodash");
@@ -43,8 +45,8 @@ export default function HotelResult(props) {
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_MAPAPIKEY
   });
-  
-  const [roomData, setRoomData] = useState({});
+  const roomData = useSelector((state) => state.hotelResultReducer?.roomDtls);
+  //const [roomData, setRoomData] = useState({});
   const [htlCollapse, setHtlCollapse] = useState('');
 
   const roomDetail = async(hotelCollapseCode, hotelCode) => {
@@ -149,8 +151,9 @@ export default function HotelResult(props) {
       if (_.isEmpty(roomData)) {
         roomItems = {}
       }
-      roomItems[hotelCode] = tempArr
-      setRoomData(roomItems)
+      roomItems[hotelCode] = tempArr;
+      dispatch(doRoomDtls(roomItems));
+      //setRoomData(roomItems)
     }
   }
 
@@ -264,7 +267,7 @@ export default function HotelResult(props) {
       button: true,
       cell: (row) => (
         // <div><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></div>
-        <div><button type="button" className="btn btn-warning py-1" onClick={() => bookNow(row)}>Book</button></div>
+        <div><button type="button" className="btn btn-warning py-1 text-nowrap" onClick={(e) => bookNow(e,row)}>Book</button></div>
       )
     }
   ];
@@ -396,55 +399,52 @@ export default function HotelResult(props) {
     return images;
   };
 
-  const bookNow = async(val) => {
-    // console.log("val", val)
-    // if(val.item[0].rateType==='Non-Refundable' || val.item[0].rateType==='Non Refundable' || val.item[0].rateType==='non-refundable' || val.item[0].rateType==='non refundable'){
-
-    // }
-   // else{
-      let rc = val.item.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0);
-      let repriceObj = {
-        customerCode: qry.customerCode,
-        destination: qry.destination,
-        chkIn: qry.chkIn,
-        chkOut: qry.chkOut,
-        currency: qry.currency,
-        nationality: qry.nationality,
-        correlationId: qry.correlationId,
-        hotelCode: val.hotelCode,
-        groupCode: val.item[0].groupCode,
-        rateKey: rc.split(',').slice(1),
-        paxInfoArr: qry.paxInfoArr,
-        sessionId: getOrgHtlResult.generalInfo.sessionId
-      }
-      let encJson = AES.encrypt(JSON.stringify(repriceObj), 'ekey').toString()
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson))
-      router.push(`/pages/hotelBookH2H?qry=${encData}`);
-    //}
-    // let repriceObj = {
-    //   "CustomerCode": qry.customerCode,
-    //   "SearchParameter": {
-    //     "CityName": qry.destination[0].cityName,
-    //     "CountryName": qry.destination[0].countryName,
-    //     "DestinationCode": qry.destination[0].destinationCode,
-    //     "Nationality": qry.nationality.split('-')[1],
-    //     "HotelCode": val.hotelCode,
-    //     "GroupCode": val.item[0].groupCode,
-    //     "CheckInDate": qry.chkIn,
-    //     "CheckOutDate": qry.chkOut,
-    //     "Currency": qry.currency,
-    //     "RateKeys": {
-    //       "RateKey": rc.split(',').slice(1),
-    //     }
-    //   },
-    //   "SessionId": getOrgHtlResult.generalInfo.sessionId
-    // }
-
-    // const responseReprice = HotelService.doReprice(repriceObj, qry.correlationId);
-    // const resReprice = await responseReprice;
-    // console.log("resReprice", resReprice)
-
+  
+  const [repriceQry, setRepriceQry] = useState('');
+  const bookNow = async(e,val) => {
+    e.nativeEvent.target.disabled = true;
+    e.nativeEvent.target.innerHTML = 'Processing...';
+    //e.currentTarget.innerHTML = 'Processing...';
+    dispatch(doHotelReprice(null));
+    let rc = val.item.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0);
+    let repriceObj = {
+      customerCode: qry.customerCode,
+      destination: qry.destination,
+      chkIn: qry.chkIn,
+      chkOut: qry.chkOut,
+      currency: qry.currency,
+      nationality: qry.nationality,
+      correlationId: qry.correlationId,
+      hotelCode: val.hotelCode,
+      groupCode: val.item[0].groupCode,
+      rateKey: rc.split(',').slice(1),
+      paxInfoArr: qry.paxInfoArr,
+      sessionId: getOrgHtlResult.generalInfo.sessionId
+    }
+    const responseReprice = HotelService.doReprice(repriceObj);
+    const resReprice = await responseReprice;
+    dispatch(doHotelReprice(resReprice));
+    let encJson = AES.encrypt(JSON.stringify(repriceObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    setRepriceQry(encData)
+    e.nativeEvent.target.disabled = false;
+    e.nativeEvent.target.innerHTML = 'Book';
+    if(val.item[0].rateType==='Non-Refundable' || val.item[0].rateType==='Non Refundable' || val.item[0].rateType==='non-refundable' || val.item[0].rateType==='non refundable'){
+      noRefundBtn.current?.click();
+    }
+    else if(!resReprice?.isBookable){
+      e.nativeEvent.target.disabled = true;
+      soldOutBtn.current?.click();
+    }
+    else{
+      router.push(`/pages/hotel/hotelBookH2H?qry=${encData}`);
+    }
   }
+
+  const nonRfndContinue = () => {
+    router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`);
+  }
+  
 
   return (
     <>
@@ -914,16 +914,38 @@ export default function HotelResult(props) {
         </div>
       </div>
 
-      <div className="modal" id="nonRfndblModal">
+      <button ref={noRefundBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#nonRfndblModal">No refund</button>
+      <div className="modal fade" id="nonRfndblModal" data-bs-backdrop="static" data-bs-keyboard="false">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-body">
-              
-              Riyaj
+              <h1 className="fs-6">Non Refundable Rates</h1>
+              <div className="fs-6">Rates are non refundable. Do you want continue?</div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              &nbsp;<button type="button" className='btn btn-sm btn-success' data-bs-dismiss="modal" onClick={nonRfndContinue}>Continue <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button>
             </div>
           </div>
         </div>
       </div>
+
+      <button ref={soldOutBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#soldOutModal">Sold Out</button>
+      <div className="modal fade" id="soldOutModal" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-body">
+              <h1 className="fs-6">We are unable to process this request as room has been sold.</h1>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+              &nbsp;<button type="button" className='btn btn-sm btn-success' data-bs-dismiss="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
 
     </>
     :

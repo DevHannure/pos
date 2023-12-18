@@ -24,12 +24,13 @@ export default function HotelListing() {
 
   useEffect(()=>{
     //if(qry){
-      doHtlResultOnLoad()
+      if(!getHtlRes){
+        doHtlResultOnLoad()
+      }
     //}
-  },[searchparams]);
+  },[search]);
 
   const doHtlResultOnLoad = async() =>{
-    dispatch(doHotelSearchOnLoad(null));
     let htlSrchObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {

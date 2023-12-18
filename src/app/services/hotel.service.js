@@ -69,12 +69,30 @@ const HotelService = {
     } catch (error) {console.log("error", error)}
   },
 
-  doReprice: async function (reqObj, correlationId) {
+  doReprice: async function (reqObj) {
     try {
+      let repriceObj = {
+        "CustomerCode": reqObj.customerCode,
+        "SearchParameter": {
+          "CityName": reqObj.destination[0].cityName,
+          "CountryName": reqObj.destination[0].countryName,
+          "DestinationCode": reqObj.destination[0].destinationCode,
+          "Nationality": reqObj.nationality.split('-')[1],
+          "HotelCode": reqObj.hotelCode,
+          "GroupCode": reqObj.groupCode,
+          "CheckInDate": reqObj.chkIn,
+          "CheckOutDate": reqObj.chkOut,
+          "Currency": reqObj.currency,
+          "RateKeys": {
+            "RateKey": reqObj.rateKey
+          }
+        },
+        "SessionId": reqObj.sessionId
+      }
       const response = await fetch(`${baseUrl}/hotel/Reprice`, {
         method: 'POST',
-        body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        body: JSON.stringify(repriceObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': reqObj.correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}

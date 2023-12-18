@@ -23,32 +23,32 @@ export default function DefaultCustomer(props) {
 
   return (
   <>
-{props?.Type === 'landing' ?
-  <>
-    <div className="col-lg-3 tFourInput bor-b bor-s bor-e">
-      <div className="mb-3">
-        <label>Currency</label>
-        <select className="form-select" value={cusCurrency} onChange={event => setCusCurrency(event.target.value)}>
-        <option value="USD">USD</option>
-          <option value={cusCurrency}>{cusCurrency}</option>
-        </select>
+  {props?.Type === 'landing' ?
+    <>
+      <div className="col-lg-3 tFourInput bor-b bor-s bor-e">
+        <div className="mb-3">
+          <label>Currency</label>
+          <select className="form-select" value={cusCurrency} onChange={event => setCusCurrency(event.target.value)}>
+          <option value="USD">USD</option>
+            <option value={cusCurrency}>{cusCurrency}</option>
+          </select>
+        </div>
       </div>
-    </div>
-  </>
-  :
+    </>
+    :
 
-  <>
-    <div className="col-lg-3">
-      <div className="mb-3">
-        <label>Currency</label>
-        <select className="form-select border-0 fn14" value={cusCurrency} onChange={event => setCusCurrency(event.target.value)}>
-          <option value={cusCurrency}>{cusCurrency}</option>
-        </select>
+    <>
+      <div className="col-lg-3">
+        <div className="mb-3">
+          <label>Currency</label>
+          <select className="form-select border-0 fn14" value={cusCurrency} onChange={event => setCusCurrency(event.target.value)}>
+            <option value={cusCurrency}>{cusCurrency}</option>
+          </select>
+        </div>
       </div>
-    </div>
-  </>
-  
-  }
+    </>
+    
+    }
 
   </>
   )

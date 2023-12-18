@@ -14,11 +14,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import ServiceNav from '@/app/components/serviceNav/ServiceNav';
 import { useRouter } from 'next/navigation';
-import {useSelector } from "react-redux";
+import {useDispatch, useSelector } from "react-redux";
 import MasterService from '@/app/services/master.service';
 import DefaultCustomer from '@/app/components/default/DefaultCustomer';
+import { doHotelSearchOnLoad, doRoomDtls } from '@/app/store/hotelStore/hotel';
+import { doCountryOnLoad, doB2bXmlSupplierOnLoad } from '@/app/store/commonStore/common';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
+
 
 const starOptions = [
   { value: '5', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
@@ -91,8 +94,10 @@ const multiValueContainer = ({ selectProps, data }) => {
 };
 
 export default function ModifySearch(props) {
+
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
-  const router = useRouter()
+  const router = useRouter();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     let w = window.innerWidth;
@@ -155,10 +160,12 @@ export default function ModifySearch(props) {
 
   const [numNights, setNumNights] = useState(differenceInDays(chkOut,chkIn));
   const [selectedStarOption, setSelectedStarOption] = useState(starOptions);
-  const [selectedXML, setSelectedXML] = useState(null);
+  const selectedXML = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
+  //const [selectedXML, setSelectedXML] = useState(null);
   const [xmlOptions, setXmlOptions] = useState([]);
   const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
-  const [nationalityOptions, setNationalityOptions] = useState([]);
+  //const [nationalityOptions, setNationalityOptions] = useState([]);
+  const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
   const [regionCode, setRegionCode] = useState(props.HtlReq ? props.HtlReq.regionCode : '');
   const [cusCurrency, setCusCurrency] = useState(props.HtlReq ? props.HtlReq.currency : '');
   const [cusCode, setCusCode] = useState(props.HtlReq ? props.HtlReq.customerCode : null);
@@ -458,19 +465,19 @@ export default function ModifySearch(props) {
 
   useEffect(() => {
     if(userInfo){
-      if(!nationalityOptions.length){
+      if(!nationalityOptions){
         nationalityReq();
       }
-      if(process.env.NEXT_PUBLIC_APPCODE==='1'){
+      if(process.env.NEXT_PUBLIC_APPCODE==='1' && !selectedXML){
         b2bXmlReq()
       }
     }
   }, [userInfo]);
 
   const nationalityReq = async()=> {
-      const responseCoutry = await MasterService.doGetCountries(props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
-      const resCoutry = responseCoutry;
-      setNationalityOptions(resCoutry)
+    const responseCoutry = await MasterService.doGetCountries(props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+    const resCoutry = responseCoutry;
+    dispatch(doCountryOnLoad(resCoutry));
   }
 
   useEffect(() => {
@@ -490,22 +497,21 @@ export default function ModifySearch(props) {
   }
 
   const b2bXmlReq = async()=> {
-    if(!selectedXML){
-        const xmlObj= {
-          "Flag": 0,
-          "ServiceCode": 1,
-          "CustomerCode": userInfo.user.userCode
-        }
-        const responseXml = await MasterService.doGetXMLSuppliers(xmlObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
-        const resXml = responseXml;
-        let xmlAraay = []
-        if(resXml){
-          resXml.forEach((v, i) => {
-            xmlAraay.push(v.supplierShortName)
-          })
-        }
-        setSelectedXML(xmlAraay.toString())
+    const xmlObj= {
+      "Flag": 0,
+      "ServiceCode": 1,
+      "CustomerCode": userInfo.user.userCode
     }
+    const responseXml = await MasterService.doGetXMLSuppliers(xmlObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+    const resXml = responseXml;
+    let xmlAraay = []
+    if(resXml){
+      resXml.forEach((v) => {
+        xmlAraay.push(v.supplierShortName)
+      })
+    }
+    dispatch(doB2bXmlSupplierOnLoad(xmlAraay.toString()));
+    //setSelectedXML(xmlAraay.toString())
   } 
 
   const [modifyCollapse, setModifyCollapse] = useState(false);
@@ -564,6 +570,8 @@ export default function ModifySearch(props) {
   const srchHtl = () => {
     let allowMe = validate();
     if(allowMe){
+      dispatch(doHotelSearchOnLoad(null));
+      dispatch(doRoomDtls({}));
       setSearchLoading(true)
       setModifyCollapse(false)
       let starOpt = []
@@ -588,7 +596,7 @@ export default function ModifySearch(props) {
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString()
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson))
       setSearchLoading(false)
-      router.push(`/pages/hotelListing?qry=${encData}`);
+      router.push(`/pages/hotel/hotelListing?qry=${encData}`);
     }
   }
 

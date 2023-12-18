@@ -13,6 +13,8 @@ const initialState = {
   htlFilterSort : {
     srtVal: '0'
   },
+  roomDtls:{},
+  repriceDtls:null,
 };
 
 export const hotelResult = createSlice({
@@ -101,10 +103,20 @@ export const hotelResult = createSlice({
 
     },
 
+    doRoomDtls:  (state, action) => {
+      state.roomDtls = action.payload
+    },
+
+    doHotelReprice: (state, action) => {
+      state.repriceDtls = action.payload;
+    },
+
+    
+
   }
 
 });
 
-export const { doHotelSearchOnLoad, doFilterSort } = hotelResult.actions
+export const { doHotelSearchOnLoad, doFilterSort, doRoomDtls, doHotelReprice } = hotelResult.actions
 
 export default hotelResult.reducer;

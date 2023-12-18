@@ -1,6 +1,6 @@
 "use client"
 import MainLayout from '@/app/layouts/mainLayout';
-import React, {useEffect, useState } from 'react';
+import React, {useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
@@ -12,56 +12,52 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
 import {format} from 'date-fns';
+import { useSelector, useDispatch } from "react-redux";
+import { doHotelReprice } from '@/app/store/hotelStore/hotel';
 
 export default function HotelItinerary() {
+  const noRefundBtn = useRef(null);
+  const soldOutBtn = useRef(null);
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
-  //const dispatch = useDispatch();
-  //console.log("qry", qry)
+  const dispatch = useDispatch();
+  
+  const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
 
   useEffect(()=>{
-    //if(qry){
+    if(!resReprice) {
       doHtlRepriceLoad()
-    //}
+    }
   },[searchparams]);
 
-  const [resReprice, setResReprice] = useState(null);
-  //console.log("resReprice", resReprice)
-
-  const doHtlRepriceLoad = async() =>{
-    let repriceObj = {
-      "CustomerCode": qry.customerCode,
-      "SearchParameter": {
-        "CityName": qry.destination[0].cityName,
-        "CountryName": qry.destination[0].countryName,
-        "DestinationCode": qry.destination[0].destinationCode,
-        "Nationality": qry.nationality.split('-')[1],
-        "HotelCode": qry.hotelCode,
-        "GroupCode": qry.groupCode,
-        "CheckInDate": qry.chkIn,
-        "CheckOutDate": qry.chkOut,
-        "Currency": qry.currency,
-        "RateKeys": {
-          "RateKey": qry.rateKey
-        }
-      },
-      "SessionId": qry.sessionId
-    }
-    console.log("repriceObj", repriceObj)
-    const responseReprice = HotelService.doReprice(repriceObj, qry.correlationId);
-    const resReprice = await responseReprice;
+  useEffect(()=> {
     if(resReprice && resReprice.hotel){
       createPaxObj();
     }
-    setResReprice(resReprice)
+  },[resReprice]);
+
+  //const [resReprice, setResReprice] = useState(null);
+  //const [resReprice, setResReprice] = useState(null);
+  //console.log("resReprice", resReprice)
+
+  const doHtlRepriceLoad = async() =>{
+    dispatch(doHotelReprice(null));
+    const responseReprice = HotelService.doReprice(qry);
+    const resRepriceText = await responseReprice;
+    dispatch(doHotelReprice(resRepriceText));
+    if(resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non-Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non-refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non refundable'){
+      noRefundBtn.current?.click();
+    }
+    else if(!resRepriceText?.isBookable){
+      soldOutBtn.current?.click();
+    }
   }
 
   const [paxObj, setPaxObj] = useState(null);
-  //console.log("paxObj", paxObj)
 
   const createPaxObj = () => {
     let roomPax = []
@@ -101,7 +97,6 @@ export default function HotelItinerary() {
     setPaxObj(roomPax)
   };
 
-  
   const titleChange = (roomIndex, adltIndex, value) => {
     const paxRoomItems = [...paxObj];
     const paxItems = [...paxRoomItems[roomIndex].Guests];
@@ -172,8 +167,8 @@ export default function HotelItinerary() {
         <div className="container-fluid">
           <div className="pt-3">
 
-            {resReprice && resReprice?.isBookable && !resReprice?.isPriceChanged && !resReprice?.isSoldOut ?
-            
+            {resReprice ?
+            <>
             <div className="row">
               <div className="mb-2 col-lg-8 order-lg-1 order-2">
                 <div className="bg-white rounded shadow-sm p-2">
@@ -293,12 +288,11 @@ export default function HotelItinerary() {
                               {v.remarks?.remark?.map((p, i) => ( 
                                 <div key={i} className="mt-1">
                                   <div className='fw-semibold text-capitalize'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
-                                  <div>{p?.text}</div>
+                                  {/* <div>{p?.text}</div> */}
+                                  <div dangerouslySetInnerHTML={{ __html:p?.text}}></div>
                                 </div>
                               ))}
-                            
 
-                            
                             </div>
                             ))}
                           </div>
@@ -399,6 +393,38 @@ export default function HotelItinerary() {
                 </div>
               </div>
             </div>
+            
+            <button ref={noRefundBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#nonRfndblModal">No refund</button>
+            <div className="modal fade" id="nonRfndblModal" data-bs-backdrop="static" data-bs-keyboard="false">
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-body">
+                    <h1 className="fs-6">Non Refundable Rates</h1>
+                    <div className="fs-6">Rates are non refundable. Do you want continue?</div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal" onClick={() => router.back()}>Cancel</button>
+                    &nbsp;<button type="button" className='btn btn-sm btn-success' data-bs-dismiss="modal">Continue <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button ref={soldOutBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#soldOutModal">Sold Out</button>
+            <div className="modal fade" id="soldOutModal" data-bs-backdrop="static" data-bs-keyboard="false">
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-body">
+                    <h1 className="fs-6">We are unable to process this request as room has been sold.</h1>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal" onClick={() => router.back()}>Close</button>
+                    &nbsp;<button type="button" className='btn btn-sm btn-success' data-bs-dismiss="modal" onClick={() => router.back()}>Ok</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </>
             :
             <div className='row placeholder-glow'>
               <div className="mb-2 col-lg-8 order-lg-1 order-2">

@@ -11,7 +11,7 @@ import { enc } from 'crypto-js';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
-import {format} from 'date-fns';
+import {format, addDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import { doHotelReprice } from '@/app/store/hotelStore/hotel';
 
@@ -27,6 +27,7 @@ export default function HotelItinerary() {
   const dispatch = useDispatch();
   
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
+  //console.log("resReprice", resReprice)
 
   useEffect(()=>{
     if(!resReprice) {
@@ -49,12 +50,15 @@ export default function HotelItinerary() {
     const responseReprice = HotelService.doReprice(qry);
     const resRepriceText = await responseReprice;
     dispatch(doHotelReprice(resRepriceText));
-    if(resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non-Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non-refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non refundable'){
-      noRefundBtn.current?.click();
-    }
-    else if(!resRepriceText?.isBookable){
+    if(!resRepriceText?.isBookable){
       soldOutBtn.current?.click();
     }
+    else{
+      if(resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non-Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non-refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non refundable'){
+        noRefundBtn.current?.click();
+      }
+    }
+    
   }
 
   const [paxObj, setPaxObj] = useState(null);
@@ -245,54 +249,137 @@ export default function HotelItinerary() {
                           <>
                           <div className="table-responsive">
                             {resReprice.hotel.rooms.room.map((v, i) => ( 
-                            <div key={i} className="mb-2">
-                              <div className="col-md-12 blue fs-6 text-capitalize"><strong>Room {v.roomIdentifier}: {v.roomName.toLowerCase()}</strong></div>
-                              <table className="table table-bordered fn12 table-sm mb-2">
-                                <thead>
-                                  <tr className="table-light">
-                                    <th>From</th>
-                                    <th>To</th>
-                                    <th className="text-center">Percentage(%)</th>
-                                    <th className="text-center">Nights</th>
-                                    <th>Fixed</th>
-                                  </tr>
-                                </thead>
-                                {v.policies?.policy?.map((k, i) => ( 
-                                <tbody key={i}>
-                                  {k?.type ==='CAN' &&
+                            <div key={i}>
+                              {v.policies?.policy?.map((k, i) => (
+                              <React.Fragment key={i}>
+                                {k?.type ==='CAN' &&
+                                <>
+                                <div className="col-md-12 blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                <table className="table table-sm table-bordered fn12 mb-1">
+                                  <thead>
+                                    <tr className="table-light">
+                                      <th>From</th>
+                                      <th>To</th>
+                                      <th className="text-center">Percentage(%)</th>
+                                      <th className="text-center">Nights</th>
+                                      <th>Fixed</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <>
+                                    {k?.condition?.map((m, i) => (
+                                    <tr key={i}>
+                                      <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
+                                      <td>
+                                        {i === k?.condition.length -1 ?
+                                        format(new Date(m.toDate), 'dd MMM yyyy')
+                                        :
+                                        format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
+                                        }
+                                        &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                                      <td className="text-center">{m.percentage}</td>
+                                      <td className="text-center">{m.nights}</td>
+                                      <td>{m.fixed}</td>
+                                    </tr>
+                                    ))}
+                                    </>
+                                  </tbody>
+                                </table>
+                                <div className="fn12 mb-2"><strong>Supplier Information:</strong> {k?.textCondition}</div>
+                                </>
+                                }
+            
+                                {k?.type ==='MOD' && 
+                                <>
+                                  {k?.condition &&
                                   <>
-                                  {k?.condition?.map((m, i) => (
-                                  <tr key={i}>
-                                    <td>{format(new Date(m.fromDate), 'dd MMM yyyy')}&nbsp; {m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                                    <td>{format(new Date(m.toDate), 'dd MMM yyyy')}&nbsp;  {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
-                                    <td className="text-center">{m.percentage}</td>
-                                    <td className="text-center">{m.nights}</td>
-                                    <td>{m.fixed}</td>
-                                  </tr>
-                                  ))}
+                                  <div className="col-md-12 blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                  <table className="table table-sm table-bordered fn12 mb-1">
+                                    <thead>
+                                      <tr className="table-light">
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th className="text-center">Percentage(%)</th>
+                                        <th className="text-center">Nights</th>
+                                        <th>Fixed</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <>
+                                      {k?.condition?.map((m, i) => (
+                                      <tr key={i}>
+                                        <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
+                                        <td>
+                                          {i === k?.condition.length -1 ?
+                                          format(new Date(m.toDate), 'dd MMM yyyy')
+                                          :
+                                          format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
+                                          }
+                                          &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                                        <td className="text-center">{m.percentage}</td>
+                                        <td className="text-center">{m.nights}</td>
+                                        <td>{m.fixed}</td>
+                                      </tr>
+                                      ))}
+                                      </>
+                                    </tbody>
+                                  </table>
                                   </>
                                   }
-                                </tbody>
-                                ))}
-                              </table>
-                              <>
-                              {v.policies?.policy?.map((p, i) => ( 
-                                <React.Fragment key={i}>
-                                {p?.type ==='CAN' &&
-                                  <div>Supplier Information: {p?.textCondition}</div>
+                                </>
                                 }
-                                </React.Fragment>
+            
+                                {k?.type ==='NOS' && 
+                                <>
+                                  {k?.condition &&
+                                  <>
+                                  <div className="col-md-12 blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                  <table className="table table-sm table-bordered fn12 mb-1">
+                                    <thead>
+                                      <tr className="table-light">
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th className="text-center">Percentage(%)</th>
+                                        <th className="text-center">Nights</th>
+                                        <th>Fixed</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <>
+                                      {k?.condition?.map((m, i) => (
+                                      <tr key={i}>
+                                        <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
+                                        <td>
+                                          {i === k?.condition.length -1 ?
+                                          format(new Date(m.toDate), 'dd MMM yyyy')
+                                          :
+                                          format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
+                                          }
+                                          &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                                        <td className="text-center">{m.percentage}</td>
+                                        <td className="text-center">{m.nights}</td>
+                                        <td>{m.fixed}</td>
+                                      </tr>
+                                      ))}
+                                      </>
+                                    </tbody>
+                                  </table>
+                                  </>
+                                  }
+                                </>
+                                }
+                              </React.Fragment> 
                               ))}
-                              </>
 
+                              <div className='fn12'>
                               {v.remarks?.remark?.map((p, i) => ( 
                                 <div key={i} className="mt-1">
                                   <div className='fw-semibold text-capitalize'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
-                                  {/* <div>{p?.text}</div> */}
                                   <div dangerouslySetInnerHTML={{ __html:p?.text}}></div>
                                 </div>
                               ))}
-
+                              </div>
+                              <hr />
                             </div>
                             ))}
                           </div>
@@ -302,7 +389,7 @@ export default function HotelItinerary() {
                       </>
                     }
 
-                    <div className='fs-6 mt-3'><strong>Rate Remark</strong></div>
+                    <div className='fs-6 mt-2'><strong>Rate Remark</strong></div>
                     <hr className='my-1' />
                     <div>
                       <label>Special Requests (optional)</label>
@@ -321,10 +408,10 @@ export default function HotelItinerary() {
                 <div className="bg-white rounded shadow-sm border p-2 py-2 mb-3">
                   <div className='d-sm-flex flex-row'>
                     <div className="hotelImg rounded d-none d-sm-block">
-                      {resReprice.hotel?.hotelInfo?.image ?
+                      {resReprice?.hotel?.hotelInfo?.image ?
                       <Image src={`https://static.giinfotech.ae/medianew/${resReprice.hotel.hotelInfo.image}`} alt={resReprice.hotel.hotelInfo.name} width={140} height={95} priority={true} />
                       :
-                      <Image src='/images/noHotelThumbnail.jpg' alt={resReprice.hotel.hotelInfo.name} width={140} height={95} priority={true} />
+                      <Image src='/images/noHotelThumbnail.jpg' alt={resReprice?.hotel?.hotelInfo?.name} width={140} height={95} priority={true} />
                       }
                     </div>
                     <div className='ps-sm-2 w-100'>
@@ -350,7 +437,7 @@ export default function HotelItinerary() {
                   {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                   <div key={i}>
                     <hr className='my-2' />
-                    <div className='text-capitalize fn13'><strong className='blue'>Room {i+1}:</strong> {v.roomName.toLowerCase()} 
+                    <div className='text-capitalize fn13'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} 
                       {v.rateType==='Refundable' || v.rateType==='refundable' ?
                       <span className="refund"> (Refundable)</span>:''
                       }

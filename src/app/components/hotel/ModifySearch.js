@@ -159,6 +159,15 @@ export default function ModifySearch(props) {
   ])
 
   const [numNights, setNumNights] = useState(differenceInDays(chkOut,chkIn));
+  useEffect(() => {
+    if (chkIn && chkOut) {
+      setNumNights(differenceInDays(chkOut,chkIn))
+    } 
+    else{
+      setNumNights(0)
+    }
+  }, [chkIn, chkOut]);
+
   const [selectedStarOption, setSelectedStarOption] = useState(starOptions);
   const selectedXML = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
   //const [selectedXML, setSelectedXML] = useState(null);
@@ -203,14 +212,15 @@ export default function ModifySearch(props) {
     else{
       setChkOut(end)
     }
-    if(end){
-      if(date1 === date2){
-        setNumNights(1)
-      }
-      else{
-        setNumNights(differenceInDays(end,start))
-      }
-    }
+    // if(start && end){
+    //   debugger;
+    //   if(date1 === date2){
+    //     setNumNights(1)
+    //   }
+    //   else{
+    //     setNumNights(differenceInDays(end,start))
+    //   }
+    // }
   };
 
   
@@ -394,7 +404,7 @@ export default function ModifySearch(props) {
                   }
                 </div>
               </div>
-              <div className="col-sm-1">
+              <div className="col-1">
                 <label className="d-none d-sm-block mb-2">&nbsp;</label>
                 {rmCountArr[rmCntIndx].idDelBtn !=='delRoom0' ?
                   <button className="btn btn-link text-danger p-0" onClick={()=>delRoom(rmCntIndx)}><FontAwesomeIcon icon={faCircleXmark} className="fs-5" /></button>
@@ -515,15 +525,6 @@ export default function ModifySearch(props) {
   } 
 
   const [modifyCollapse, setModifyCollapse] = useState(false);
-
-  const totalGuest = () => {
-    let array = [...rmCountArr];
-    let guest = 0
-    array.forEach((v) => {
-      guest = guest + parseInt(v.adtVal) + parseInt(v.chdVal)
-    })
-    return guest
-  }
 
   const customerDetails = (dataCustomer) => {
     setCusCurrency(dataCustomer.custCurrency)
@@ -660,7 +661,7 @@ export default function ModifySearch(props) {
               <div className="mb-2">
                 <label>Room Information</label>
                 <div className="dropdown">
-                  <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{totalGuest()} Guest(s) in {rmCountArr.length} Room(s)</button>
+                  <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{rmCountArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {rmCountArr.length} Room(s)</button>
                   <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
                     <PaxDropdown />
                   </div>
@@ -762,7 +763,7 @@ export default function ModifySearch(props) {
         : 
         <>
           <div className="fn15 d-lg-flex justify-content-between align-items-center d-none">
-            <div className="py-1">{selectedDestination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(chkIn), 'dd MMM yyyy')} to {format(new Date(chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {totalGuest()} Guest(s) in {rmCountArr.length} Room(s) &nbsp; <button type="button" className="btn btn-warning btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}>Modify Search</button></div>
+            <div className="py-1">{props.HtlReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.HtlReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.HtlReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.HtlReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.HtlReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-warning btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}>Modify Search</button></div>
             <div className="py-2">
               <button type="button" className="btn btn-light btn-sm"><FontAwesomeIcon icon={faMap} className="fs-6 blue" /> Map View</button>
             </div>
@@ -826,7 +827,7 @@ export default function ModifySearch(props) {
                 <div className="mb-2">
                   <label>Room Information</label>
                   <div className="dropdown">
-                    <button className="form-control paxMainBtn dropdown-toggle border-0 fn14" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{totalGuest()} Guest(s) in {rmCountArr.length} Room(s)</button>
+                    <button className="form-control paxMainBtn dropdown-toggle border-0 fn14" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{rmCountArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {rmCountArr.length} Room(s)</button>
                     <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
                       <PaxDropdown />
                     </div>

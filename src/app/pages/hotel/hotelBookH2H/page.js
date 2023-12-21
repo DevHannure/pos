@@ -37,6 +37,7 @@ export default function HotelItinerary() {
 
   useEffect(()=> {
     if(resReprice && resReprice.hotel){
+      window.scrollTo(0, 0);
       createPaxObj();
     }
   },[resReprice]);
@@ -62,6 +63,7 @@ export default function HotelItinerary() {
   }
 
   const [paxObj, setPaxObj] = useState(null);
+  console.log("paxObj", paxObj)
 
   const createPaxObj = () => {
     let roomPax = []
@@ -222,7 +224,7 @@ export default function HotelItinerary() {
                             </div>
                             <div className='col-2 mt-2 text-center'>
                               {p.Type==='Adult' ?
-                                <input type="radio" checked={r.Guests[paxIndex].IsLeadPAX} onChange={(e) => leadChange(roomIndex, paxIndex)} />
+                                <input type="radio" checked={r.Guests[paxIndex].IsLeadPAX} onChange={(e) => leadChange(roomIndex, paxIndex)} name="riyaj" />
                                 :
                                 ''
                               }
@@ -269,14 +271,8 @@ export default function HotelItinerary() {
                                     <>
                                     {k?.condition?.map((m, i) => (
                                     <tr key={i}>
-                                      <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                                      <td>
-                                        {i === k?.condition.length -1 ?
-                                        format(new Date(m.toDate), 'dd MMM yyyy')
-                                        :
-                                        format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
-                                        }
-                                        &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                                      <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                      <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                       <td className="text-center">{m.percentage}</td>
                                       <td className="text-center">{m.nights}</td>
                                       <td>{m.fixed}</td>
@@ -308,14 +304,8 @@ export default function HotelItinerary() {
                                       <>
                                       {k?.condition?.map((m, i) => (
                                       <tr key={i}>
-                                        <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                                        <td>
-                                          {i === k?.condition.length -1 ?
-                                          format(new Date(m.toDate), 'dd MMM yyyy')
-                                          :
-                                          format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
-                                          }
-                                          &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                                        <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                        <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                         <td className="text-center">{m.percentage}</td>
                                         <td className="text-center">{m.nights}</td>
                                         <td>{m.fixed}</td>
@@ -348,14 +338,8 @@ export default function HotelItinerary() {
                                       <>
                                       {k?.condition?.map((m, i) => (
                                       <tr key={i}>
-                                        <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                                        <td>
-                                          {i === k?.condition.length -1 ?
-                                          format(new Date(m.toDate), 'dd MMM yyyy')
-                                          :
-                                          format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
-                                          }
-                                          &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                                        <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                        <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                         <td className="text-center">{m.percentage}</td>
                                         <td className="text-center">{m.nights}</td>
                                         <td>{m.fixed}</td>
@@ -375,7 +359,7 @@ export default function HotelItinerary() {
                               {v.remarks?.remark?.map((p, i) => ( 
                                 <div key={i} className="mt-1">
                                   <div className='fw-semibold text-capitalize'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
-                                  <div dangerouslySetInnerHTML={{ __html:p?.text}}></div>
+                                  <div className='pre-line' dangerouslySetInnerHTML={{ __html:p?.text}}></div>
                                 </div>
                               ))}
                               </div>

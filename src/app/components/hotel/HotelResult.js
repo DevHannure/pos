@@ -438,14 +438,14 @@ export default function HotelResult(props) {
         noRefundBtn.current?.click();
       }
       else{
-        router.push(`/pages/hotel/hotelBookH2H?qry=${encData}`);
+        router.push(`/pages/hotel/hotelBookH2H?qry=${encData}`, {scroll:false});
       }
     }
     
   }
 
   const nonRfndContinue = () => {
-    router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`);
+    router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`, {scroll:false});
   }
   
   return (
@@ -873,14 +873,8 @@ export default function HotelResult(props) {
                         <>
                         {k?.condition?.map((m, i) => (
                         <tr key={i}>
-                          <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                          <td>
-                            {i === k?.condition.length -1 ?
-                            format(new Date(m.toDate), 'dd MMM yyyy')
-                            :
-                            format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
-                            }
-                            &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                          <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                          <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                           <td className="text-center">{m.percentage}</td>
                           <td className="text-center">{m.nights}</td>
                           <td>{m.fixed}</td>
@@ -912,14 +906,8 @@ export default function HotelResult(props) {
                           <>
                           {k?.condition?.map((m, i) => (
                           <tr key={i}>
-                            <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                            <td>
-                              {i === k?.condition.length -1 ?
-                              format(new Date(m.toDate), 'dd MMM yyyy')
-                              :
-                              format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
-                              }
-                              &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                            <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                            <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                             <td className="text-center">{m.percentage}</td>
                             <td className="text-center">{m.nights}</td>
                             <td>{m.fixed}</td>
@@ -952,14 +940,8 @@ export default function HotelResult(props) {
                           <>
                           {k?.condition?.map((m, i) => (
                           <tr key={i}>
-                            <td>{format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy')} &nbsp;{m.fromDate.split('T')[1].includes('+') ? m.fromDate.split('T')[1].split('+')[0]: m.fromDate.split('T')[1]}</td>
-                            <td>
-                              {i === k?.condition.length -1 ?
-                              format(new Date(m.toDate), 'dd MMM yyyy')
-                              :
-                              format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')
-                              }
-                              &nbsp; {m.toDate.split('T')[1].includes('+') ? m.toDate.split('T')[1].split('+')[0]: m.toDate.split('T')[1]}</td>
+                            <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                            <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                             <td className="text-center">{m.percentage}</td>
                             <td className="text-center">{m.nights}</td>
                             <td>{m.fixed}</td>
@@ -980,7 +962,7 @@ export default function HotelResult(props) {
                   {v.remarks?.remark?.map((p, i) => ( 
                     <div key={i} className="mt-1">
                       <div className='fw-semibold text-capitalize'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
-                      <div dangerouslySetInnerHTML={{ __html:p?.text}}></div>
+                      <div className='pre-line' dangerouslySetInnerHTML={{ __html:p?.text}}></div>
                     </div>
                   ))}
                   </div>

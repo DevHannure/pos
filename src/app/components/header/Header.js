@@ -90,7 +90,7 @@ export default function Header() {
             <div className="ms-auto mt-2">
               <div className="text-end">
                 <ul className="deviderList">
-                  <li>{userInfos?.user?.consultantName && toTitleCase(userInfos.user.consultantName)}, {userInfos?.user?.branchName && toTitleCase(userInfos.user.branchName)}</li>
+                  <li className="text-capitalize">{userInfos?.user?.customerConsultantName?.toLowerCase()}, {userInfos?.user?.branchName?.toLowerCase()}</li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
               </div>

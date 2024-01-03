@@ -8,6 +8,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
 import { useRouter } from 'next/navigation';
+import AES from 'crypto-js/aes';
+import { enc } from 'crypto-js';
 
 const selBookingOptions = [
   { value: '0', label:'On Request'},
@@ -78,7 +80,15 @@ export default function ReservationTray() {
   const [selCustomerName, setSelCustomerName] = useState(null);
 
   const viewBooking = () => {
-    router.push("/pages/booking/bookingItinerary")
+    let bookItnery = {
+      "bcode": "2",
+      "btype": "O",
+      "returnurl": null,
+      "correlationId": 'd'
+    }
+    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
   }
   
 

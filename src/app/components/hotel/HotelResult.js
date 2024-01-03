@@ -69,7 +69,7 @@ export default function HotelResult(props) {
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
         "Nationality": qry.nationality.split('-')[1],
-        "Rooms":{}
+        "Rooms": {}
       },
       "SessionId": getOrgHtlResult?.generalInfo?.sessionId
     }
@@ -418,6 +418,7 @@ export default function HotelResult(props) {
       hotelCode: val.hotelCode,
       groupCode: val.item[0].groupCode,
       rateKey: rc.split(',').slice(1),
+      regionCode: qry.regionCode,
       paxInfoArr: qry.paxInfoArr,
       sessionId: getOrgHtlResult.generalInfo.sessionId
     }
@@ -438,7 +439,7 @@ export default function HotelResult(props) {
         noRefundBtn.current?.click();
       }
       else{
-        router.push(`/pages/hotel/hotelBookH2H?qry=${encData}`, {scroll:false});
+        router.push(`/pages/hotel/hotelBookH2H?qry=${encData}`);
       }
     }
     

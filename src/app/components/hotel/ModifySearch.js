@@ -18,7 +18,7 @@ import {useDispatch, useSelector } from "react-redux";
 import MasterService from '@/app/services/master.service';
 import DefaultCustomer from '@/app/components/default/DefaultCustomer';
 import { doHotelSearchOnLoad, doRoomDtls } from '@/app/store/hotelStore/hotel';
-import { doCountryOnLoad, doB2bXmlSupplierOnLoad } from '@/app/store/commonStore/common';
+import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode } from '@/app/store/commonStore/common';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 
@@ -175,7 +175,8 @@ export default function ModifySearch(props) {
   const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
   //const [nationalityOptions, setNationalityOptions] = useState([]);
   const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
-  const [regionCode, setRegionCode] = useState(props.HtlReq ? props.HtlReq.regionCode : '');
+  const regionCodeSav = useSelector((state) => state.commonResultReducer?.regionCodeSaver);
+  const [regionCode, setRegionCode] = useState(regionCodeSav ? regionCodeSav : '');
   const [cusCurrency, setCusCurrency] = useState(props.HtlReq ? props.HtlReq.currency : '');
   const [cusCode, setCusCode] = useState(props.HtlReq ? props.HtlReq.customerCode : null);
   const [isLoadingHtl, setIsLoadingHtl] = useState(false);
@@ -494,6 +495,7 @@ export default function ModifySearch(props) {
     regionReq()
   }, [cusCode]);
 
+  
   const regionReq = async()=> {
     if(cusCode){
       const regionObj= {
@@ -502,6 +504,7 @@ export default function ModifySearch(props) {
       }
       const responseRegion = await MasterService.doGetRegionBasedOnCustomerNationality(regionObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
       const resRegion = responseRegion;
+      dispatch(doRegionCode(resRegion));
       setRegionCode(resRegion)
     }
   }

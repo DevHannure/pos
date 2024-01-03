@@ -6,18 +6,22 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams  } from 'next/navigation';
 import HotelService from '@/app/services/hotel.service';
+import BookingService from '@/app/services/booking.service';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
-import {format, addDays} from 'date-fns';
+import {format, addDays, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import { doHotelReprice } from '@/app/store/hotelStore/hotel';
+
+function getUID() {return Date.now().toString(36);}
 
 export default function HotelItinerary() {
   const noRefundBtn = useRef(null);
   const soldOutBtn = useRef(null);
+  const cancelPolicyHtml = useRef(null);
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
@@ -25,26 +29,114 @@ export default function HotelItinerary() {
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
-  
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
-  //console.log("resReprice", resReprice)
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+
+  let uniqId = getUID();
+  const [room1, setRoom1] = useState(null);
+  const [room2, setRoom2] = useState(null);
+  const [room3, setRoom3] = useState(null);
+  const [chdAllAges, setChdAllAges] = useState(null);
+
+ 
 
   useEffect(()=>{
+    window.scrollTo(0, 0);
+    let chdAllAgesVar = []
+    qry.paxInfoArr.forEach((v) => {
+      if (v.chdVal > 0) {
+        v.chdAgesArr.forEach((val) => {
+          if (parseInt(val.chdAgeVal) > 0) {
+            chdAllAgesVar.push(val.chdAgeVal)
+          }
+        })
+      }
+    })
+    setChdAllAges(chdAllAgesVar)
+
     if(!resReprice) {
       doHtlRepriceLoad()
     }
+    if(qry.paxInfoArr[0]){
+      roomRatetype1(qry.paxInfoArr[0])
+    }
+    if(qry.paxInfoArr[1]){
+      roomRatetype2(qry.paxInfoArr[1])
+    }
+    if(qry.paxInfoArr[2]){
+      roomRatetype3(qry.paxInfoArr[2])
+    }
   },[searchparams]);
 
-  useEffect(()=> {
-    if(resReprice && resReprice.hotel){
-      window.scrollTo(0, 0);
-      createPaxObj();
-    }
-  },[resReprice]);
+  const [supplierNet, setSupplierNet] = useState(null);
+  const [net, setNet] = useState(null);
+  const [markUpAmount, setMarkUpAmount] = useState(null);
+  const [dueDateStart, setDueDateStart] = useState(null);
 
-  //const [resReprice, setResReprice] = useState(null);
-  //const [resReprice, setResReprice] = useState(null);
-  //console.log("resReprice", resReprice)
+  useEffect(()=> {
+    if(resReprice && resReprice.hotel && room1){
+      createRoomObj();
+      htlDetail(resReprice.hotel.code);
+
+      setSupplierNet(parseFloat(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierNet, 0)));
+      setNet(parseFloat(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.net, 0)));
+      setMarkUpAmount(parseFloat(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.markUpAmount, 0)));
+  
+      let dueDateStartVar = [];
+      resReprice?.hotel?.rooms?.room[0]?.policies?.policy?.map((k, i) => {
+        if(k?.type ==='CAN'){
+          k?.condition?.map((m) => {
+            if(m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0"){}
+            else{dueDateStartVar.push(m)}
+          })
+        }
+      });
+      setDueDateStart(dueDateStartVar);
+    }
+  },[resReprice, room1]);
+
+  const roomRatetype1 = async(v) => {
+    let rateRoomReq1 = {
+      "RateTypeName": "Room-1( "+ v.adtVal +','+ v.chdVal + " )",
+      "Adult": v.adtVal,
+      "Children": v.chdVal
+    }
+    const responseRatetype1 = HotelService.doHotelRateTypes(rateRoomReq1, qry.correlationId);
+    let resHtlRatetype1 =  await responseRatetype1;
+    setRoom1(resHtlRatetype1)
+  }
+
+  const roomRatetype2 = async(v) => {
+    let rateRoomReq2 = {
+      "RateTypeName": "Room-2( "+ v.adtVal +','+ v.chdVal + " )",
+      "Adult": v.adtVal,
+      "Children": v.chdVal
+    }
+    const responseRatetype2 = HotelService.doHotelRateTypes(rateRoomReq2, qry.correlationId);
+    let resHtlRatetype2 =  await responseRatetype2;
+    setRoom2(resHtlRatetype2)
+  }
+
+  const roomRatetype3 = async(v) => {
+    let rateRoomReq3 = {
+      "RateTypeName": "Room-3( "+ v.adtVal +','+ v.chdVal + " )",
+      "Adult": v.adtVal,
+      "Children": v.chdVal
+    }
+    const responseRatetype3 = HotelService.doHotelRateTypes(rateRoomReq3, qry.correlationId);
+    let resHtlRatetype3 =  await responseRatetype3;
+    setRoom3(resHtlRatetype3)
+  }
+
+  const [htlDetails, setHtlDetails] = useState(null);
+  const htlDetail = async(htlCode) => {
+    let htlObj = {
+      "systemId": htlCode
+    }
+    const responseHtlDtl = HotelService.doHotelDetail(htlObj, qry.correlationId);
+    const resHtlDtl = await responseHtlDtl;
+    setHtlDetails(resHtlDtl);
+  }
 
   const doHtlRepriceLoad = async() =>{
     dispatch(doHotelReprice(null));
@@ -59,92 +151,153 @@ export default function HotelItinerary() {
         noRefundBtn.current?.click();
       }
     }
-    
   }
 
-  const [paxObj, setPaxObj] = useState(null);
-  console.log("paxObj", paxObj)
+  const [roomObj, setRoomObj] = useState(null);
 
-  const createPaxObj = () => {
+  const createRoomObj = () => {
     let roomPax = []
     qry.paxInfoArr.map((r, i) => {
+      let roomNet = resReprice.hotel?.rooms?.room[i]?.price.net;
+      let roomMarkUpAmount = resReprice.hotel?.rooms?.room[i]?.price.markUpAmount;
+      let roomTax = resReprice.hotel?.rooms?.room[i]?.price.tax;
+
       let roomSingle = {
-        "RateKey": "288249440PT",
-        "RoomIdentifier": i+1,
-        "Guests": []
+        "NoOfUnits": "1",
+        "AdultNoOfUnits": r.adtVal.toString(),
+        "ChildNoOfUnits": r.chdVal.toString(),
+        "Rate": parseFloat(roomNet).toFixed(2).toString(),
+        "Payable": parseFloat(roomNet).toFixed(2).toString(),
+        "MarkupAmount": parseFloat(roomMarkUpAmount).toFixed(2).toString(),
+        "MarkupPercentage": "0",
+        "Tax": parseFloat(roomTax).toFixed(2).toString(),
+        "Net": parseFloat(roomNet+roomMarkUpAmount).toFixed(2).toString(),
+        "VATInputAmount": "0",
+        "VATOutputAmount": "0",
+        "RoomTypeName": resReprice.hotel?.rooms?.room[i]?.roomName,
+        "RateBasisName": resReprice.hotel?.rooms?.room[i]?.meal,
+        "RateTypeCode": i===0 && room1[0].rateTypeCode || i===1 && room2[0].rateTypeCode || i===2 && room3[0].rateTypeCode,
+        "RateTypeName": i===0 && room1[0].rateTypeName || i===1 && room2[0].rateTypeName || i===2 && room3[0].rateTypeName,
+        "RateCategoryCode": "0",
+        "DetailsString": "",
+        "CancelPolicyType": resReprice.hotel?.rooms?.room[i].rateType==='Refundable' || resReprice.hotel?.rooms?.room[i].rateType==='refundable' ? "R" : "N",
+        "PaxDetails": [],
+        "CancellationPolicyDetails": []
       };
+
+      resReprice.hotel?.rooms?.room[i]?.policies?.policy?.map((k) => {
+        if(k?.type ==='CAN'){
+          k?.condition?.map((m, i) => {
+            let cancelObj = {
+              "FromDate": format(new Date(m.fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(m.fromDate), 'yyyy-MM-dd')+'T00:00:00' : format(addDays(new Date(m.fromDate), -2), 'yyyy-MM-dd')+'T00:00:00',
+              "FromTime": m.fromTime,
+              "ToDate": i === k?.condition.length -1 ? format(new Date(m.toDate), 'yyyy-MM-dd')+'T00:00:00' : format(addDays(new Date(m.toDate), -2), 'yyyy-MM-dd')+'T00:00:00',
+              "ToTime": m.toTime,
+              "AppliedOn": m.applicableOn,
+              "Nights": m.nights,
+              "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
+              "SupplierCurrencyFixed": m.supplierFixed,
+              "SupplierCurrencyPercentage": m.percentage,
+              "SupplierCurrencyExchangeRate": parseFloat(resReprice.hotel?.rooms?.room[0]?.price.supplierExchangeRate).toFixed(2).toString(),
+              "CustomerCurrencyCode": userInfo?.user?.currencyCode.toString(),
+              "CustomerCurrencyFixed": m.fixed,
+              "CustomerCurrencyPercentage": m.percentage,
+              "CustomerCurrencyExchangeRate": parseFloat(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+              "SystemCurrencyCode": userInfo?.user?.systemCurrencyCode,
+              "SystemCurrencyFixed": (parseFloat(m.fixed*userInfo?.user?.currencyExchangeRate) / parseFloat(userInfo?.user?.systemCurrencyExchangeRate)).toFixed(2).toString(),
+              "SystemCurrencyPercentage": m.percentage,
+              "SystemCurrencyExchangeRate": parseFloat(userInfo?.user?.systemCurrencyExchangeRate).toFixed(2).toString(),
+              "MarkupPercentage": (parseFloat((roomSingle.Net - roomSingle.Rate) / roomSingle.Rate)* 100).toFixed(2).toString(),
+              "PolicyType": "Cancellation Policy"
+            }
+            roomSingle.CancellationPolicyDetails.push(cancelObj)
+          })
+          
+        }
+      });
      
       [...Array(r.adtVal)].map((a, adtIndx) => {
         let adltObj = {
-          "Title": {"Code": "", "Text": "Mr"},
-          "FirstName": "",
-          "LastName": "",
-          "IsLeadPAX": adtIndx === 0 ? true : false,
-          "Type": "Adult",
-          "Age": 35
+          "PaxType": "A",
+          "PaxTitle": "Mr",
+          "FName": "",
+          "MName": "",
+          "LName": "",
+          "PaxFullName": "",
+          "Nationality": qry.nationality.split('-')[0]+','+qry.nationality.split('-')[0],
+          "LeadPax": false,
+          "PaxAssgRoomNo": (i+1).toString(),
+          "AssociateId": ""
         }
-        roomSingle.Guests.push(adltObj)
+        roomSingle.PaxDetails.push(adltObj)
       });
 
       [...Array(r.chdVal)].map((c, chdIndx) => {
         let chldObj = {
-          "Title": {"Code": "", "Text": "Master"},
-          "FirstName": "",
-          "LastName": "",
-          "IsLeadPAX": false,
-          "Type": "Child",
-          "Age": r.chdAgesArr[chdIndx].chdAgeVal
+          "PaxType": "C",
+          "PaxTitle": "Master",
+          "FName": "",
+          "MName": "",
+          "LName": "",
+          "PaxFullName": "",
+          "Nationality": qry.nationality.split('-')[0]+','+qry.nationality.split('-')[0],
+          "LeadPax": false,
+          "PaxAssgRoomNo": (i+1).toString(),
+          "AssociateId": ""
         }
-        roomSingle.Guests.push(chldObj)
+        roomSingle.PaxDetails.push(chldObj)
       });
       roomPax.push(roomSingle)
     });
-
-    setPaxObj(roomPax)
+    roomPax[0].PaxDetails[0].LeadPax = true;
+    setRoomObj(roomPax)
   };
 
   const titleChange = (roomIndex, adltIndex, value) => {
-    const paxRoomItems = [...paxObj];
-    const paxItems = [...paxRoomItems[roomIndex].Guests];
-    paxItems[adltIndex].Title.Text = value;
-    setPaxObj(paxRoomItems);
+    const paxRoomItems = [...roomObj];
+    const paxItems = [...paxRoomItems[roomIndex].PaxDetails];
+    paxItems[adltIndex].PaxTitle = value;
+    setRoomObj(paxRoomItems);
   };
 
   const firstNameChange = (roomIndex, adltIndex, value) => {
-    const paxRoomItems = [...paxObj];
-    const paxItems = [...paxRoomItems[roomIndex].Guests];
-    paxItems[adltIndex].FirstName = value;
-    setPaxObj(paxRoomItems);
+    const paxRoomItems = [...roomObj];
+    const paxItems = [...paxRoomItems[roomIndex].PaxDetails];
+    paxItems[adltIndex].FName = value;
+    paxItems[adltIndex].PaxFullName = value + ' ' + paxItems[adltIndex].LName;
+    setRoomObj(paxRoomItems);
   };
 
   const lastNameChange = (roomIndex, adltIndex, value) => {
-    const paxRoomItems = [...paxObj];
-    const paxItems = [...paxRoomItems[roomIndex].Guests];
-    paxItems[adltIndex].LastName = value;
-    setPaxObj(paxRoomItems);
+    const paxRoomItems = [...roomObj];
+    const paxItems = [...paxRoomItems[roomIndex].PaxDetails];
+    paxItems[adltIndex].LName = value;
+    paxItems[adltIndex].PaxFullName = paxItems[adltIndex].FName + ' ' + value;
+    setRoomObj(paxRoomItems);
   };
 
-  const leadChange = (roomIndex, adltIndex) => {
-    const paxRoomItems = [...paxObj];
-    const paxItems = [...paxRoomItems[roomIndex].Guests];
-    paxItems.forEach((v, i) => {
-      v.IsLeadPAX = false;
+  const leadPaxChange = (roomIndex, adltIndex) => {
+    const paxRoomItems = [...roomObj];
+    paxRoomItems.forEach((p) => {
+      p.PaxDetails.forEach((v) => {
+        v.LeadPax = false;
+      })
     })
-    paxItems[adltIndex].IsLeadPAX = true;
-    setPaxObj(paxRoomItems);
+    paxRoomItems[roomIndex].PaxDetails[adltIndex].LeadPax = true;
+    setRoomObj(paxRoomItems);
   };
-
+  
   const validate = () => {
     let status = true;
-    for (var k = 0; k < paxObj.length; k++) {
-      for (var i = 0; i < paxObj[k].Guests.length; i++) {
-        if(paxObj[k].Guests[i].FirstName===''){
+    for (var k = 0; k < roomObj.length; k++) {
+      for (var i = 0; i < roomObj[k].PaxDetails.length; i++) {
+        if(roomObj[k].PaxDetails[i].FName===''){
           status = false;
           document.getElementById("firstName"+k+i).focus();
           toast.error("Please enter passenger's first name",{theme: "colored"})
           break;
         }
-        if(paxObj[k].Guests[i].LastName===''){
+        if(roomObj[k].PaxDetails[i].LName===''){
           status = false;
           document.getElementById("lastName"+k+i).focus();
           toast.error("Please enter passenger's last name",{theme: "colored"})
@@ -159,9 +312,124 @@ export default function HotelItinerary() {
 
   }
 
-  const bookBtn = () => {
+  const [custRemarks, setCustRemarks] = useState('');
+  const [bookBtnLoad, setBookBtnLoad] = useState(false);
+
+  const bookBtn = async() => {
     let allowMe = validate();
-    console.log("allowMe", allowMe)
+    if(allowMe){
+      setBookBtnLoad(true);
+      let leadPaxName = ''
+      roomObj.forEach((v) => {
+        v.PaxDetails.forEach((val) => {
+          if (val.LeadPax) {
+            leadPaxName = val.PaxTitle +'. '+ val.PaxFullName
+          }
+        })
+      })
+      
+      let addServiceCartObj = {
+        "BookingNo": "0",
+        "IsNewBooking": true,
+        "UserId": userInfo?.user?.userId,
+        "BookingDetail": {
+          "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
+          "BookingStatus": "-1",
+          "BookingCurrencyCode": userInfo?.user?.currencyCode,
+          "WalkinUserCode": "",
+          "BranchCode": userInfo?.user?.branchCode,
+          "RegionCode": qry.regionCode.toString(),
+          "CustomerCode": userInfo?.user?.userCode,
+          "CustomerConsultantCode": userInfo?.user?.customerConsultantCode,
+          "CompanyConsultantCode": userInfo?.user?.companyConsultantCode,
+          "CustomerRemarks": custRemarks,
+          "LeadPassengerName": leadPaxName,
+          "IsPackage": "",
+          "IsFromNewSystem": true
+        },
+        "Service": {
+          "ServiceCode": "1",
+          "ServiceType": "0",
+          "ServiceStatus": "0",
+          "ProductCode": htlDetails?.hotelDetail?.hotelCode,
+          "ProductName": htlDetails?.hotelDetail?.hotelName,
+          "PeriodCode": "",
+          "RoomTypeCode": "0",
+          "RoomTypeName": resReprice.hotel?.rooms?.room[0]?.roomName,
+          "RateBasisCode": "0",
+          "RateBasisName": resReprice.hotel?.rooms?.room[0]?.meal,
+          "BookedFrom": qry?.chkIn,
+          "BookedTo": qry?.chkOut,
+          "BookedNights": differenceInDays(new Date(qry?.chkOut),new Date(qry?.chkIn)).toString(),
+          "PickupDetails": 'https://static.giinfotech.ae/medianew'+htlDetails?.hotelDetail?.imageUrl,
+          "DropoffDetails": "",
+          "ProductAddress": htlDetails?.hotelDetail?.address1+', '+htlDetails?.hotelDetail?.address2,
+          "ProductSystemId": htlDetails?.hotelDetail?.hotelCode,
+          "ProductCityName": htlDetails?.hotelDetail?.cityName,
+          "ProductCountryISOCode": htlDetails?.hotelDetail?.countryCode,
+          "ProductCountryName": htlDetails?.hotelDetail?.countryName,
+          "ProductContactNo": htlDetails?.hotelDetail?.contactTelephone,
+          "ProductFaxNo": htlDetails?.hotelDetail?.contactFax,
+          "ProductWebSite": htlDetails?.hotelDetail?.contactWebUrl,
+          "ClassificationCode": htlDetails?.hotelDetail?.rating,
+          "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
+          "SupplierCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCodeFK,
+          "SupplierConsultantCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+          "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
+          "SupplierRemarks": "",
+          "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
+          "SupplierExchangeRate": parseFloat(resReprice.hotel?.rooms?.room[0]?.price.supplierExchangeRate).toFixed(2).toString(),
+          "SupplierPayableAmount": parseFloat(supplierNet).toFixed(2).toString(),
+          "Rate":  parseFloat(net).toFixed(2).toString(),
+          "PayableAmount": parseFloat(net).toFixed(2).toString(),
+          "MarkupAmount": markUpAmount.toString(),
+          "NetAmount": parseFloat(net+markUpAmount).toFixed(2).toString(),
+          "SellPrice": parseFloat(net+markUpAmount).toFixed(2).toString(),
+          "GSANet": parseFloat(net+markUpAmount).toFixed(2).toString(),
+          "VATInput": "0",
+          "VATInputAmount": "0",
+          "VATOutput": "0",
+          "VATOutputAmount": "0",
+          "DueDate": format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime,
+          "UniqueId": qry?.sessionId+'-'+uniqId,
+          "CustomerCurrencyCode": userInfo?.user?.currencyCode,
+          "CustomerExchangeRate": parseFloat(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "CustomerNetAmount": (parseFloat(net+markUpAmount)*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "XMLSupplierCode": resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
+          "XMLRateKey": resReprice?.hotel?.rooms?.room.reduce((totalRk, r, i) => totalRk + (i !==0 ? 'splitter':'') + r.rateKey, ''),
+          "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
+          "NoOfAdults": parseFloat(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
+          "NoOfChildren": parseFloat(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
+          "NoOfInfants": "0",
+          "AgesOfChildren": chdAllAges.toString(),
+          "VoucherLink": "",
+          "FairName": "",
+          "NRF": resReprice.hotel?.rooms?.room[0].rateType==='Refundable' || resReprice.hotel?.rooms?.room[0].rateType==='refundable' ? false : true,
+          "IsHidden": false,
+          "ServiceDetails": roomObj,
+        }
+      }
+      console.log("addServiceCartObj", addServiceCartObj)
+      const responseAddCart = BookingService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
+      const resAddCart = await responseAddCart;
+      console.log("resAddCart", resAddCart)
+      if(resAddCart > 0){
+        let bookItnery = {
+          "bcode": resAddCart.toString(),
+          "btype": "O",
+          "returnurl": null,
+          "correlationId": qry.correlationId
+        }
+        let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+        let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+        setBookBtnLoad(false);
+        router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+      }
+      else{
+        toast.error("Something Wrong !!",{theme: "colored"});
+        setBookBtnLoad(false);
+      }
+    }
   }
 
   const [otherInfo, setOtherInfo] = useState(false);
@@ -170,10 +438,10 @@ export default function HotelItinerary() {
     <MainLayout>
       <ToastContainer />
       <div className="middle">
+       
         <div className="container-fluid">
           <div className="pt-3">
-
-            {resReprice ?
+            {resReprice && htlDetails ?
             <>
             <div className="row">
               <div className="mb-2 col-lg-8 order-lg-1 order-2">
@@ -181,7 +449,7 @@ export default function HotelItinerary() {
                   <div className='mb-3'>
                     <div className='bg-warning bg-opacity-10 px-2 py-1 fs-5 mb-2'><strong>Guest Details</strong></div>
   
-                    {paxObj?.map((r, roomIndex) => (
+                    {roomObj?.map((r, roomIndex) => (
                       <div key={roomIndex}>
                         <div className='fs-6 blue'><strong>Room {roomIndex+1}</strong></div>
                         <hr className='my-1' />
@@ -190,22 +458,19 @@ export default function HotelItinerary() {
                           <div className='col-2'><strong>Select Lead Guest</strong></div>
                         </div>
 
-                        {r.Guests.map((p, paxIndex) => ( 
+                        {r.PaxDetails.map((p, paxIndex) => ( 
                           <div key={paxIndex} className='row gx-3 mb-1'>
                             <div className='col-10'>
-                              {/* <div className='row gx-1 mb-1'>
-                                <div className="col blue"><strong>{p.Type}</strong></div>
-                              </div> */}
                               <div className='row gx-3'>
                                 <div className='col-md-2 mb-3'>
-                                  {p.Type==='Adult' ?
-                                  <select className='form-select form-select-sm' value={r.Guests[paxIndex].Title.Text} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
+                                  {p.PaxType==='A' ?
+                                  <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
                                     <option value="Mr">Mr</option>
                                     <option value="Mrs">Mrs</option>
                                     <option value="Ms">Ms</option>
                                   </select>
                                   :
-                                  <select className='form-select form-select-sm' value={r.Guests[paxIndex].Title.Text} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
+                                  <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
                                     <option value="Master">Master</option>
                                     <option value="Miss">Miss</option>
                                   </select>
@@ -213,18 +478,17 @@ export default function HotelItinerary() {
                                 </div>
                                 
                                 <div className='col-md-5 mb-3'>
-                                  <input type='text' className='form-control form-control-sm' placeholder='First Name' value={r.Guests[paxIndex].FirstName} onChange={(e) => firstNameChange(roomIndex, paxIndex, e.target.value)} id={'firstName'+roomIndex+paxIndex} />
-                                  {/* <div className='text-danger mx-1 fn12'>First Name is required</div> */}
+                                  <input type='text' className='form-control form-control-sm' placeholder='First Name' value={r.PaxDetails[paxIndex].FName} onChange={(e) => firstNameChange(roomIndex, paxIndex, e.target.value)} id={'firstName'+roomIndex+paxIndex} />
                                 </div>
                                 <div className='col-md-5 mb-3'>
-                                  <input type='text' className='form-control form-control-sm' placeholder='Last Name' value={r.Guests[paxIndex].LastName} onChange={(e) => lastNameChange(roomIndex, paxIndex, e.target.value)} id={'lastName'+roomIndex+paxIndex} />
+                                  <input type='text' className='form-control form-control-sm' placeholder='Last Name' value={r.PaxDetails[paxIndex].LName} onChange={(e) => lastNameChange(roomIndex, paxIndex, e.target.value)} id={'lastName'+roomIndex+paxIndex} />
                                 </div>
                               </div>
                               
                             </div>
                             <div className='col-2 mt-2 text-center'>
-                              {p.Type==='Adult' ?
-                                <input type="radio" checked={r.Guests[paxIndex].IsLeadPAX} onChange={(e) => leadChange(roomIndex, paxIndex)} name="riyaj" />
+                              {p.PaxType==='A' ?
+                                <input type="radio" checked={r.PaxDetails[paxIndex].LeadPax} onChange={(e) => leadPaxChange(roomIndex, paxIndex)} />
                                 :
                                 ''
                               }
@@ -236,7 +500,7 @@ export default function HotelItinerary() {
                     ))}
                   </div>
 
-                  <div className='mb-3'>
+                  <div className='mb-5'>
 
                     <div className={"bg-warning bg-opacity-10 px-2 py-1 fs-5 mb-2 d-flex justify-content-between curpointer "+ (otherInfo ? '':'collapsed')} aria-expanded={otherInfo} onClick={()=> setOtherInfo(!otherInfo)}>
                       <strong>Other Information</strong>
@@ -249,15 +513,20 @@ export default function HotelItinerary() {
                       <div className='fn12'>
                         {resReprice.hotel?.rooms?.room &&
                           <>
-                          <div className="table-responsive">
+                          <div>
                             {resReprice.hotel.rooms.room.map((v, i) => ( 
                             <div key={i}>
                               {v.policies?.policy?.map((k, i) => (
                               <React.Fragment key={i}>
                                 {k?.type ==='CAN' &&
                                 <>
-                                <div className="col-md-12 blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                <table className="table table-sm table-bordered fn12 mb-1">
+                                <div className="blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                {k?.condition?.map((m, i) => (
+                                  <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' }</div>
+                                ))}
+                                {/* <table className="table table-sm table-bordered fn12 mb-1">
                                   <thead>
                                     <tr className="table-light">
                                       <th>From</th>
@@ -280,7 +549,7 @@ export default function HotelItinerary() {
                                     ))}
                                     </>
                                   </tbody>
-                                </table>
+                                </table> */}
                                 <div className="fn12 mb-2"><strong>Supplier Information:</strong> {k?.textCondition}</div>
                                 </>
                                 }
@@ -289,8 +558,13 @@ export default function HotelItinerary() {
                                 <>
                                   {k?.condition &&
                                   <>
-                                  <div className="col-md-12 blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                  <table className="table table-sm table-bordered fn12 mb-1">
+                                  <div className="blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                  {k?.condition?.map((m, i) => (
+                                    <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                                    &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                                    &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
+                                  ))}
+                                  {/* <table className="table table-sm table-bordered fn12 mb-1">
                                     <thead>
                                       <tr className="table-light">
                                         <th>From</th>
@@ -313,7 +587,7 @@ export default function HotelItinerary() {
                                       ))}
                                       </>
                                     </tbody>
-                                  </table>
+                                  </table> */}
                                   </>
                                   }
                                 </>
@@ -323,8 +597,13 @@ export default function HotelItinerary() {
                                 <>
                                   {k?.condition &&
                                   <>
-                                  <div className="col-md-12 blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                  <table className="table table-sm table-bordered fn12 mb-1">
+                                  <div className="blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                  {k?.condition?.map((m, i) => (
+                                    <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                                    &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                                    &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
+                                  ))}
+                                  {/* <table className="table table-sm table-bordered fn12 mb-1">
                                     <thead>
                                       <tr className="table-light">
                                         <th>From</th>
@@ -347,7 +626,7 @@ export default function HotelItinerary() {
                                       ))}
                                       </>
                                     </tbody>
-                                  </table>
+                                  </table> */}
                                   </>
                                   }
                                 </>
@@ -377,13 +656,13 @@ export default function HotelItinerary() {
                     <hr className='my-1' />
                     <div>
                       <label>Special Requests (optional)</label>
-                      <textarea className="form-control form-control-sm" rows="3"></textarea>
+                      <textarea className="form-control form-control-sm" rows="3" value={custRemarks} onChange={(e) => setCustRemarks(e.target.value)}></textarea>
                     </div>
                   </div>
 
                   <div className='d-flex justify-content-between'>
                     <button className='btn btn-light' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn12' /> Back</button>
-                    <button className='btn btn-warning' onClick={bookBtn}>Continue <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button>
+                    <button className='btn btn-warning' onClick={bookBtn} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Continue'} <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button>
                   </div>
                 </div>
               </div>
@@ -392,25 +671,26 @@ export default function HotelItinerary() {
                 <div className="bg-white rounded shadow-sm border p-2 py-2 mb-3">
                   <div className='d-sm-flex flex-row'>
                     <div className="hotelImg rounded d-none d-sm-block">
-                      {resReprice?.hotel?.hotelInfo?.image ?
-                      <Image src={`https://static.giinfotech.ae/medianew/${resReprice.hotel.hotelInfo.image}`} alt={resReprice.hotel.hotelInfo.name} width={140} height={95} priority={true} />
+                      {htlDetails?.hotelDetail?.imageUrl ?
+                      <Image src={`https://static.giinfotech.ae/medianew/${htlDetails?.hotelDetail?.imageUrl}`} alt={htlDetails?.hotelDetail?.hotelName} width={140} height={95} priority={true} />
                       :
-                      <Image src='/images/noHotelThumbnail.jpg' alt={resReprice?.hotel?.hotelInfo?.name} width={140} height={95} priority={true} />
+                      <Image src='/images/noHotelThumbnail.jpg' alt={htlDetails?.hotelDetail?.hotelName} width={140} height={95} priority={true} />
                       }
                     </div>
                     <div className='ps-sm-2 w-100'>
-                      <h3 className="fs-6 blue mb-1">{resReprice.hotel?.hotelInfo?.name}</h3>
+                      <h3 className="fs-6 blue mb-1">{htlDetails?.hotelDetail?.hotelName}</h3>
                       <div className='mb-1'>
                         {Array.apply(null, { length:5}).map((e, i) => (
                         <span key={i}>
-                          {i+1 > parseInt(resReprice.hotel?.hotelInfo?.starRating) ?
+                          {i+1 > parseInt(htlDetails?.hotelDetail?.rating) ?
                           <FontAwesomeIcon key={i} icon={faStar} className="starBlank" /> : <FontAwesomeIcon key={i} icon={faStar} className="starGold" />
                           }
                         </span>
                         ))
                         }
+                        <span className="ms-1"><Image src={`https://tripadvisor.com/img/cdsi/img2/ratings/traveler/${Number(htlDetails.hotelDetail?.tripAdvisorRating).toFixed(1)}-13387-4.png`} alt="rating" width={100} height={17} priority={true} /></span>
                       </div>
-                      <div className="text-black-50 mb-2 fn12">{resReprice.hotel?.hotelInfo?.add1}, {resReprice.hotel?.hotelInfo?.add2}</div>
+                      <div className="text-black-50 mb-2 fn12">{htlDetails?.hotelDetail?.address1}, {htlDetails?.hotelDetail?.address2}, {htlDetails.hotelDetail?.countryName}</div>
                     </div>
                   </div>  
                   <hr className='my-2' />
@@ -463,6 +743,72 @@ export default function HotelItinerary() {
                   </table>
                 </div>
               </div>
+            </div>
+
+            <div ref={cancelPolicyHtml} className='d-none'>
+              {resReprice.hotel?.rooms?.room &&
+              <>
+              {resReprice.hotel.rooms.room.map((v, i) => ( 
+              <React.Fragment key={i}>
+                {v.policies?.policy?.map((k, i) => (
+                <React.Fragment key={i}>
+                {k?.type ==='CAN' &&
+                <>
+                <div className="fn15 bold" style={{textTransform:'capitalize',marginTop:'10px'}}>Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</div><br />
+                <div className="fn15 bold">Cancellation Policy</div>
+                <hr className="mt5 mb10" />
+                {k?.condition?.map((m, i) => (
+                  <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
+                ))}
+                </>
+                }
+            
+                {k?.type ==='MOD' && 
+                <>
+                  {k?.condition &&
+                  <>
+                  <div className="fn15 bold">Amendment Policy</div>
+                  <hr className="mt5 mb10" />
+                  {k?.condition?.map((m, i) => (
+                  <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
+                  ))}
+                  </>
+                  }
+                </>
+                }
+            
+                {k?.type ==='NOS' && 
+                <>
+                  {k?.condition &&
+                  <>
+                  <div className="fn15 bold">No Show Policy</div>
+                  <hr className="mt5 mb10" />
+                  {k?.condition?.map((m, i) => (
+                  <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
+                  ))}
+                  </>
+                  }
+                </>
+                }
+                </React.Fragment> 
+                ))}
+              
+                {v.remarks?.remark?.map((p, i) => ( 
+                <React.Fragment key={i}>
+                  <div className="fn15 bold text-capitalize">{p?.type?.toLowerCase().replace('_',' ') }:</div>
+                  <div dangerouslySetInnerHTML={{ __html:p?.text}}></div>
+                </React.Fragment>
+                ))}
+              </React.Fragment>
+              ))}
+              </>
+              }
             </div>
             
             <button ref={noRefundBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#nonRfndblModal">No refund</button>

@@ -5,12 +5,16 @@
 }
 hr{border-top-style: dashed;}
 label{margin-bottom:0.3rem;}
-th, strong{font-weight:600;}
+th, strong, .bold{font-weight:600;}
 .fn9{font-size:9px;}
 .fn10{font-size:10px;}
 .fn12{font-size:12px;}
 .fn13{font-size:13px;}
 .fn14{font-size:14px;}
+.fn15{font-size:15px;}
+ 
+.mt5 {margin-top:5px !important;}
+.mb10 {margin-bottom:10px !important;}
 .mt-n1 {margin-top: -0.25rem !important;}
 .mt-n2 {margin-top: -0.5rem !important;}
 .mt-n3 {margin-top: -1rem !important;}
@@ -211,6 +215,8 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 }
 
 .image-gallery-thumbnail{height:80px; overflow:hidden; vertical-align:middle;}
+.cancelBrnone br{display:none !important;}
+.cancelBrnone .fn15{font-size:13px !important;}
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

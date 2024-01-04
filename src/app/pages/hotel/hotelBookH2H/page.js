@@ -521,12 +521,12 @@ export default function HotelItinerary() {
                                 {k?.type ==='CAN' &&
                                 <>
                                 <div className="blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                {k?.condition?.map((m, i) => (
+                                {/* {k?.condition?.map((m, i) => (
                                   <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                                   &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
                                   &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' }</div>
-                                ))}
-                                {/* <table className="table table-sm table-bordered fn12 mb-1">
+                                ))} */}
+                                <table className="table table-sm table-bordered fn12 mb-1">
                                   <thead>
                                     <tr className="table-light">
                                       <th>From</th>
@@ -549,7 +549,7 @@ export default function HotelItinerary() {
                                     ))}
                                     </>
                                   </tbody>
-                                </table> */}
+                                </table>
                                 <div className="fn12 mb-2"><strong>Supplier Information:</strong> {k?.textCondition}</div>
                                 </>
                                 }
@@ -559,12 +559,12 @@ export default function HotelItinerary() {
                                   {k?.condition &&
                                   <>
                                   <div className="blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                  {k?.condition?.map((m, i) => (
+                                  {/* {k?.condition?.map((m, i) => (
                                     <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                                     &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
                                     &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
-                                  ))}
-                                  {/* <table className="table table-sm table-bordered fn12 mb-1">
+                                  ))} */}
+                                  <table className="table table-sm table-bordered fn12 mb-1">
                                     <thead>
                                       <tr className="table-light">
                                         <th>From</th>
@@ -587,7 +587,7 @@ export default function HotelItinerary() {
                                       ))}
                                       </>
                                     </tbody>
-                                  </table> */}
+                                  </table>
                                   </>
                                   }
                                 </>
@@ -598,12 +598,12 @@ export default function HotelItinerary() {
                                   {k?.condition &&
                                   <>
                                   <div className="blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                  {k?.condition?.map((m, i) => (
+                                  {/* {k?.condition?.map((m, i) => (
                                     <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                                     &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
                                     &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
-                                  ))}
-                                  {/* <table className="table table-sm table-bordered fn12 mb-1">
+                                  ))} */}
+                                  <table className="table table-sm table-bordered fn12 mb-1">
                                     <thead>
                                       <tr className="table-light">
                                         <th>From</th>
@@ -626,7 +626,7 @@ export default function HotelItinerary() {
                                       ))}
                                       </>
                                     </tbody>
-                                  </table> */}
+                                  </table>
                                   </>
                                   }
                                 </>
@@ -726,7 +726,7 @@ export default function HotelItinerary() {
                       {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                         <tr key={i}>
                           <td>Room {i+1}</td>
-                          <td className="text-end">{qry.currency} {v.price.net}</td>
+                          <td className="text-end">{qry.currency} {parseFloat(v.price.net).toFixed(2)}</td>
                         </tr>
                       ))}
                       </tbody>

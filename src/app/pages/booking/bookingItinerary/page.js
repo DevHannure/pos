@@ -3,13 +3,16 @@ import React, {useEffect, useState } from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
 import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerary/HotelBookingItinerary';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faShareSquare, faEnvelope, faPrint, faStar} from "@fortawesome/free-solid-svg-icons";
+import {faEnvelope, faPrint, faStar} from "@fortawesome/free-solid-svg-icons";
+import {faShareFromSquare, faTrashCan} from "@fortawesome/free-regular-svg-icons";
 import {format, addDays, differenceInDays} from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useSearchParams  } from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import BookingService from '@/app/services/booking.service';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function ReservationTray() {
   const router = useRouter();
@@ -53,15 +56,76 @@ export default function ReservationTray() {
     }, 100);
   }
 
+  const [emailText, setEmailText] = useState('');
+  const [errorEmailText, setErroremailText] = useState('');
+  
+  const emailChange = (value) => {
+    let error = ''
+    if(value===''){
+      error = 'Email is required.';
+    }
+    if (!/\S+@\S+\.\S+/.test(value)) { 
+      error = 'Email is invalid.'; 
+    }
+    setErroremailText(error); 
+    setEmailText(value);
+  }
+  const validateEmail = () => {
+    let status = true;
+    if(emailText===''){
+      status = false;
+      setErroremailText('Email is required.'); 
+      return false
+    }
+    if (!/\S+@\S+\.\S+/.test(emailText)) { 
+      status = false;
+      setErroremailText('Email is invalid.'); 
+      return false
+    }
+    return status 
+  }
+  
+
+  const emailBtn = async() => {
+    let allowMe = validateEmail();
+    console.log("allowMe", allowMe)
+
+  }
+  
+  const [payMode, setPayMode] = useState('');
+  const [termCheckbox, setTermCheckbox] = useState(false);
+  const validate = () => {
+    let status = true;
+
+    if (payMode==='') {
+      status = false;
+      toast.error("Please select a mode of payment",{theme: "colored"});
+      return false
+    }
+    if (!termCheckbox) {
+      status = false;
+      toast.error("Please accept service details, rates, cancellation and payment policy",{theme: "colored"});
+      return false
+    }
+
+    return status
+  }
+  const completeBtn = async() => {
+    let allowMe = validate();
+    console.log("allowMe", allowMe)
+  }
+
 
   return (
     <MainLayout>
+      <ToastContainer />
       <div className="middle">
         <div className="container-fluid">
           <div className='pt-3'>
             <div className='bg-white shadow-sm'>
 
               {bkngDetails ?
+              <>
               <div id="printableArea">
                 <table width="100%" align="center" cellPadding="0" cellSpacing="0" style={{backgroundColor:'#FFF',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'18px',color:'#000',minWidth:'100%',maxWidth:'100%',border:'1px solid #e1e1e1'}}>
                   <tbody>
@@ -74,9 +138,9 @@ export default function ReservationTray() {
                                 <td align="right">
                                   {noPrint &&
                                   <div className='d-print-none'>
-                                    <button type='button' data-toggle="modal" data-target="#paymentdetailsPopup" className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Payment Link Details</button>&nbsp;
-                                    <button type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Send Payment Link</button>&nbsp;
-                                    <button type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faEnvelope} /> Email</button>&nbsp;
+                                    {/* <button type='button' data-toggle="modal" data-target="#paymentdetailsPopup" className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Payment Link Details</button>&nbsp;
+                                    <button type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Send Payment Link</button>&nbsp; */}
+                                    <button data-bs-toggle="modal" data-bs-target="#emailModal" type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faEnvelope} /> Email</button>&nbsp;
                                     <button onClick={() => (printDiv('printableArea'))} type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faPrint} /> Print</button>
                                   </div>
                                   }
@@ -99,9 +163,11 @@ export default function ReservationTray() {
                                         <td style={{paddingLeft:'0px',paddingRight:'0px'}}>
                                           <p className="fn16 blue" style={{marginBottom:'0px',lineHeight:'24px'}}>
                                             <strong style={{color:'#01468a',marginBottom:'5px'}}>Cart Id:</strong> {qry?.btype ==="O" ? bkngDetails?.ReservationDetail?.BookingDetail.BookingNo : bkngDetails?.ReservationDetail?.BookingDetail.TempBookingNo} &nbsp; | &nbsp;
-                                            <strong style={{color:'#01468a',marginBottom:'5px'}}>Booking Number:</strong> {bkngDetails?.ReservationDetail?.BookingDetail.BookingNo} &nbsp; | &nbsp;
+                                            {qry?.btype !=="O" &&
+                                              <><strong style={{color:'#01468a',marginBottom:'5px'}}>Booking Number:</strong> {bkngDetails?.ReservationDetail?.BookingDetail.BookingNo} &nbsp; | &nbsp;</>
+                                            }
                                             <strong style={{color:'#01468a', arginBottom:'5px'}}>Booking Status:</strong>&nbsp; 
-                                            {bkngDetails?.ReservationDetail?.BookingDetail.BookingStatus ==="-1" && <span style={{color:'#ff3300'}}>ON REQUEST</span>}
+                                            {bkngDetails?.ReservationDetail?.BookingDetail.BookingStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
                                             {bkngDetails?.ReservationDetail?.BookingDetail.BookingStatus ==="0" && <span style={{color:'#ff3300'}}>ON REQUEST</span>}
                                             {bkngDetails?.ReservationDetail?.BookingDetail.BookingStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
                                             {bkngDetails?.ReservationDetail?.BookingDetail.BookingStatus ==="2" && <span style={{color:'#0daa44'}}>CONFIRMED</span>}
@@ -162,7 +228,11 @@ export default function ReservationTray() {
                                     </span>
                                   </td>
                                   <td>
-
+                                    {noPrint &&
+                                      <div className="text-end pe-2">
+                                        <button className="btn btn-sm border" title="Delete service"><FontAwesomeIcon icon={faTrashCan} /></button>
+                                      </div>
+                                    }
                                   </td>
                                 </tr>
                                 <tr>
@@ -419,8 +489,41 @@ export default function ReservationTray() {
                         {/* Visa Service End */}
 
                         {noPrint &&
-                         <div className='d-print-none p-2'>
-                          <button type='button' className='btn btn-sm btn-primary'>Add Offline Service</button>
+                         <div className='d-print-none p-2 fn15 mt-3'>
+                          <div className="form-check mb-2">
+                            <label><input className="form-check-input mt-0" type="checkbox" checked={termCheckbox} onChange={() => setTermCheckbox(!termCheckbox)}  /> I have read and accept the service details, rates, cancellation and payment policy.</label>
+                          </div>
+
+                          <div className="mb-3">
+                            <div className="row g-1 align-items-center">
+                              <div className="col-auto">
+                                <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
+                              </div>
+                              <div className="col-auto">
+                                <input type="text" className="form-control form-control-sm" />
+                              </div>
+                              <div className="col-auto">
+                                <button className="btn btn-sm border"><FontAwesomeIcon icon={faShareFromSquare} /></button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mb-3">
+                            <div className="form-check form-check-inline">
+                              <label><input className="form-check-input mt-0" type="radio" value="CC" name="payName" checked={payMode==='CC'} onChange={(e) => setPayMode(e.target.value)} /> Pay By Credit Card</label>
+                            </div>
+                            <div className="form-check form-check-inline">
+                              <label><input className="form-check-input mt-0" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
+                            </div>
+                            <div className="form-check form-check-inline">
+                              <label><input className="form-check-input mt-0" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
+                            </div>
+                          </div>
+
+                          <div className="mb-2">
+                            <button type='button' className='btn btn-sm btn-warning' onClick={completeBtn}>Complete Booking</button>
+                          </div>
+                          
                          </div>
                         }
 
@@ -430,6 +533,28 @@ export default function ReservationTray() {
                   </tbody>
                 </table>
               </div>
+              
+              <div className="modal fade" id="emailModal" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h5 className="modal-title">Send Email</h5>
+                      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div className="modal-body">
+                      <div className='mb-3'>
+                        <input type='text' className='form-control' value={emailText} onChange={(e) => emailChange(e.target.value)} placeholder='Enter Email ID' />
+                        {errorEmailText && <div className='text-danger m-1'>{errorEmailText}</div>} 
+                      </div>
+                      <button type="button" className='btn btn-success' onClick={emailBtn}>Submit</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              </>
+
+
               :
               <div className='text-center blue py-5'>
                 <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 

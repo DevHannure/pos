@@ -511,7 +511,7 @@ export default function HotelResult(props) {
                     <div className="ms-3 fw-semibold fs-6">{v.city}</div>
                   </div>
                 </div>
-                <div className="col-md-2 col-10"><div className="blue fw-semibold fs-6">{qry?.currency} {v.minPrice}</div></div>
+                <div className="col-md-2 col-10"><div className="blue fw-semibold fs-6">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div></div>
                 <div className="col-md-1 col-2 text-center">
                   <button className="btn btn-success py-0 togglePlus" type="button"></button>
                 </div>
@@ -728,7 +728,7 @@ export default function HotelResult(props) {
                     <span>Supplier: {roomRow.shortCodeName} &nbsp;|&nbsp; </span>
                   }
                   
-                  <span>{qry?.currency} {fareBrkData?.priceBreakdown.reduce((totalAmount, a) => totalAmount + a.netAmount, 0)}</span>
+                  <span>{qry?.currency} {parseFloat(fareBrkData?.priceBreakdown.reduce((totalAmount, a) => totalAmount + a.netAmount, 0)).toFixed(2)}</span>
                   <span className="fn12 align-top ms-1">
                     {roomRow.rateType==='Refundable' || roomRow.rateType==='refundable' ?
                     <span className="text-success">Refundable</span>
@@ -762,7 +762,7 @@ export default function HotelResult(props) {
                         </tr>
                         <tr>
                           <td>Total Fare</td>
-                          <td className="text-end">{a.netAmount}</td>
+                          <td className="text-end">{parseFloat(a.netAmount).toFixed(2)}</td>
                         </tr>
                       </tbody>
                     </table>

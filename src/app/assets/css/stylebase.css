@@ -39,6 +39,7 @@ a, .btn-link{text-decoration:none;}
 .listNone{list-style-type: none; padding:0px;}
 .tooltip-inner{font-size:11px;}
 .popover-body{padding:12px;font-size:13px;}
+.form-check-input{border-color:#a59e9e !important;}
 
 .mainloader1{display:flex; justify-content:center; align-items: center; position: fixed; left:0px; right: 0px; top:0px; bottom:0px; background:rgba(0,0,0,0.65); z-index: 999;}
 .loader1 {color: #FFF; font-weight:500; font-size:25px; text-transform:capitalize;box-sizing: content-box; height:40px; padding:10px 10px; display:flex;}

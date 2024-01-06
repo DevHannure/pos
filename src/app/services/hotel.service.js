@@ -109,6 +109,17 @@ const HotelService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doBook: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/hotel/Book`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
 
 }
 

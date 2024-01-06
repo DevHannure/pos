@@ -408,20 +408,21 @@ export default function HotelResult(props) {
     dispatch(doHotelReprice(null));
     let rc = val.item.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0);
     let repriceObj = {
-      customerCode: qry.customerCode,
-      destination: qry.destination,
-      chkIn: qry.chkIn,
-      chkOut: qry.chkOut,
-      currency: qry.currency,
-      nationality: qry.nationality,
-      correlationId: qry.correlationId,
-      hotelCode: val.hotelCode,
-      groupCode: val.item[0].groupCode,
-      rateKey: rc.split(',').slice(1),
-      regionCode: qry.regionCode,
-      paxInfoArr: qry.paxInfoArr,
-      sessionId: getOrgHtlResult.generalInfo.sessionId
+      "customerCode": qry.customerCode,
+      "destination": qry.destination,
+      "chkIn": qry.chkIn,
+      "chkOut": qry.chkOut,
+      "currency": qry.currency,
+      "nationality": qry.nationality,
+      "correlationId": qry.correlationId,
+      "hotelCode": val.hotelCode,
+      "groupCode": val.item[0].groupCode,
+      "rateKey": rc.split(',').slice(1),
+      "regionCode": qry.regionCode,
+      "paxInfoArr": qry.paxInfoArr,
+      "sessionId": getOrgHtlResult.generalInfo.sessionId
     }
+
     const responseReprice = HotelService.doReprice(repriceObj);
     const resReprice = await responseReprice;
     dispatch(doHotelReprice(resReprice));

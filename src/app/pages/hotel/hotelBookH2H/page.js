@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams  } from 'next/navigation';
 import HotelService from '@/app/services/hotel.service';
-import BookingService from '@/app/services/booking.service';
+import ReservationService from '@/app/services/reservation.service';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { ToastContainer, toast } from 'react-toastify';
@@ -37,8 +37,6 @@ export default function HotelItinerary() {
   const [room2, setRoom2] = useState(null);
   const [room3, setRoom3] = useState(null);
   const [chdAllAges, setChdAllAges] = useState(null);
-
- 
 
   useEffect(()=>{
     window.scrollTo(0, 0);
@@ -180,7 +178,7 @@ export default function HotelItinerary() {
         "RateTypeName": i===0 && room1[0].rateTypeName || i===1 && room2[0].rateTypeName || i===2 && room3[0].rateTypeName,
         "RateCategoryCode": "0",
         "DetailsString": "",
-        "CancelPolicyType": resReprice.hotel?.rooms?.room[i].rateType==='Refundable' || resReprice.hotel?.rooms?.room[i].rateType==='refundable' ? "R" : "N",
+        "CancelPolicyType": resReprice.hotel?.rooms?.room[i]?.rateType==='Refundable' || resReprice.hotel?.rooms?.room[i]?.rateType==='refundable' ? "R" : "N",
         "PaxDetails": [],
         "CancellationPolicyDetails": []
       };
@@ -224,6 +222,7 @@ export default function HotelItinerary() {
           "MName": "",
           "LName": "",
           "PaxFullName": "",
+          "Age": "35",
           "Nationality": qry.nationality.split('-')[0]+','+qry.nationality.split('-')[0],
           "LeadPax": false,
           "PaxAssgRoomNo": (i+1).toString(),
@@ -240,6 +239,7 @@ export default function HotelItinerary() {
           "MName": "",
           "LName": "",
           "PaxFullName": "",
+          "Age": r.chdAgesArr[chdIndx].chdAgeVal,
           "Nationality": qry.nationality.split('-')[0]+','+qry.nationality.split('-')[0],
           "LeadPax": false,
           "PaxAssgRoomNo": (i+1).toString(),
@@ -338,7 +338,7 @@ export default function HotelItinerary() {
           "BookingCurrencyCode": userInfo?.user?.currencyCode,
           "WalkinUserCode": "",
           "BranchCode": userInfo?.user?.branchCode,
-          "RegionCode": qry.regionCode.toString(),
+          "RegionCode": qry?.regionCode.toString(),
           "CustomerCode": userInfo?.user?.userCode,
           "CustomerConsultantCode": userInfo?.user?.customerConsultantCode,
           "CompanyConsultantCode": userInfo?.user?.companyConsultantCode,
@@ -365,6 +365,7 @@ export default function HotelItinerary() {
           "DropoffDetails": "",
           "ProductAddress": htlDetails?.hotelDetail?.address1+', '+htlDetails?.hotelDetail?.address2,
           "ProductSystemId": htlDetails?.hotelDetail?.hotelCode,
+          "ProductCityCode": htlDetails?.hotelDetail?.destinationCode,
           "ProductCityName": htlDetails?.hotelDetail?.cityName,
           "ProductCountryISOCode": htlDetails?.hotelDetail?.countryCode,
           "ProductCountryName": htlDetails?.hotelDetail?.countryName,
@@ -397,6 +398,7 @@ export default function HotelItinerary() {
           "CustomerNetAmount": (parseFloat(net+markUpAmount)*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
           "XMLSupplierCode": resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
           "XMLRateKey": resReprice?.hotel?.rooms?.room.reduce((totalRk, r, i) => totalRk + (i !==0 ? 'splitter':'') + r.rateKey, ''),
+          "XMLSessionId": qry?.sessionId,
           "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
           "NoOfAdults": parseFloat(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
           "NoOfChildren": parseFloat(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
@@ -410,7 +412,7 @@ export default function HotelItinerary() {
         }
       }
       console.log("addServiceCartObj", addServiceCartObj)
-      const responseAddCart = BookingService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
+      const responseAddCart = ReservationService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
       const resAddCart = await responseAddCart;
       console.log("resAddCart", resAddCart)
       if(resAddCart > 0){
@@ -503,7 +505,7 @@ export default function HotelItinerary() {
                   <div className='mb-5'>
 
                     <div className={"bg-warning bg-opacity-10 px-2 py-1 fs-5 mb-2 d-flex justify-content-between curpointer "+ (otherInfo ? '':'collapsed')} aria-expanded={otherInfo} onClick={()=> setOtherInfo(!otherInfo)}>
-                      <strong>Other Information</strong>
+                      <strong>Cancellation Policy</strong>
                       <button className="btn btn-success py-0 togglePlus" type="button"></button>    
                     </div>
                     {otherInfo &&

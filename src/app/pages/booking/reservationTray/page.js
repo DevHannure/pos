@@ -83,7 +83,7 @@ export default function ReservationTray() {
     let bookItnery = {
       "bcode": "2",
       "btype": "O",
-      "returnurl": null,
+      "returnurl": '/pages/booking/reservationTray',
       "correlationId": 'd'
     }
     let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();

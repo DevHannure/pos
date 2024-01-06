@@ -81,7 +81,7 @@ export default function Header() {
       <div className="cusnav navbar navbar-expand-lg navbar-light">
         <div className="container-fluid">
           <Link className="navbar-brand" href="/">
-            <Image src={`/images/logo${process.env.NEXT_PUBLIC_SHORTCODE}.png`} alt={process.env.NEXT_PUBLIC_SHORTCODE} width={235} height={65} priority />
+            <Image className="mainlogo" src={`/images/logo${process.env.NEXT_PUBLIC_SHORTCODE}.png`} alt={process.env.NEXT_PUBLIC_SHORTCODE} width={235} height={65} priority />
           </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainnavigation">
             <span className="navbar-toggler-icon"></span>

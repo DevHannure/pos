@@ -583,19 +583,19 @@ export default function ModifySearch(props) {
         starOpt.push(v.value)
       })
       let qry = {
-        customerCode: cusCode,
-        destination:selectedDestination,
-        chkIn: format(chkIn, 'yyyy-MM-dd'),
-        chkOut: format(chkOut, 'yyyy-MM-dd'),
-        currency: cusCurrency,
-        nationality: cusNationality,
-        regionCode: regionCode,
-        activeSuppliers:selectedXML,
-        correlationId: props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId,
-        starRating: starOpt,
-        hotelName: selectedHotel,
-        num_rooms: parseInt(rmCountArr.length),
-        paxInfoArr: rmCountArr
+        "customerCode": cusCode,
+        "destination":selectedDestination,
+        "chkIn": format(chkIn, 'yyyy-MM-dd'),
+        "chkOut": format(chkOut, 'yyyy-MM-dd'),
+        "currency": cusCurrency,
+        "nationality": cusNationality,
+        "regionCode": regionCode,
+        "activeSuppliers":selectedXML,
+        "correlationId": props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId,
+        "starRating": starOpt,
+        "hotelName": selectedHotel,
+        "num_rooms": parseInt(rmCountArr.length),
+        "paxInfoArr": rmCountArr
       }
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString()
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson))

@@ -218,6 +218,7 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .image-gallery-thumbnail{height:80px; overflow:hidden; vertical-align:middle;}
 .cancelBrnone br{display:none !important;}
 .cancelBrnone .fn15{font-size:13px !important;}
+.mainlogo{width:auto; height:auto; }
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

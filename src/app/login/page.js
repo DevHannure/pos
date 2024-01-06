@@ -18,7 +18,7 @@ export default async function Login() {
         <div className="cusnav navbar navbar-expand-lg navbar-light">
           <div className="container">
             <Link className="navbar-brand" href="/">
-              <Image
+              <Image className="mainlogo"
                 src={`/images/logo-login${process.env.NEXT_PUBLIC_SHORTCODE}.png`}
                 alt={process.env.NEXT_PUBLIC_SHORTCODE}
                 width={216}

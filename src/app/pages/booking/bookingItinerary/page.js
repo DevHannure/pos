@@ -3,18 +3,41 @@ import React, {useEffect, useState } from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
 import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerary/HotelBookingItinerary';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faEnvelope, faPrint, faStar} from "@fortawesome/free-solid-svg-icons";
+import {faEnvelope, faPrint, faStar, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
 import {faShareFromSquare, faTrashCan} from "@fortawesome/free-regular-svg-icons";
 import {format, addDays, differenceInDays} from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useSearchParams  } from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
-import BookingService from '@/app/services/booking.service';
+import ReservationService from '@/app/services/reservation.service';
+import HotelService from '@/app/services/hotel.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// function JSONtoXML(obj) {
+//   let xml = '';
+//   for (let prop in obj) {
+//     xml += obj[prop] instanceof Array ? '' : '<' + prop + '>';
+//     if (obj[prop] instanceof Array) {
+//       for (let array in obj[prop]) {
+//         xml += '\n<' + prop + '>\n';
+//         xml += JSONtoXML(new Object(obj[prop][array]));
+//         xml += '</' + prop + '>';
+//       }
+//     } else if (typeof obj[prop] == 'object') {
+//       xml += JSONtoXML(new Object(obj[prop]));
+//     } else {
+//       xml += obj[prop];
+//     }
+//     xml += obj[prop] instanceof Array ? '' : '</' + prop + '>\n';
+//   }
+//   xml = xml.replace(/<\/?[0-9]{1,}>/g, '');
+//   return xml;
+// }
+
 export default function ReservationTray() {
+  
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
@@ -24,21 +47,57 @@ export default function ReservationTray() {
 
   useEffect(()=>{
     window.scrollTo(0, 0);
-    doItineraryLoad()
+    doItineraryLoad();
   },[searchparams]);
-
   
   const [bkngDetails, setBkngDetails] = useState(null);
-  //console.log("bkngDetails", bkngDetails)
+  const [bkngCombDetails, setBkngCombDetails] = useState(null);
 
-  const doItineraryLoad = async() =>{
+  console.log("bkngDetails",bkngDetails)
+  console.log("bkngCombDetails",bkngCombDetails)
+
+  
+
+  const doItineraryLoad = async() => {
     let bookingItineraryObj = {
       "BookingNo": qry?.bcode,
       "BookingType": qry?.btype
     }
-    const responseItinerary = BookingService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
+    const responseItinerary = ReservationService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
     const resItinerary = await responseItinerary;
-    setBkngDetails(resItinerary)
+    if(!resItinerary.ErrorInfo){
+      setBkngDetails(resItinerary);
+     
+      let serviceComb = []
+      serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
+        if(s.ServiceCode==="1"){
+          let filterDtl = []
+          resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
+            if(s.ServiceMasterCode===d.ServiceMasterCode){
+              filterDtl.push(d)
+            }
+          });
+          let combArr = []
+          combArr = filterDtl.map((dt, i) => {
+            let objPax = resItinerary?.ReservationDetail?.PaxDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+            if(objPax){
+              dt.PaxNew = objPax
+            }
+            let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+            if(objCancellation){
+              dt.CancellationNew = objCancellation
+            }
+            return dt
+          })
+          s.RoomDtlNew = combArr
+        }
+        return s
+      });
+      setBkngCombDetails(serviceComb)
+    }
+    else{
+      toast.error(resItinerary.ErrorInfo,{theme: "colored"});
+    }
   }
   
   const [noPrint, setNoPrint] = useState(true);
@@ -85,12 +144,10 @@ export default function ReservationTray() {
     return status 
   }
   
-
   const emailBtn = async() => {
     let allowMe = validateEmail();
     console.log("allowMe", allowMe)
-
-  }
+  };
   
   const [payMode, setPayMode] = useState('');
   const [termCheckbox, setTermCheckbox] = useState(false);
@@ -109,11 +166,124 @@ export default function ReservationTray() {
     }
 
     return status
-  }
+  };
+
   const completeBtn = async() => {
     let allowMe = validate();
-    console.log("allowMe", allowMe)
+    if(allowMe){
+      if(payMode==='PL'){
+        bkngCombDetails?.map((s) => {
+          convertCartToReservationBtn(s)
+        });
+      }
+    }
+  };
+
+  const convertCartToReservationBtn = async(value) => {
+    let cartToReservationObj = {
+      "TempBookingNo": value.BookingNo,
+      "TempServiceMasterCode": value.ServiceMasterCode,
+      "UserId": bkngDetails?.ReservationDetail?.BookingDetail.UserId
+    }
+    const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, qry.correlationId);
+    const resCartToReservation = await responseCartToReservation;
+    console.log("resCartToReservation", resCartToReservation)
+    if(resCartToReservation){
+      if(value.ServiceCode==="1"){
+        hotelBookBtn(value, resCartToReservation)
+      }
+    }
+  };
+
+  const hotelBookBtn = async(value, bookingId) => {
+    let roomArr = []
+    roomArr = value.RoomDtlNew.map((r, i) => {
+      let rateKeyArray = value.XMLRateKey.split('splitter');    
+      let roomGuest = [];
+      roomGuest = r.PaxNew.map((p) => {
+        let guest = {
+          "Title": {
+            "Code": "",
+            "Text": p.PaxTitle
+          },
+          "FirstName": p.FName,
+          "LastName": p.LName,
+          "IsLeadPAX": p.LeadPax,
+          "Type": p.PaxType === "A" ? "Adult" : "Child",
+          "Age": p.Age
+        }
+        return guest
+      })
+
+      let room = {
+        "RateKey": rateKeyArray[i],
+        "RoomIdentifier": parseFloat(i+1).toString(),
+        "Guests": {
+          "Guest": roomGuest
+        },
+        "Price": {
+          "Gross": parseFloat(r.Net).toFixed(2),
+          "Net": parseFloat(r.Net).toFixed(2),
+          "Tax": parseFloat(r.Tax).toFixed(2),
+          "Commission": "0.0"
+        }
+      }
+      return room
+    })
+
+    let hotelReq = {
+      "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
+      "DestinationCode": value.ProductCityCode,
+      "Nationality": value.ProductCountryISOCode,
+      "HotelCode": value.ProductCode,
+      "GroupCode": value.XMLSupplierCode,
+      "CheckInDate": format(new Date(value.BookedFrom), 'yyyy-MM-dd'),
+      "CheckOutDate": format(new Date(value.BookedTo), 'yyyy-MM-dd'),
+      "Currency": value.CustomerCurrencyCode,
+      "CustomerRefNumber": bookingId+'-'+value.ServiceMasterCode,
+      "Rooms": {
+        "Room": roomArr
+      },
+      "SessionId": value.XMLSessionId,
+    }
+    console.log("hotelReq", hotelReq)
+    const responseHotelBook = HotelService.doBook(hotelReq, qry.correlationId);
+    const resHotelBook = await responseHotelBook;
+    console.log("resHotelBook", resHotelBook)
+    if(resHotelBook){
+      confirmReservationServiceAndEmailBtn(hotelReq,resHotelBook)
+    }
+  };
+
+  const confirmReservationServiceAndEmailBtn = async(serviceReq,serviceRes) => {
+    //let xmlServiceReqReq = JSONtoXML(serviceReq);
+    //let xmlServiceRes = JSONtoXML(serviceRes);
+    let emailHtml = '<div>'+document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+serviceRes.customerRefNumber.split('-')[1]).innerHTML+'</div>'
+    let cRSAEobj = {
+      "BookingNo": serviceRes.customerRefNumber.split('-')[0],
+      "ServiceMasterCode": serviceRes.customerRefNumber.split('-')[1],
+      "UserId": bkngDetails?.ReservationDetail?.BookingDetail.UserId,
+      "BookedFrom": serviceReq.CheckInDate,
+      "EmailHtml": emailHtml,
+      "Service": {
+        "SupplierConfirmationNo": serviceRes.supplierConfirmationNumber,
+        "XMLBookingNo": serviceRes.adsConfirmationNumber,
+        "XMLBookingStatus": serviceRes.status,
+        "XMLBookingRequest": JSON.stringify(serviceReq),
+        "XMLBookingResponse": JSON.stringify(serviceRes),
+        "XMLError": serviceRes.errorInfo ? JSON.stringify(serviceRes.errorInfo) : "",
+        "VoucherLink": ""
+      }
+    }
+    console.log("cRSAEobj", cRSAEobj);
+    const responseConfirm = ReservationService.doConfirmReservationServiceAndEmail(cRSAEobj, qry.correlationId);
+    const resConfirm = await responseConfirm;
+    console.log("resConfirm", resConfirm);
+
+
   }
+
+
 
 
   return (
@@ -135,24 +305,27 @@ export default function ReservationTray() {
                           <tbody>
                             <tr>
                               <td valign='center' style={{fontSize:'17px', color:'rgb(57, 145, 183)'}}>Review &amp; Book Itinerary</td>
-                                <td align="right">
-                                  {noPrint &&
-                                  <div className='d-print-none'>
-                                    {/* <button type='button' data-toggle="modal" data-target="#paymentdetailsPopup" className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Payment Link Details</button>&nbsp;
-                                    <button type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Send Payment Link</button>&nbsp; */}
-                                    <button data-bs-toggle="modal" data-bs-target="#emailModal" type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faEnvelope} /> Email</button>&nbsp;
-                                    <button onClick={() => (printDiv('printableArea'))} type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faPrint} /> Print</button>
-                                  </div>
+                              <td align="right">
+                                {noPrint &&
+                                <div className='d-print-none'>
+                                  {/* <button type='button' data-toggle="modal" data-target="#paymentdetailsPopup" className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Payment Link Details</button>&nbsp;
+                                  <button type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faShareSquare} /> Send Payment Link</button>&nbsp; */}
+                                  {qry?.returnurl &&
+                                    <><button onClick={() => router.back()} type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faArrowLeftLong} /> Back</button>&nbsp;</>
                                   }
-                                </td>
-                              </tr>
+                                  <button data-bs-toggle="modal" data-bs-target="#emailModal" type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faEnvelope} /> Email</button>&nbsp;
+                                  <button onClick={() => (printDiv('printableArea'))} type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faPrint} /> Print</button>
+                                </div>
+                                }
+                              </td>
+                            </tr>
                           </tbody>
                         </table>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <>
+                        <div id="bookingDetails">
                           <table width="100%" cellPadding="10" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
                             <tbody>
                               <tr>
@@ -211,12 +384,12 @@ export default function ReservationTray() {
                               </tr>
                             </tbody>
                           </table>
-                        </>
+                        </div>
 
                         {bkngDetails?.ReservationDetail?.Services?.map((s, i) => (
                           <React.Fragment key={i}>
                           {s.ServiceCode === "1" &&
-                            <>
+                            <div id={`serviceDetails${s.ServiceMasterCode}`}>
                             {/* Hotel Service Start */}
                             <table width="100%" cellPadding="0" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif', fontSize:'13px'}}>
                               <tbody>
@@ -341,7 +514,7 @@ export default function ReservationTray() {
                               </tbody>
                             </table>
                             {/* Hotel Service End */}
-                            </>
+                            </div>
                           }
                           </React.Fragment>
                         ))}
@@ -494,19 +667,7 @@ export default function ReservationTray() {
                             <label><input className="form-check-input mt-0" type="checkbox" checked={termCheckbox} onChange={() => setTermCheckbox(!termCheckbox)}  /> I have read and accept the service details, rates, cancellation and payment policy.</label>
                           </div>
 
-                          <div className="mb-3">
-                            <div className="row g-1 align-items-center">
-                              <div className="col-auto">
-                                <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
-                              </div>
-                              <div className="col-auto">
-                                <input type="text" className="form-control form-control-sm" />
-                              </div>
-                              <div className="col-auto">
-                                <button className="btn btn-sm border"><FontAwesomeIcon icon={faShareFromSquare} /></button>
-                              </div>
-                            </div>
-                          </div>
+                          
                           
                           <div className="mb-3">
                             <div className="form-check form-check-inline">
@@ -520,8 +681,24 @@ export default function ReservationTray() {
                             </div>
                           </div>
 
+                          {payMode !== "PL" && payMode !== "" &&
+                          <div className="mb-3">
+                            <div className="row g-1 align-items-center">
+                              <div className="col-auto">
+                                <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
+                              </div>
+                              <div className="col-auto">
+                                <input type="text" className="form-control form-control-sm" />
+                              </div>
+                              <div className="col-auto">
+                                <button className="btn btn-sm border"><FontAwesomeIcon icon={faShareFromSquare} /></button>
+                              </div>
+                            </div>
+                          </div>
+                          }
+
                           <div className="mb-2">
-                            <button type='button' className='btn btn-sm btn-warning' onClick={completeBtn}>Complete Booking</button>
+                            <button type='button' className='btn btn-warning' onClick={completeBtn}>Complete Booking</button>
                           </div>
                           
                          </div>

@@ -433,8 +433,6 @@ export default function ReservationTray() {
     }
   }
 
-
-
   return (
     <MainLayout>
       <ToastContainer />

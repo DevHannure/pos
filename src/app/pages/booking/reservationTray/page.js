@@ -81,7 +81,7 @@ export default function ReservationTray() {
 
   const viewBooking = () => {
     let bookItnery = {
-      "bcode": "2",
+      "bcode": "28",
       "btype": "O",
       "returnurl": '/pages/booking/reservationTray',
       "correlationId": 'd'

@@ -443,7 +443,6 @@ export default function ReservationTray() {
         <div className="container-fluid">
           <div className='pt-3'>
             <div className='bg-white shadow-sm'>
-
               {bkngDetails ?
               <>
               {bkngDetails?.ReservationDetail?.BookingDetail ?
@@ -814,45 +813,56 @@ export default function ReservationTray() {
                         {/* Visa Service End */}
 
                         {noPrint &&
-                         <div className='d-print-none p-2 fn15 mt-3'>
-                          <div className="form-check mb-2">
-                            <label><input className="form-check-input mt-0" type="checkbox" checked={termCheckbox} onChange={() => setTermCheckbox(!termCheckbox)}  /> I have read and accept the service details, rates, cancellation and payment policy.</label>
-                          </div>
-                          
-                          <div className="mb-3">
-                            <div className="form-check form-check-inline">
-                              <label><input className="form-check-input mt-0" type="radio" value="CC" name="payName" checked={payMode==='CC'} onChange={(e) => setPayMode(e.target.value)} /> Pay By Credit Card</label>
-                            </div>
-                            <div className="form-check form-check-inline">
-                              <label><input className="form-check-input mt-0" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
-                            </div>
-                            <div className="form-check form-check-inline">
-                              <label><input className="form-check-input mt-0" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
-                            </div>
-                          </div>
 
-                          {payMode === "CC" || payMode === "PN" ?
-                          <div className="mb-3">
-                            <div className="row g-1 align-items-center">
-                              <div className="col-auto">
-                                <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
+                        <div className='d-print-none p-2 fn15 mt-3'>
+                          {bkngDetails.ReservationDetail.BookingDetail.BookingStatus ==="-1" ?
+                          <div>
+                            <div className="form-check mb-2">
+                              <label><input className="form-check-input mt-0" type="checkbox" checked={termCheckbox} onChange={() => setTermCheckbox(!termCheckbox)}  /> I have read and accept the service details, rates, cancellation and payment policy.</label>
+                            </div>
+                            
+                            <div className="mb-3">
+                              <div className="form-check form-check-inline">
+                                <label><input className="form-check-input mt-0" type="radio" value="CC" name="payName" checked={payMode==='CC'} onChange={(e) => setPayMode(e.target.value)} /> Pay By Credit Card</label>
                               </div>
-                              <div className="col-auto">
-                                <input type="text" className="form-control form-control-sm" value={agentRefText} onChange={(e) => setAgentRefText(e.target.value)} />
+                              <div className="form-check form-check-inline">
+                                <label><input className="form-check-input mt-0" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
                               </div>
-                              {/* <div className="col-auto">
-                                <button className="btn btn-sm border"><FontAwesomeIcon icon={faShareFromSquare} /></button>
-                              </div> */}
+                              <div className="form-check form-check-inline">
+                                <label><input className="form-check-input mt-0" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
+                              </div>
+                            </div>
+
+                            {payMode === "CC" || payMode === "PN" ?
+                            <div className="mb-3">
+                              <div className="row g-1 align-items-center">
+                                <div className="col-auto">
+                                  <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
+                                </div>
+                                <div className="col-auto">
+                                  <input type="text" className="form-control form-control-sm" value={agentRefText} onChange={(e) => setAgentRefText(e.target.value)} />
+                                </div>
+                                {/* <div className="col-auto">
+                                  <button className="btn btn-sm border"><FontAwesomeIcon icon={faShareFromSquare} /></button>
+                                </div> */}
+                              </div>
+                            </div>
+                            : ''
+                            }
+
+                            <div className="mb-2">
+                              <button type='button' className='btn btn-warning' onClick={completeBtn}>Complete Booking</button>
                             </div>
                           </div>
-                          : ''
-                          }
-
+                          :
                           <div className="mb-2">
-                            <button type='button' className='btn btn-warning' onClick={completeBtn}>Complete Booking</button>
+                            <button type='button' className='btn btn-primary me-3'>Add Service</button>
+                            <button type='button' className='btn btn-primary'>Add Offline Service</button>
                           </div>
+                          }
                           
-                         </div>
+                        </div>
+
                         }
 
 

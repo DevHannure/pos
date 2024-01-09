@@ -96,7 +96,7 @@ export default function Header() {
               </div>
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
-                <li className="nav-item"><Link className="nav-link" href="#">Cart</Link></li>
+                <li className="nav-item"><Link className="nav-link" href="/pages/booking/tempBookings">Cart</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="/pages/booking/reservationTray">Bookings</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li>

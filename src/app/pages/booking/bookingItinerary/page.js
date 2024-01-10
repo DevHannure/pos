@@ -419,7 +419,7 @@ export default function ReservationTray() {
     const responseConfirm = ReservationService.doReConfirmReservationServiceAndEmail(rCRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
     console.log("resConfirm", resConfirm);
-    if(resConfirm==='LOC'){
+    if(resConfirm){
       let bookItnery = {
         "bcode": serviceRes.customerRefNumber.split('-')[0],
         "btype": "",

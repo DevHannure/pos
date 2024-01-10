@@ -75,7 +75,7 @@ const ReservationService = {
         body: JSON.stringify(reqObj),
         headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
       });
-      return response.text()
+      return response.json()
     } catch (error) {console.log("error", error)}
   },
 

@@ -618,7 +618,7 @@ export default function ReservationTray() {
                                             <React.Fragment key={ind}>
                                               {s.ServiceMasterCode === d.ServiceMasterCode &&
                                               <div style={{marginBottom:'8px'}}>
-                                                <strong>{d.RateTypeName.split('(')[0]}:</strong> {d.RoomTypeName} with {d.RateBasisName}
+                                                <strong>{d.RateTypeName.split('(')[0]}:</strong> {s.RoomTypeName} with {s.RateBasisName}
                                                 &nbsp;({d.NoOfUnits} Units) &nbsp;|&nbsp;&nbsp;
                                                 <span style={{textWrap:'nowrap'}}><strong>Pax:</strong> {d.AdultNoOfUnits} Adult(s){d.ChildNoOfUnits !=="0" && <span>, {d.ChildNoOfUnits} Child(ren)</span>}</span>
                                               </div>

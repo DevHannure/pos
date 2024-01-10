@@ -15,6 +15,7 @@ import HotelService from '@/app/services/hotel.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
+import {useSelector } from "react-redux";
 
 // function JSONtoXML(obj) {
 //   let xml = '';
@@ -38,7 +39,8 @@ import CommonLoader from '@/app/components/common/CommonLoader';
 // }
 
 export default function ReservationTray() {
-  const emailModalClose = useRef(null);
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  console.log("userInfo", userInfo)
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
@@ -119,6 +121,7 @@ export default function ReservationTray() {
 
   const [mainLoader, setMainLoader] = useState(false);
 
+  const emailModalClose = useRef(null);
   const [emailText, setEmailText] = useState('');
   const [errorEmailText, setErroremailText] = useState('');
   const [emailLoad, setEmailLoad] = useState(false);
@@ -447,6 +450,7 @@ export default function ReservationTray() {
               <>
               {bkngDetails?.ReservationDetail?.BookingDetail ?
               <>
+              
               <div id="printableArea">
                 <table width="100%" align="center" cellPadding="0" cellSpacing="0" style={{backgroundColor:'#FFF',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'18px',color:'#000',minWidth:'100%',maxWidth:'100%',border:'1px solid #e1e1e1'}}>
                   <tbody>
@@ -825,12 +829,20 @@ export default function ReservationTray() {
                               <div className="form-check form-check-inline">
                                 <label><input className="form-check-input mt-0" type="radio" value="CC" name="payName" checked={payMode==='CC'} onChange={(e) => setPayMode(e.target.value)} /> Pay By Credit Card</label>
                               </div>
-                              <div className="form-check form-check-inline">
-                                <label><input className="form-check-input mt-0" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
-                              </div>
+
+                              {userInfo?.user.paymentMode==="LOC" &&
+                                <div className="form-check form-check-inline">
+                                  <label><input className="form-check-input mt-0" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
+                                </div>
+                              }
+
+                              {bkngDetails.ReservationDetail.Services.some(o => o.NRF === false) ?
                               <div className="form-check form-check-inline">
                                 <label><input className="form-check-input mt-0" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
                               </div>
+                              : ''
+                              }
+
                             </div>
 
                             {payMode === "CC" || payMode === "PN" ?

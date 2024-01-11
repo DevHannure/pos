@@ -623,7 +623,7 @@ export default function ReservationTray() {
                                           </td>
                                           <td>
                                             {s?.RoomDtlNew?.map((d, ind) => (
-                                              <div style={{marginBottom:'8px'}}>
+                                              <div key={ind} style={{marginBottom:'8px'}}>
                                                 <strong>Room {ind+1}:</strong> {s.RoomTypeName} with {s.RateBasisName}
                                                 &nbsp;({d.NoOfUnits} Units) &nbsp;|&nbsp;&nbsp;
                                                 <span style={{textWrap:'nowrap'}}><strong>Pax:</strong> {d.AdultNoOfUnits} Adult(s){d.ChildNoOfUnits !=="0" && <span>, {d.ChildNoOfUnits} Child(ren)</span>}</span>
@@ -647,7 +647,7 @@ export default function ReservationTray() {
                                           <td>{format(new Date(s.BookedTo), 'eee, dd MMM yyyy')}</td>
                                           <td>
                                             {s?.RoomDtlNew?.map((d, ind) => (
-                                              <div style={{marginBottom:'8px'}}>
+                                              <div key={ind} style={{marginBottom:'8px'}}>
                                                 <div><strong>Room {ind+1}:</strong> 
                                                   <div style={{textWrap:'nowrap'}}>{(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(s.CustomerExchangeRate))} ({s.CustomerCurrencyCode})</div>
                                                 </div>

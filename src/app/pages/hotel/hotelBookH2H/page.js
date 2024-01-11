@@ -41,7 +41,7 @@ export default function HotelItinerary() {
   useEffect(()=>{
     window.scrollTo(0, 0);
     let chdAllAgesVar = []
-    qry.paxInfoArr.forEach((v) => {
+    qry?.paxInfoArr?.forEach((v) => {
       if (v.chdVal > 0) {
         v.chdAgesArr.forEach((val) => {
           if (parseInt(val.chdAgeVal) > 0) {
@@ -55,13 +55,17 @@ export default function HotelItinerary() {
     if(!resReprice) {
       doHtlRepriceLoad()
     }
-    if(qry.paxInfoArr[0]){
+    
+    if(qry?.paxInfoArr?.length===1){
       roomRatetype1(qry.paxInfoArr[0])
     }
-    if(qry.paxInfoArr[1]){
+    else if(qry?.paxInfoArr?.length===2){
+      roomRatetype1(qry.paxInfoArr[0])
       roomRatetype2(qry.paxInfoArr[1])
     }
-    if(qry.paxInfoArr[2]){
+    else{
+      roomRatetype1(qry.paxInfoArr[0])
+      roomRatetype2(qry.paxInfoArr[1])
       roomRatetype3(qry.paxInfoArr[2])
     }
   },[searchparams]);
@@ -469,7 +473,7 @@ export default function HotelItinerary() {
                                   <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
                                     <option value="Mr">Mr</option>
                                     <option value="Mrs">Mrs</option>
-                                    <option value="Ms">Ms</option>
+                                    <option value="Miss">Ms</option>
                                   </select>
                                   :
                                   <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>

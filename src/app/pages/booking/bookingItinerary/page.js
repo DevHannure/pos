@@ -385,18 +385,19 @@ export default function ReservationTray() {
     const responseConfirm = ReservationService.doConfirmReservationServiceAndEmail(cRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
     console.log("resConfirm", resConfirm);
-    if(resConfirm){
-      let bookItnery = {
-        "bcode": serviceRes.customerRefNumber.split('-')[0],
-        "btype": "",
-        "returnurl": null,
-        "correlationId": qry.correlationId
-      }
-      let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      setMainLoader(false);
-      router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    //if(resConfirm != null){
+    let bookItnery = {
+      "bcode": serviceRes.customerRefNumber.split('-')[0],
+      "btype": "",
+      "returnurl": null,
+      "correlationId": qry.correlationId
     }
+    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    setMainLoader(false);
+    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    //}
+   
   }
 
   const reConfirmReservationServiceAndEmailBtn = async(serviceReq,serviceRes, index) => {
@@ -422,18 +423,20 @@ export default function ReservationTray() {
     const responseConfirm = ReservationService.doReConfirmReservationServiceAndEmail(rCRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
     console.log("resConfirm", resConfirm);
-    if(resConfirm){
-      let bookItnery = {
-        "bcode": serviceRes.customerRefNumber.split('-')[0],
-        "btype": "",
-        "returnurl": null,
-        "correlationId": qry.correlationId
-      }
-      let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      setMainLoader(false);
-      router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    //if(resConfirm !=null){
+    let bookItnery = {
+      "bcode": serviceRes.customerRefNumber.split('-')[0],
+      "btype": "",
+      "returnurl": null,
+      "correlationId": qry.correlationId
     }
+    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    setMainLoader(false);
+    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    //}
+    
+    
   }
 
   return (

@@ -60,6 +60,7 @@ export default function ReservationTray() {
   console.log("bkngCombDetails",bkngCombDetails)
 
   const doItineraryLoad = async() => {
+    setBkngDetails(null);
     let bookingItineraryObj = {
       "BookingNo": qry?.bcode,
       "BookingType": qry?.btype
@@ -621,7 +622,14 @@ export default function ReservationTray() {
                                             </div>
                                           </td>
                                           <td>
-                                          {bkngDetails?.ReservationDetail?.ServiceDetails?.map((d, ind) => (
+                                            {s?.RoomDtlNew?.map((d, ind) => (
+                                              <div style={{marginBottom:'8px'}}>
+                                                <strong>Room {ind+1}:</strong> {s.RoomTypeName} with {s.RateBasisName}
+                                                &nbsp;({d.NoOfUnits} Units) &nbsp;|&nbsp;&nbsp;
+                                                <span style={{textWrap:'nowrap'}}><strong>Pax:</strong> {d.AdultNoOfUnits} Adult(s){d.ChildNoOfUnits !=="0" && <span>, {d.ChildNoOfUnits} Child(ren)</span>}</span>
+                                              </div>
+                                            ))}
+                                          {/* {bkngDetails?.ReservationDetail?.ServiceDetails?.map((d, ind) => (
                                             <React.Fragment key={ind}>
                                               {s.ServiceMasterCode === d.ServiceMasterCode &&
                                               <div style={{marginBottom:'8px'}}>
@@ -631,25 +639,31 @@ export default function ReservationTray() {
                                               </div>
                                               }
                                             </React.Fragment> 
-                                          ))}
+                                          ))} */}
                                           </td>
                                           <td>{s.BookedNights} Night(s)</td>
                                           {/* <td><strong>Total Guest:</strong> {(parseFloat(s.NoOfAdults)+parseFloat(s.NoOfChildren))}<br /></td> */}
                                           <td>{format(new Date(s.BookedFrom), 'eee, dd MMM yyyy')}</td>
                                           <td>{format(new Date(s.BookedTo), 'eee, dd MMM yyyy')}</td>
                                           <td>
-                                            {bkngDetails?.ReservationDetail?.ServiceDetails?.map((d, ind) => (
+                                            {s?.RoomDtlNew?.map((d, ind) => (
+                                              <div style={{marginBottom:'8px'}}>
+                                                <div><strong>Room {ind+1}:</strong> 
+                                                  <div style={{textWrap:'nowrap'}}>{(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(s.CustomerExchangeRate))} ({s.CustomerCurrencyCode})</div>
+                                                </div>
+                                              </div>
+                                            ))}
+                                            {/* {bkngDetails?.ReservationDetail?.ServiceDetails?.map((d, ind) => (
                                               <React.Fragment key={ind}>
                                                 {s.ServiceMasterCode === d.ServiceMasterCode &&
                                                 <div style={{marginBottom:'8px'}}>
                                                   <div><strong>{d.RateTypeName.split('(')[0]}:</strong> 
-                                                    {/* <div style={{textWrap:'nowrap'}}>{parseFloat(d.Net).toFixed(2)} (USD)</div> */}
                                                     <div style={{textWrap:'nowrap'}}>{(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(s.CustomerExchangeRate))} ({s.CustomerCurrencyCode})</div>
                                                   </div>
                                                 </div>
                                                 }
                                               </React.Fragment> 
-                                            ))}
+                                            ))} */}
                                           </td>
                                         </tr>
                                       </tbody>

@@ -7,14 +7,16 @@ import { faPowerOff } from "@fortawesome/free-solid-svg-icons";
 import { useSession, signOut } from "next-auth/react";
 import Bowser from "bowser";
 import AuthService from '@/app/services/auth.service';
+import MasterService from '@/app/services/master.service';
 import { useSelector, useDispatch } from "react-redux";
-import { doUserInfo } from '@/app/store/commonStore/common';
+import { doUserInfo, doCustCreditDtls } from '@/app/store/commonStore/common';
 
 export default function Header() {
   const { data, status } = useSession();
   const dispatch = useDispatch();
   const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
-  // console.log("session666", data)
+  const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
+  //console.log("session666", data)
   // console.log("session", status)
 
   //if(status==='authenticated'){
@@ -27,7 +29,10 @@ export default function Header() {
   }
   
   useEffect(() => {
-    dispatch(doUserInfo(data))
+    dispatch(doUserInfo(data));
+    if(data && !customersCreditInfo){
+      customersCreditDetailsBtn(data?.user.userCode)
+    }
   }, [data]);
   
   const [fixedClass, setFixedClass] = useState(false);
@@ -75,6 +80,15 @@ export default function Header() {
     }
   }
 
+  const customersCreditDetailsBtn = async(userCode) => {
+    let customersCreditDetailsObj={
+      "CustomerCode": userCode
+    }
+    const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, data?.correlationId);
+    const resCustCreditDtls = await responseCustCreditDtls;
+    dispatch(doCustCreditDtls(resCustCreditDtls));
+  }
+
   return (
     <>
     <header className={"headerMain " + (fixedClass ? 'fixedNav': 'absoluteNav')}>
@@ -90,7 +104,7 @@ export default function Header() {
             <div className="ms-auto mt-2">
               <div className="text-end">
                 <ul className="deviderList">
-                  <li className="text-capitalize">{userInfos?.user?.customerConsultantName?.toLowerCase()}, {userInfos?.user?.branchName?.toLowerCase()}</li>
+                  <li className="text-capitalize">Cr. Limit:150001({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; <span className="text-success">Avl Cr:{customersCreditInfo?.creditAvailable}</span> &nbsp;|&nbsp; <span className="text-danger">Used Cr:150001</span> &nbsp;|&nbsp;  {userInfos?.user?.customerConsultantName?.toLowerCase()}, {userInfos?.user?.branchName?.toLowerCase()}</li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
               </div>

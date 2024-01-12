@@ -12,7 +12,7 @@ import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import ReservationService from '@/app/services/reservation.service';
 import HotelService from '@/app/services/hotel.service';
-import PaymentService from '@/app/services/payment.service';
+import MasterService from '@/app/services/master.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
@@ -235,13 +235,14 @@ export default function ReservationTray() {
     let allowMe = validate();
     if(allowMe){
       if(payMode === "PN") {
-        // let customerCreditObj={
-        //   "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
-        //   "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode
-        // }
-        // const responseCustomerCredit = ReservationService.doConvertCartToReservation(cartToReservationObj, qry.correlationId);
-        // const resCustomerCredit = await responseCustomerCredit;
-        const resCustomerCredit = true;
+        let customerHasCreditObj={
+          "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
+          "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode
+        }
+        const responseCustomerHasCredit = MasterService.doCheckIfCustomerHasCredit(customerHasCreditObj, qry.correlationId);
+        const resCustomerCredit = await responseCustomerHasCredit;
+        console.log("resCustomerCredit", resCustomerCredit)
+        //const resCustomerCredit = true;
         if(resCustomerCredit){
           convertCartToReservationBtn()
         }
@@ -291,15 +292,14 @@ export default function ReservationTray() {
             "bookingNo": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
             "pGSupplier": parseFloat(userInfo?.user.pgType),
             "customerCode": resItineraryNew?.ReservationDetail?.BookingDetail?.CustomerCode,
-            "domainName": "b2b-psi-two.vercel.app",
+            "domainName": "https://b2b-psi-two.vercel.app",
             "uID": uniqId,
             "correlationId": qry.correlationId
           }
-          doPaymentBtn(payObj);
-          // let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
-          // let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-          // setMainLoader(false);
-          // router.push(`/pages/payment/paymentOrder?qry=${encData}`);
+          let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
+          let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+          setMainLoader(false);
+          router.push(`/pages/payment/paymentOrder?qry=${encData}`);
         }
         else{
           resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
@@ -316,33 +316,7 @@ export default function ReservationTray() {
       }
     }
   };
-
-  const divRef = useRef();
-  const doPaymentBtn = async (req) => {
-    let payObj = {
-      "BookingNo": req.bookingNo,
-      "PGSupplier": req.pGSupplier,
-      "CustomerCode": req.customerCode,
-      "DomainName": req.domainName,
-      "UID": req.uID,
-    }
-    console.log("payObj", payObj);
-    const responsePay = PaymentService.doPayment(payObj, req.correlationId);
-    const resPay = await responsePay;
-    console.log("resPay", resPay)
-    if(resPay && resPay?.pgResponseType ===1){
-      const fragment = document.createRange().createContextualFragment(resPay.responseDetail);
-      divRef.current.append(fragment);
-      setMainLoader(false);
-    }
-    else{
-      setMainLoader(false);
-      toast.error("Something went wrong! Please try after sometime",{theme: "colored"});
-      setTimeout(() => {
-        router.push('/');
-      }, 5000); 
-    }
-  }
+  
 
   const hotelBookBtn = async(value, index) => {
     let roomArr = []
@@ -929,8 +903,6 @@ export default function ReservationTray() {
                             <div className="mb-2">
                               <button type='button' className='btn btn-warning' onClick={completeBtn}>Complete Booking</button>
                             </div>
-
-                            <div ref={divRef}></div>
 
                           </div>
                           :

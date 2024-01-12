@@ -27,11 +27,19 @@ export default function PaymentOrder() {
   const qry = JSON.parse(bytes);
   console.log("qry", qry)
   
-  useEffect(()=>{
-    doBooking();
-  },[searchparams]);
+  const divRef = useRef(null);
+  console.log("divRef", divRef);
+  const [resHtml, setResHtml] = useState(null);
+  console.log("resHtml", resHtml);
 
-  const divRef = useRef();
+  useEffect(()=>{
+    //console.log("divRef123", divRef)
+    //if(divRef.current === null){
+      doBooking();
+    //}
+    
+  },[searchparams]);
+  
 
   const doBooking = async () => {
     if(qry){
@@ -44,6 +52,7 @@ export default function PaymentOrder() {
       }
       const responsePay = PaymentService.doPayment(payObj, qry.correlationId);
       const resPay = await responsePay;
+      setResHtml(resPay)
       console.log("resPay", resPay)
       if(resPay && resPay?.pgResponseType ===1){
         //setHtmlLoad(resPay.responseDetail)
@@ -63,11 +72,16 @@ export default function PaymentOrder() {
   return (
     <>
       <ToastContainer />
-      <div className="vh-100 align-items-center d-flex justify-content-center">
-        <div className="fs-5 text-center mb-5">
+      <div>
+        <div className="fs-5 text-center my-5">
+          {!resHtml &&
+            <>
             <div><FontAwesomeIcon icon={faSpinner} className="blue my-4 slow-spin fs-1" /></div>
             <p>Payment and booking is under process. Please do not refresh the page.</p>
-            <div ref={divRef}></div>
+            </>
+          }
+          <div ref={divRef}></div>
+            {/* <div ref={divRef}></div> */}
         </div>
        
         {/* <div><script src="https://test.oppwa.com/v1/paymentWidgets.js?checkoutId=607310F893041A9C0C832C006EA26A7E.uat01-vm-tx01"></script><form action="&amp;pgtype=3&amp;bookingno=50&amp;customercode=2&amp;uid=lr9bueai&amp;domain=localhost:5001" className="paymentWidgets" data-brands="VISA MASTER AMEX"></form></div> */}

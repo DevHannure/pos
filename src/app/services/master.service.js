@@ -34,6 +34,30 @@ const MasterService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetCustomersCreditDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/customer/GetCustomersCreditDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doCheckIfCustomerHasCredit: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/customer/CheckIfCustomerHasCredit`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  
+
 }
 
 export default MasterService

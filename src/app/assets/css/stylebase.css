@@ -220,6 +220,18 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .cancelBrnone .fn15{font-size:13px !important;}
 .mainlogo{width:auto; height:auto; }
 
+.slow-spin {-webkit-animation:fa-spin 1s infinite linear; animation:fa-spin 1s infinite linear;}
+@keyframes fa-spin {
+0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+}
+100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+}
+}
+
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}
 .mainNav .navbar-nav .nav-link{border-top:1px solid #eaeaea;}

@@ -12,7 +12,7 @@ import (`./assets/css/style${process.env.NEXT_PUBLIC_SHORTCODE}.css`)
 import BootstrapClient from './components/common/BootstrapClient';
 
 export const metadata = {
-  title: process.env.NEXT_PUBLIC_APPCODE ==="1" ? 'B2B' : 'POS',
+  title: process.env.NEXT_PUBLIC_APPCODE === "1" ? 'B2B' : 'POS',
   description: 'Developed by Global Innovations Travel Technology',
 }
 

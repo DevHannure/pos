@@ -155,7 +155,7 @@ export default function BookingItinerary() {
           AppCode: process.env.NEXT_PUBLIC_APPCODE,
           OTP: otp,
           DeviceInfo:{
-            Url: 'http://localhost:5001/',
+            Url: process.env.NEXT_PUBLIC_DOMAINNAME,
             DeviceName: deviceName,
             BrowserName: browserName,
             IPAddress: ipAddress,
@@ -193,7 +193,7 @@ export default function BookingItinerary() {
       UserCode: email,
       AppCode: process.env.NEXT_PUBLIC_APPCODE,
       DeviceInfo:{
-        Url: 'http://localhost:5001/',
+        Url: process.env.NEXT_PUBLIC_DOMAINNAME,
         DeviceName: deviceName,
         BrowserName: browserName,
         IPAddress: ipAddress,
@@ -222,7 +222,7 @@ export default function BookingItinerary() {
         Password: password,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         DeviceInfo:{
-          Url: 'http://localhost:5001/',
+          Url: process.env.NEXT_PUBLIC_DOMAINNAME,
           DeviceName: deviceName,
           BrowserName: browserName,
           IPAddress: ipAddress,
@@ -307,7 +307,7 @@ export default function BookingItinerary() {
         UserCode: resetEmail,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         DeviceInfo:{
-          Url: 'http://localhost:5001/',
+          Url: process.env.NEXT_PUBLIC_DOMAINNAME,
           DeviceName: deviceName,
           BrowserName: browserName,
           IPAddress: ipAddress,
@@ -415,7 +415,7 @@ export default function BookingItinerary() {
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         OTP: resetPassOTP,
         DeviceInfo:{
-          Url: 'http://localhost:5001/',
+          Url: process.env.NEXT_PUBLIC_DOMAINNAME,
           DeviceName: deviceName,
           BrowserName: browserName,
           IPAddress: ipAddress,

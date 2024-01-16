@@ -63,7 +63,7 @@ export default function Header() {
         UserCode: userInfos?.user?.userEmail,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         DeviceInfo:{
-          Url: 'http://localhost:5001/',
+          Url: process.env.NEXT_PUBLIC_DOMAINNAME,
           DeviceName: toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName,
           BrowserName: browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version,
           IPAddress: resLocation.ip_address,

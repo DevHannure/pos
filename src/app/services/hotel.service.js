@@ -1,4 +1,5 @@
-const baseUrl = process.env.NEXT_PUBLIC_ROOT_API
+const baseUrl = process.env.NEXT_PUBLIC_ROOT_API;
+const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
 const HotelService = {
 
@@ -7,7 +8,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/Search`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -18,7 +19,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/RoomDetails`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -29,7 +30,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/CombinedRoomDetails`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -41,7 +42,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/PriceBreakup`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -52,7 +53,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/CancellationPolicy`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -63,7 +64,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/staticdata/HotelDetail`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -92,7 +93,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/Reprice`, {
         method: 'POST',
         body: JSON.stringify(repriceObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': reqObj.correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': reqObj.correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -103,7 +104,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/ratetype/AddOrGetRateTypes`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -114,7 +115,7 @@ const HotelService = {
       const response = await fetch(`${baseUrl}/hotel/Book`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}

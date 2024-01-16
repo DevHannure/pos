@@ -1,4 +1,5 @@
-const baseUrl = process.env.NEXT_PUBLIC_ROOT_API
+const baseUrl = process.env.NEXT_PUBLIC_ROOT_API;
+const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
 const MasterService = {
 
@@ -6,7 +7,7 @@ const MasterService = {
     try {
       const response = await fetch(`${baseUrl}/country/GetCountries`, {
         method: 'GET',
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -17,7 +18,7 @@ const MasterService = {
       const response = await fetch(`${baseUrl}/region/GetRegionBasedOnCustomerNationality`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -28,7 +29,7 @@ const MasterService = {
       const response = await fetch(`${baseUrl}/supplier/GetXMLSuppliers`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -39,7 +40,7 @@ const MasterService = {
       const response = await fetch(`${baseUrl}/customer/GetCustomersCreditDetails`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -50,7 +51,7 @@ const MasterService = {
       const response = await fetch(`${baseUrl}/customer/CheckIfCustomerHasCredit`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}

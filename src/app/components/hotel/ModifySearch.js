@@ -189,7 +189,7 @@ export default function ModifySearch(props) {
     setOptions([]);
     const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/DestinationsPrediction`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+      headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
       body: JSON.stringify({
       "text": query,
       "customercode":process.env.NEXT_PUBLIC_SHORTCODE,
@@ -456,7 +456,7 @@ export default function ModifySearch(props) {
       setOptionsHtl([]);
       const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/HotelsPrediction`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
         body: JSON.stringify({
         "text": query,
         "destinationId":selectedDestination[0].destinationCode,

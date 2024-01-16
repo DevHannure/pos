@@ -1,4 +1,5 @@
-const baseUrl = process.env.NEXT_PUBLIC_ROOT_API
+const baseUrl = process.env.NEXT_PUBLIC_ROOT_API;
+const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
 
 const AuthService = {
@@ -8,7 +9,7 @@ const AuthService = {
       const response = await fetch(`${baseUrl}/login/login`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001',}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl,}
       });
       return response.json();
     } catch (error) {console.log("error", error)}
@@ -19,7 +20,7 @@ const AuthService = {
       const response = await fetch(`${baseUrl}/login/Logout`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.text();
     } catch (error) {console.log("error", error)}
@@ -30,7 +31,7 @@ const AuthService = {
       const response = await fetch(`${baseUrl}/login/VerifyOTP`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.text();
     } catch (error) {console.log("error", error)}
@@ -41,7 +42,7 @@ const AuthService = {
       const response = await fetch(`${baseUrl}/login/ResendOTP`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.text();
     } catch (error) {console.log("error", error)}
@@ -52,7 +53,7 @@ const AuthService = {
       const response = await fetch(`${baseUrl}/login/ResetPasswordOTP`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001'}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl}
       });
       return response.text();
     } catch (error) {console.log("error", error)}
@@ -63,14 +64,11 @@ const AuthService = {
       const response = await fetch(`${baseUrl}/login/ResetPassword`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001'}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl}
       });
       return response.text();
     } catch (error) {console.log("error", error)}
   },
-
-  
-
 
 }
 

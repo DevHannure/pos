@@ -1,4 +1,5 @@
-const baseUrl = process.env.NEXT_PUBLIC_ROOT_API
+const baseUrl = process.env.NEXT_PUBLIC_ROOT_API;
+const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
 const ReservationService = {
 
@@ -7,7 +8,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservation/SendGenericEmail`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.text()
     } catch (error) {console.log("error", error)}
@@ -18,7 +19,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservation/DeleteCartService`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.text()
     } catch (error) {console.log("error", error)}
@@ -29,7 +30,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservation/AddServiceToCart`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -40,7 +41,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservationtray/GetBookingItineraryData`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -51,7 +52,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservation/ConvertCartToReservation`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -62,7 +63,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservation/ConfirmReservationServiceAndEmail`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -73,7 +74,7 @@ const ReservationService = {
       const response = await fetch(`${baseUrl}/reservation/ReconfirmReservationServiceAndEmail`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'localhost:5001', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}

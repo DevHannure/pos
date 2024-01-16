@@ -5,7 +5,7 @@ import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerar
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faEnvelope, faPrint, faStar, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
 import {faShareFromSquare, faTrashCan} from "@fortawesome/free-regular-svg-icons";
-import {format, addDays, differenceInDays} from 'date-fns';
+import {format} from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useSearchParams  } from 'next/navigation';
 import AES from 'crypto-js/aes';
@@ -42,7 +42,6 @@ function getUID() {return Date.now().toString(36);}
 
 export default function ReservationTray() {
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
-  console.log("userInfo", userInfo)
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
@@ -188,6 +187,11 @@ export default function ReservationTray() {
   };
 
   const [deleteId, setDeleteId] = useState('');
+  
+  const handleDltId = (id) => {
+    console.log("idss", id)
+    setDeleteId(id)
+  }
 
   const deleteServiceBtn = async() => {
     let deleteObj = {
@@ -571,141 +575,7 @@ export default function ReservationTray() {
                           {s.ServiceCode === "1" &&
                             <div id={`serviceDetails${i}`}>
                             {/* Hotel Service Start */}
-                            <table width="100%" cellPadding="0" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif', fontSize:'13px'}}>
-                              <tbody>
-                                <tr>
-                                  <td valign="top">
-                                    <span className="labelribbon" style={{backgroundColor:'#003263',display:'inline-block',padding:'0px',margin:'0 22px 0 0px',position:'relative',lineHeight:'26px'}}>
-                                      &nbsp; &nbsp;
-                                      <strong style={{color:'#FFF'}}>Hotel &nbsp;  &nbsp;</strong>
-                                    </span>
-                                  </td>
-                                  <td>
-                                    {noPrint &&
-                                      <div className="text-end pe-2">
-                                        <button className="btn btn-sm btn-outline-danger" title="Delete service" data-bs-toggle="modal" data-bs-target="#deleteModal" onClick={() => setDeleteId(s.ServiceMasterCode)}><FontAwesomeIcon icon={faTrashCan} /></button>
-                                      </div>
-                                    }
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td style={{padding:'12px 10px 2px'}}>
-                                    <table width="100%" cellPadding="2" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif', fontSize:'13px'}}>
-                                      <tbody>
-                                        <tr>
-                                          <td>
-                                            <strong><span style={{color:'#01468a'}}>Booking {s.ServiceMasterCode}: Supplier Ref. No: {s.SupplierReferenceNo} &nbsp; | &nbsp; Status:&nbsp; 
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="0" && <span style={{color:'#ff3300'}}>Pending</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="2" && <span style={{color:'#0daa44'}}>CONFIRMED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="3" && <span style={{color:'#339933'}}>RECONFIRMED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="4" && <span style={{color:'#0058af'}}>SO GENERATED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="5" && <span style={{color:'#fc5900'}}>UNAVAILABLE</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="8" && <span style={{color:'#ee1c23'}}>ON CANCELLATION</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="9" && <span style={{color:'#ff3300'}}>CANCELLED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="10" && <span style={{color:'#0daa44'}}>AVAILABLE</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="13" && <span style={{color:'#ff3300'}}>Not Confirmed</span>}
-                                            </span></strong>
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </td>
-                                  <td valign="bottom" align="right" style={{padding:'12px 10px 2px', lineHeight:'20px'}}> </td>
-                                </tr>
-                                <tr>
-                                  <td colSpan="2" style={{padding:'5px 10px'}}>
-                                    <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dddddd" style={{width:'100%', maxWidth:'100%', borderCollapse:'collapse',borderSpacing:0,fontFamily:'Arial, Helvetica, sans-serif', fontSize:'13px', marginBottom:'20px', marginBottom:'0px', border:'1px solid #dddddd'}}>
-                                      <tbody>
-                                        <tr style={{backgroundColor:'#f5f5f5'}}>
-                                          <th>Hotel Details</th>
-                                          <th>Room Details</th>
-                                          <th>No. of Nights</th>
-                                          {/* <th>No. of Guest</th> */}
-                                          <th>Check-in</th>
-                                          <th>Check-out</th>
-                                          <th>Net Price</th>
-                                        </tr>
-                                        <tr>
-                                          <td>
-                                            <div style={{color:'#337ab7', fontSize:'14px', marginBottom:'5px'}}><strong>{s.ProductName}</strong></div>
-                                            <div style={{marginBottom:'5px'}}>{s.ProductAddress}, {s.ProductCountryName}</div>
-                                            <div style={{marginBottom:'5px'}}>
-                                              {Array.apply(null, { length:5}).map((e, i) => (
-                                              <span key={i}>
-                                                {i+1 > parseInt(s.ClassificationCode) ?
-                                                <FontAwesomeIcon icon={faStar} style={{color:'#e0e0e0',width:'14px'}} /> : <FontAwesomeIcon icon={faStar} style={{color:'#ffab2d',width:'14px'}} />
-                                                }
-                                              </span>
-                                              ))
-                                              }
-                                            </div>
-                                          </td>
-                                          <td>
-                                            {s?.RoomDtlNew?.map((d, ind) => (
-                                              <div key={ind} style={{marginBottom:'8px'}}>
-                                                <strong>Room {ind+1}:</strong> {s.RoomTypeName} with {s.RateBasisName}
-                                                &nbsp;({d.NoOfUnits} Units) &nbsp;|&nbsp;&nbsp;
-                                                <span style={{textWrap:'nowrap'}}><strong>Pax:</strong> {d.AdultNoOfUnits} Adult(s){d.ChildNoOfUnits !=="0" && <span>, {d.ChildNoOfUnits} Child(ren)</span>}</span>
-                                              </div>
-                                            ))}
-                                          {/* {bkngDetails?.ReservationDetail?.ServiceDetails?.map((d, ind) => (
-                                            <React.Fragment key={ind}>
-                                              {s.ServiceMasterCode === d.ServiceMasterCode &&
-                                              <div style={{marginBottom:'8px'}}>
-                                                <strong>{d.RateTypeName.split('(')[0]}:</strong> {s.RoomTypeName} with {s.RateBasisName}
-                                                &nbsp;({d.NoOfUnits} Units) &nbsp;|&nbsp;&nbsp;
-                                                <span style={{textWrap:'nowrap'}}><strong>Pax:</strong> {d.AdultNoOfUnits} Adult(s){d.ChildNoOfUnits !=="0" && <span>, {d.ChildNoOfUnits} Child(ren)</span>}</span>
-                                              </div>
-                                              }
-                                            </React.Fragment> 
-                                          ))} */}
-                                          </td>
-                                          <td>{s.BookedNights} Night(s)</td>
-                                          {/* <td><strong>Total Guest:</strong> {(parseFloat(s.NoOfAdults)+parseFloat(s.NoOfChildren))}<br /></td> */}
-                                          <td>{format(new Date(s.BookedFrom), 'eee, dd MMM yyyy')}</td>
-                                          <td>{format(new Date(s.BookedTo), 'eee, dd MMM yyyy')}</td>
-                                          <td>
-                                            {s?.RoomDtlNew?.map((d, ind) => (
-                                              <div key={ind} style={{marginBottom:'8px'}}>
-                                                <div><strong>Room {ind+1}:</strong> 
-                                                  <div style={{textWrap:'nowrap'}}>{(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(s.CustomerExchangeRate))} ({s.CustomerCurrencyCode})</div>
-                                                </div>
-                                              </div>
-                                            ))}
-                                            {/* {bkngDetails?.ReservationDetail?.ServiceDetails?.map((d, ind) => (
-                                              <React.Fragment key={ind}>
-                                                {s.ServiceMasterCode === d.ServiceMasterCode &&
-                                                <div style={{marginBottom:'8px'}}>
-                                                  <div><strong>{d.RateTypeName.split('(')[0]}:</strong> 
-                                                    <div style={{textWrap:'nowrap'}}>{(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(s.CustomerExchangeRate))} ({s.CustomerCurrencyCode})</div>
-                                                  </div>
-                                                </div>
-                                                }
-                                              </React.Fragment> 
-                                            ))} */}
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td colSpan="2" style={{padding:'5px 10px'}}></td>
-                                </tr>
-                                <tr>
-                                  <td colSpan="2" valign="bottom" align="right" style={{lineHeight:'20px', padding:'3px 10px'}}>
-                                    <div style={{fontSize:'12px'}}>Disclaimer: Charges include Agency Commission payable to travel agents (if applicable).</div>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td colSpan="2" valign="bottom" style={{lineHeight:'20px', padding:'3px 10px'}}>
-                                    <div className="cancelBrnone" style={{fontSize:'12px'}} dangerouslySetInnerHTML={{ __html:s?.CancellationPolicy}}></div>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
+                            <HotelBookingItinerary response={s} bookingDetail={bkngDetails?.ReservationDetail?.BookingDetail} noPrint={noPrint} onSelectDltId={handleDltId} />
                             {/* Hotel Service End */}
                             </div>
                           }

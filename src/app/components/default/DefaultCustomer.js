@@ -29,7 +29,6 @@ export default function DefaultCustomer(props) {
         <div className="mb-3">
           <label>Currency</label>
           <select className="form-select" value={cusCurrency} onChange={event => setCusCurrency(event.target.value)}>
-          <option value="USD">USD</option>
             <option value={cusCurrency}>{cusCurrency}</option>
           </select>
         </div>

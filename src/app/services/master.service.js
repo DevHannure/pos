@@ -57,6 +57,17 @@ const MasterService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetExchangeRate: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/currency/GetExchangeRate`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("error", error)}
+  },
+
   
 
 }

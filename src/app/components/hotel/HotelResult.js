@@ -519,7 +519,7 @@ export default function HotelResult(props) {
               </div>
 
               
-              <div className={"collapse "+(htlCollapse==='#room'+v.productCode ? 'show':'')} >
+              <div className={"collapse "+(htlCollapse==='#room'+v.productCode ? 'show':'')}>
                 <div className="mt-1">
                   <div className="d-flex flex-row">
                     <div className="hotelImg rounded">

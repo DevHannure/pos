@@ -10,6 +10,9 @@ import Select from 'react-select';
 import { useRouter } from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
+import { useSelector, useDispatch } from "react-redux";
+import ReservationtrayService from '@/app/services/reservationtray.service';
+import { doReserveListOnLoad } from '@/app/store/reservationTrayStore/reservationTray';
 
 const selBookingOptions = [
   { value: '0', label:'On Request'},
@@ -37,9 +40,21 @@ const selCreatedOptions = [
 export default function ReservationTray() {
   const router = useRouter();
   const refDiv = useRef(null);
+  const dispatch = useDispatch();
   const [dimensions, setDimensions] = useState(null);
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const resListRes = useSelector((state) => state.reservationListReducer?.reserveListObj);
 
   useEffect(() => {
+    if(userInfo?.user){
+      if(!resListRes) {
+        getReservations();
+      }
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+
     if (window.innerWidth < 992) {
       document.querySelectorAll('.dropReserve').forEach(function(everydropdown){
         everydropdown.addEventListener('hidden.bs.dropdown', function () {
@@ -79,19 +94,75 @@ export default function ReservationTray() {
   const [selSupplier, setSelSupplier] = useState(null);
   const [selCustomerName, setSelCustomerName] = useState(null);
 
-  const viewBooking = () => {
+  const getReservations = async() => {
+    let reservationObj = {
+      "Skip": "0",
+      "Take": "10",
+      "BookingStatus": "",
+      "BookingType": "",
+      "BookingNo": "",
+      "FromDate": "2023-11-01",
+      "ToDate": "2024-01-31",
+      "CreatedBy": "",
+      "BookingChannel": "",
+      "CancellationStartDate": "",
+      "CancellationEndDate": "",
+      "SupplierType": "",
+      "CustomerCode": "",
+      "BookingName": "",
+      "CartId": "",
+      "RateType": "",
+      "TicketType": "0",
+      "CheckinFrom": "",
+      "CheckinTo": "",
+      "CheckoutFrom": "",
+      "CheckoutTo": "",
+      "DuedateFrom": "",
+      "DuedateTo": "",
+      "UserId": userInfo.user.userId,
+      "SubUserType": "0"
+    }
+    const responseReservList = ReservationtrayService.doGetReservations(reservationObj, userInfo.correlationId);
+    const resReservList = await responseReservList;
+    dispatch(doReserveListOnLoad(resReservList))
+  }
+
+  const [dtlCollapse, setDtlCollapse] = useState('');
+
+  const detailsBtn = async(dtlCollapseCode, dtlCode) => {
+    if(dtlCollapseCode!==dtlCollapse){
+      setDtlCollapse(dtlCollapseCode)
+    }
+    else{
+      setDtlCollapse('')
+    }
+
+    // let getDtlObj = {
+    //   "BookingNo": dtlCode,
+    //   "UserId": userInfo?.user?.userId
+    // }
+
+    // let dtlItems = {...dtlData}
+    // if (_.isEmpty(dtlData[dtlCode])) {
+    //   const responseDtls = ReservationtrayService.doGetReservationDetails(getDtlObj, userInfo?.correlationId);
+    //   let resDtls = await responseDtls;
+
+    // }
+
+  }
+
+  const viewBooking = (id) => {
     let bookItnery = {
-      "bcode": "28",
-      "btype": "O",
+      "bcode": id,
+      "btype": "",
       "returnurl": '/pages/booking/reservationTray',
-      "correlationId": 'd'
+      "correlationId": userInfo.correlationId
     }
     let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
   }
   
-
   return (
     <MainLayout>
       <div className="middle">
@@ -266,20 +337,21 @@ export default function ReservationTray() {
                       <div className='divCell text-nowrap'>PR</div>
                     </div>
 
-                    {Array.apply(null, { length: 10 }).map((e, i) => (
+                    {resListRes?.bookings.map((e, i) => (
                     <React.Fragment key={i}>
                     <div className='divRow'>
-                      <div className='divCell collapsed' data-bs-toggle="collapse" data-bs-target={`#detailsub${i}`}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
-                      <div className='divCell'>369854</div>
-                      <div className='divCell'>27 Oct 2023</div>
-                      <div className='divCell'>Mr.Danilov family</div>
-                      <div className='divCell'>Imaginative Agency</div>
-                      <div className='divCell'>HTL-WBD-474628015</div>
-                      <div className='divCell'>Noujath Noushad</div>
-                      <div className='divCell'>Cancelled</div>
-                      <div className='divCell'>9125.00</div>
-                      <div className='divCell'>2500.00</div>
-                      <div className='divCell'><button onClick={()=> viewBooking()} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                      {/* <div className='divCell collapsed' data-bs-toggle="collapse" data-bs-target={`#detailsub${i}`}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div> */}
+                      <div className={"divCell curpointer " + (dtlCollapse==='#detailsub'+e.bookingNo ? 'colOpen':'collapsed')} aria-expanded={dtlCollapse==='#detailsub'+e.bookingNo} onClick={() => detailsBtn(`#detailsub${e.bookingNo}`,e.bookingNo)}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
+                      <div className='divCell'>{e.bookingNo}</div>
+                      <div className='divCell'>{e.bookingDate}</div>
+                      <div className='divCell'>{e.passengerName}</div>
+                      <div className='divCell'>{e.customerName}</div>
+                      <div className='divCell'>{e.customerRefNo}</div>
+                      <div className='divCell'>{e.createdby}</div>
+                      <div className='divCell'>{e.status}</div>
+                      <div className='divCell'>{e.totalPrice}</div>
+                      <div className='divCell'>{e.totalCustomerPrice}</div>
+                      <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
                       <div className='divCell'><button type="button" className='sqBtn' title="Service Order" data-bs-toggle="tooltip"><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></div>
                       <div className='divCell'><button type="button" className='sqBtn' title="Sales Report" data-bs-toggle="tooltip"><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
                       <div className='divCell'><button type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></div>
@@ -289,11 +361,12 @@ export default function ReservationTray() {
                     </div>
                     <div className='divRow'>
                       <div className='colspan' style={{marginRight:`-${dimensions-40}px`}}>
-                        <div className="collapse m-2" id={`detailsub${i}`} style={{width:`${dimensions-20}px`, overflowX:'auto'}}>
+                        {/* <div className="collapse m-2" id={`detailsub${i}`} style={{width:`${dimensions-20}px`, overflowX:'auto'}}> */}
+                        <div className={"m-2 collapse "+(dtlCollapse==='#detailsub'+e.bookingNo ? 'show':'')} style={{width:`${dimensions-20}px`, overflowX:'auto'}}>
                           <div>
                             <div className='divTable border mb-0 table-bordered'>
                               <div className='divHeading bg-light'>
-                                <div className='divCell text-nowrap'>Select</div>
+                                {/* <div className='divCell text-nowrap'>Select</div> */}
                                 <div className='divCell text-nowrap'>Service Id</div>
                                 <div className='divCell text-nowrap'>Product &nbsp; &nbsp; &nbsp; &nbsp;</div>
                                 <div className='divCell text-nowrap'>Service Type / Rate Basis</div>
@@ -316,7 +389,7 @@ export default function ReservationTray() {
                               </div>
 
                               <div className='divRow dropend dropReserve'>
-                                <div className='divCell text-center'><input type="checkbox" /></div>
+                                {/* <div className='divCell text-center'><input type="checkbox" /></div> */}
                                 <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">1056250</div>
                                 <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">C Central Resort The Palm, Dubai <span><span className="circleicon refund" title="Refundable" data-bs-toggle="tooltip">R</span></span></div>
                                 <div className="divCell dropdown-toggle arrowNone" data-bs-toggle="dropdown" data-bs-auto-close="outside">2Xsuperior Room Double With Hotel Private Beach Access / <br />Half Board,Free Valet Parking,Free Self Parking,Free Wifi</div>

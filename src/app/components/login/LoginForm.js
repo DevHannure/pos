@@ -231,7 +231,6 @@ export default function BookingItinerary() {
       }
       const response = AuthService.login(req);
       const resUser = await response;
-      
       if(resUser?.error === 'Success'){
         if(resUser?.user?.isOTPRequired){
           setRunTimer(true)

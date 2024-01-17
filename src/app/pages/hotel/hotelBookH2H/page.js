@@ -7,6 +7,7 @@ import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-sol
 import { useSearchParams  } from 'next/navigation';
 import HotelService from '@/app/services/hotel.service';
 import ReservationService from '@/app/services/reservation.service';
+import MasterService from '@/app/services/master.service';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { ToastContainer, toast } from 'react-toastify';
@@ -74,16 +75,16 @@ export default function HotelItinerary() {
   const [net, setNet] = useState(null);
   const [markUpAmount, setMarkUpAmount] = useState(null);
   const [dueDateStart, setDueDateStart] = useState(null);
+  const [exchangeRate, setExchangeRate] = useState(null);
 
   useEffect(()=> {
     if(resReprice && resReprice.hotel && room1){
-      createRoomObj();
+      exchangerateBtn(resReprice?.hotel?.rooms?.room[0]?.price?.supplierCurrency);
       htlDetail(resReprice.hotel.code);
-
-      setSupplierNet(parseFloat(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierNet, 0)));
-      setNet(parseFloat(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.net, 0)));
-      setMarkUpAmount(parseFloat(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.markUpAmount, 0)));
-  
+      setSupplierNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierNet, 0)).toFixed(2));
+      setNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.net, 0)).toFixed(2));
+      setMarkUpAmount(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.markUpValue, 0)).toFixed(2));
+      
       let dueDateStartVar = [];
       resReprice?.hotel?.rooms?.room[0]?.policies?.policy?.map((k, i) => {
         if(k?.type ==='CAN'){
@@ -96,6 +97,21 @@ export default function HotelItinerary() {
       setDueDateStart(dueDateStartVar);
     }
   },[resReprice, room1]);
+
+  useEffect(()=> {
+    if(exchangeRate){
+      createRoomObj();
+    }
+  },[exchangeRate]);
+
+  const exchangerateBtn = async(code) => {
+    let exchangeObj = {
+      "CurrencyCode": code
+    }
+    const responseExchange = MasterService.doGetExchangeRate(exchangeObj, qry.correlationId);
+    const resExchange = await responseExchange;
+    setExchangeRate(Number(resExchange).toFixed(2));
+  }
 
   const roomRatetype1 = async(v) => {
     let rateRoomReq1 = {
@@ -161,19 +177,20 @@ export default function HotelItinerary() {
     let roomPax = []
     qry.paxInfoArr.map((r, i) => {
       let roomNet = resReprice.hotel?.rooms?.room[i]?.price.net;
-      let roomMarkUpAmount = resReprice.hotel?.rooms?.room[i]?.price.markUpAmount;
+      let roomSupplierNet = resReprice.hotel?.rooms?.room[i]?.price.supplierNet;
+      let roomMarkUpAmount = resReprice.hotel?.rooms?.room[i]?.price.markUpValue;
       let roomTax = resReprice.hotel?.rooms?.room[i]?.price.tax;
-
       let roomSingle = {
         "NoOfUnits": "1",
         "AdultNoOfUnits": r.adtVal.toString(),
         "ChildNoOfUnits": r.chdVal.toString(),
-        "Rate": parseFloat(roomNet).toFixed(2).toString(),
-        "Payable": parseFloat(roomNet).toFixed(2).toString(),
-        "MarkupAmount": parseFloat(roomMarkUpAmount).toFixed(2).toString(),
+        "Rate": Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
+        "Payable": Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
+        "MarkupAmount": Number(roomMarkUpAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
         "MarkupPercentage": "0",
-        "Tax": parseFloat(roomTax).toFixed(2).toString(),
-        "Net": parseFloat(roomNet+roomMarkUpAmount).toFixed(2).toString(),
+        //"Tax": Number(roomTax).toString(),
+        "Tax": "0",
+        "Net": Number(roomNet * userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
         "VATInputAmount": "0",
         "VATOutputAmount": "0",
         "RoomTypeName": resReprice.hotel?.rooms?.room[i]?.roomName,
@@ -200,21 +217,20 @@ export default function HotelItinerary() {
               "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
               "SupplierCurrencyFixed": m.supplierFixed,
               "SupplierCurrencyPercentage": m.percentage,
-              "SupplierCurrencyExchangeRate": parseFloat(resReprice.hotel?.rooms?.room[0]?.price.supplierExchangeRate).toFixed(2).toString(),
+              "SupplierCurrencyExchangeRate": exchangeRate.toString(),
               "CustomerCurrencyCode": userInfo?.user?.currencyCode.toString(),
               "CustomerCurrencyFixed": m.fixed,
               "CustomerCurrencyPercentage": m.percentage,
-              "CustomerCurrencyExchangeRate": parseFloat(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+              "CustomerCurrencyExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
               "SystemCurrencyCode": userInfo?.user?.systemCurrencyCode,
-              "SystemCurrencyFixed": (parseFloat(m.fixed*userInfo?.user?.currencyExchangeRate) / parseFloat(userInfo?.user?.systemCurrencyExchangeRate)).toFixed(2).toString(),
+              "SystemCurrencyFixed": (Number(m.fixed*userInfo?.user?.currencyExchangeRate) / Number(userInfo?.user?.systemCurrencyExchangeRate)).toFixed(2).toString(),
               "SystemCurrencyPercentage": m.percentage,
-              "SystemCurrencyExchangeRate": parseFloat(userInfo?.user?.systemCurrencyExchangeRate).toFixed(2).toString(),
-              "MarkupPercentage": (parseFloat((roomSingle.Net - roomSingle.Rate) / roomSingle.Rate)* 100).toFixed(2).toString(),
+              "SystemCurrencyExchangeRate": Number(userInfo?.user?.systemCurrencyExchangeRate).toFixed(2).toString(),
+              "MarkupPercentage": (Number((roomSingle.Net - roomSingle.Rate) / roomSingle.Rate)* 100).toFixed(2).toString(),
               "PolicyType": "Cancellation Policy"
             }
             roomSingle.CancellationPolicyDetails.push(cancelObj)
           })
-          
         }
       });
      
@@ -254,7 +270,7 @@ export default function HotelItinerary() {
       roomPax.push(roomSingle)
     });
     roomPax[0].PaxDetails[0].LeadPax = true;
-    setRoomObj(roomPax)
+    setRoomObj(roomPax);  
   };
 
   const titleChange = (roomIndex, adltIndex, value) => {
@@ -336,6 +352,7 @@ export default function HotelItinerary() {
         "BookingNo": "0",
         "IsNewBooking": true,
         "UserId": userInfo?.user?.userId,
+        //"UserId": userInfo?.user?.userEmail,
         "BookingDetail": {
           "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
           "BookingStatus": "-1",
@@ -383,14 +400,14 @@ export default function HotelItinerary() {
           "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
           "SupplierRemarks": "",
           "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
-          "SupplierExchangeRate": parseFloat(resReprice.hotel?.rooms?.room[0]?.price.supplierExchangeRate).toFixed(2).toString(),
-          "SupplierPayableAmount": parseFloat(supplierNet).toFixed(2).toString(),
-          "Rate":  parseFloat(net).toFixed(2).toString(),
-          "PayableAmount": parseFloat(net).toFixed(2).toString(),
-          "MarkupAmount": markUpAmount.toString(),
-          "NetAmount": parseFloat(net+markUpAmount).toFixed(2).toString(),
-          "SellPrice": parseFloat(net+markUpAmount).toFixed(2).toString(),
-          "GSANet": parseFloat(net+markUpAmount).toFixed(2).toString(),
+          "SupplierExchangeRate":exchangeRate.toString(),
+          "SupplierPayableAmount": Number(supplierNet).toFixed(2).toString(),
+          "Rate":  Number(supplierNet * exchangeRate).toFixed(2).toString(),
+          "PayableAmount": Number(supplierNet * exchangeRate).toFixed(2).toString(),
+          "MarkupAmount": Number(markUpAmount*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "NetAmount": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "SellPrice": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "GSANet": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
           "VATInput": "0",
           "VATInputAmount": "0",
           "VATOutput": "0",
@@ -398,14 +415,14 @@ export default function HotelItinerary() {
           "DueDate": format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime,
           "UniqueId": qry?.sessionId+'-'+uniqId,
           "CustomerCurrencyCode": userInfo?.user?.currencyCode,
-          "CustomerExchangeRate": parseFloat(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-          "CustomerNetAmount": (parseFloat(net+markUpAmount)*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+          "CustomerNetAmount": Number(net).toFixed(2).toString(),
           "XMLSupplierCode": resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
           "XMLRateKey": resReprice?.hotel?.rooms?.room.reduce((totalRk, r, i) => totalRk + (i !==0 ? 'splitter':'') + r.rateKey, ''),
           "XMLSessionId": qry?.sessionId,
           "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
-          "NoOfAdults": parseFloat(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
-          "NoOfChildren": parseFloat(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
+          "NoOfAdults": Number(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
+          "NoOfChildren": Number(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
           "NoOfInfants": "0",
           "AgesOfChildren": chdAllAges.toString(),
           "VoucherLink": "",
@@ -415,10 +432,8 @@ export default function HotelItinerary() {
           "ServiceDetails": roomObj,
         }
       }
-      console.log("addServiceCartObj", addServiceCartObj)
       const responseAddCart = ReservationService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
       const resAddCart = await responseAddCart;
-      console.log("resAddCart", resAddCart)
       if(resAddCart > 0){
         let bookItnery = {
           "bcode": resAddCart.toString(),
@@ -732,7 +747,7 @@ export default function HotelItinerary() {
                       {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                         <tr key={i}>
                           <td>Room {i+1}</td>
-                          <td className="text-end">{qry.currency} {parseFloat(v.price.net).toFixed(2)}</td>
+                          <td className="text-end">{qry.currency} {Number(v.price.net).toFixed(2)}</td>
                         </tr>
                       ))}
                       </tbody>
@@ -743,7 +758,7 @@ export default function HotelItinerary() {
                     <tbody>
                       <tr className="table-light">
                         <td><strong>Total Amount</strong><br/><small>(Including all taxes & fees)</small></td>
-                        <td className="text-end"><strong>{qry.currency} {parseFloat(resReprice.hotel?.rooms?.room.reduce((totalAmt, price) => totalAmt + price.price.net, 0)).toFixed(2)}</strong></td>
+                        <td className="text-end"><strong>{qry.currency} {Number(resReprice.hotel?.rooms?.room.reduce((totalAmt, price) => totalAmt + price.price.net, 0)).toFixed(2)}</strong></td>
                       </tr>
                     </tbody>
                   </table>

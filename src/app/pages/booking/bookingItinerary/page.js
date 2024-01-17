@@ -11,6 +11,7 @@ import { useSearchParams  } from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import ReservationService from '@/app/services/reservation.service';
+import ReservationtrayService from '@/app/services/reservationtray.service';
 import HotelService from '@/app/services/hotel.service';
 import MasterService from '@/app/services/master.service';
 import { ToastContainer, toast } from 'react-toastify';
@@ -66,7 +67,7 @@ export default function ReservationTray() {
       "BookingNo": qry?.bcode,
       "BookingType": qry?.btype
     }
-    const responseItinerary = ReservationService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
+    const responseItinerary = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
     const resItinerary = await responseItinerary;
     if(!resItinerary.ErrorInfo){
       setBkngDetails(resItinerary);
@@ -282,7 +283,7 @@ export default function ReservationTray() {
         "BookingNo": resCartToReservation.toString(),
         "BookingType": ""
       }
-      const responseItineraryNew = ReservationService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
+      const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
       const resItineraryNew = await responseItineraryNew;
       
       console.log("resItineraryNew", resItineraryNew)
@@ -392,15 +393,15 @@ export default function ReservationTray() {
     //let xmlServiceRes = JSONtoXML(serviceRes);
     let emailHtml = '<div>'+document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML+'</div>'
     let cRSAEobj = {
-      "BookingNo": serviceRes.customerRefNumber.split('-')[0],
-      "ServiceMasterCode": serviceRes.customerRefNumber.split('-')[1],
+      "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
+      "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "BookedFrom": serviceReq.CheckInDate,
       "EmailHtml": emailHtml,
       "Service": {
         "SupplierConfirmationNo": serviceRes.supplierConfirmationNumber,
         "XMLBookingNo": serviceRes.adsConfirmationNumber,
-        "XMLBookingStatus": serviceRes.status,
+        "XMLBookingStatus": serviceRes.status === "2" ? serviceRes.status : serviceRes.status === "10" ? "1" : "0",
         "XMLBookingRequest": JSON.stringify(serviceReq),
         "XMLBookingResponse": JSON.stringify(serviceRes),
         "XMLError": serviceRes.errorInfo ? JSON.stringify(serviceRes.errorInfo) : "",
@@ -429,8 +430,8 @@ export default function ReservationTray() {
   const reConfirmReservationServiceAndEmailBtn = async(serviceReq,serviceRes, index) => {
     let emailHtml = '<div>'+document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML+'</div>'
     let rCRSAEobj = {
-      "BookingNo": serviceRes.customerRefNumber.split('-')[0],
-      "ServiceMasterCode": serviceRes.customerRefNumber.split('-')[1],
+      "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
+      "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "CustomerReferenceNo": agentRefText,
       "BookedFrom": serviceReq.CheckInDate,
@@ -438,7 +439,7 @@ export default function ReservationTray() {
       "Service": {
         "SupplierConfirmationNo": serviceRes.supplierConfirmationNumber,
         "XMLBookingNo": serviceRes.adsConfirmationNumber,
-        "XMLBookingStatus": serviceRes.status,
+        "XMLBookingStatus": serviceRes.status === "2" ? serviceRes.status : serviceRes.status === "10" ? "1" : "0",
         "XMLBookingRequest": JSON.stringify(serviceReq),
         "XMLBookingResponse": JSON.stringify(serviceRes),
         "XMLError": serviceRes.errorInfo ? JSON.stringify(serviceRes.errorInfo) : "",

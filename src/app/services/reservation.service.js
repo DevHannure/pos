@@ -36,17 +36,6 @@ const ReservationService = {
     } catch (error) {console.log("error", error)}
   },
 
-  doBookingItineraryData: async function (reqObj, correlationId) {
-    try {
-      const response = await fetch(`${baseUrl}/reservationtray/GetBookingItineraryData`, {
-        method: 'POST',
-        body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
-      });
-      return response.json()
-    } catch (error) {console.log("error", error)}
-  },
-
   doConvertCartToReservation: async function (reqObj, correlationId) {
     try {
       const response = await fetch(`${baseUrl}/reservation/ConvertCartToReservation`, {

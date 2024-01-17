@@ -26,7 +26,9 @@ export default function HotelBookingItinerary(props) {
             <td>
               {noPrintSub &&
                 <div className="text-end pe-2">
+                  {props.bookingDetail?.BookingStatus === "-1" &&
                   <button className="btn btn-sm btn-outline-danger" title="Delete service" data-bs-toggle="modal" data-bs-target="#deleteModal" onClick={() => deleteService(props.response.ServiceMasterCode)}><FontAwesomeIcon icon={faTrashCan} /></button>
+                  }
                 </div>
               }
             </td>
@@ -101,7 +103,7 @@ export default function HotelBookingItinerary(props) {
                       {props.response?.RoomDtlNew?.map((d, ind) => (
                         <div key={ind} style={{marginBottom:'8px'}}>
                           <div><strong>Room {ind+1}:</strong> 
-                            <div style={{textWrap:'nowrap'}}>{(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(props.response.CustomerExchangeRate))} ({props.response.CustomerCurrencyCode})</div>
+                            <div style={{textWrap:'nowrap'}}>{Number(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(props.response.CustomerExchangeRate)).toFixed(2)} ({props.response.CustomerCurrencyCode})</div>
                           </div>
                         </div>
                       ))}

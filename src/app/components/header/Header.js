@@ -10,10 +10,13 @@ import AuthService from '@/app/services/auth.service';
 import MasterService from '@/app/services/master.service';
 import { useSelector, useDispatch } from "react-redux";
 import { doUserInfo, doCustCreditDtls } from '@/app/store/commonStore/common';
+import { doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const { data, status } = useSession();
   const dispatch = useDispatch();
+  const router = useRouter();
   const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
   const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
   //console.log("session666", data)
@@ -89,6 +92,12 @@ export default function Header() {
     dispatch(doCustCreditDtls(resCustCreditDtls));
   }
 
+  const reservationBtn = async() => {
+    dispatch(doReserveListOnLoad(null));
+    router.push('/pages/booking/reservationTray');
+  }
+  
+
   return (
     <>
     <header className={"headerMain " + (fixedClass ? 'fixedNav': 'absoluteNav')}>
@@ -111,7 +120,7 @@ export default function Header() {
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="/pages/booking/tempBookings">Cart</Link></li>
-                <li className="nav-item"><Link className="nav-link" href="/pages/booking/reservationTray">Bookings</Link></li>
+                <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li>
                 {/* <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dashboard</Link>

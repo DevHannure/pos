@@ -65,41 +65,7 @@ export default function ReservationTray() {
     }
   }, [userInfo, resListRes]);
 
-  useEffect(() => {
-
-    if (window.innerWidth < 992) {
-      document.querySelectorAll('.dropReserve').forEach(function(everydropdown){
-        everydropdown.addEventListener('hidden.bs.dropdown', function () {
-            this.querySelectorAll('.submenu').forEach(function(everysubmenu){
-              everysubmenu.style.display = 'none';
-            });
-        })
-      });
-    
-      document.querySelectorAll('.dropReserve .dropdown-menu a').forEach(function(element){
-        element.addEventListener('click', function (e) {
-            let nextEl = this.nextElementSibling;
-            if(nextEl && nextEl.classList.contains('submenu')) {	
-              e.preventDefault();
-              if(nextEl.style.display == 'block'){
-                nextEl.style.display = 'none';
-              } else {
-                nextEl.style.display = 'block';
-              }
-            }
-        });
-      })
-    }
-      
-    setDimensions(refDiv?.current?.offsetWidth)
-    function handleWindowResize() {
-      setDimensions(refDiv?.current?.offsetWidth)
-    }
-    window.addEventListener('resize', handleWindowResize);
-    return () => {
-      window.removeEventListener('resize', handleWindowResize);
-    };
-  }, []);
+  
 
   const getAllCustomers = async() => {
     const responseAllCustomer = MasterService.doGetCustomers(userInfo.correlationId);
@@ -303,6 +269,41 @@ export default function ReservationTray() {
   const dtlData = useSelector((state) => state.reservationListReducer?.subDtlsList);
 
   const [dtlCollapse, setDtlCollapse] = useState('');
+
+  useEffect(() => {
+    if (window.innerWidth < 992) {
+      document.querySelectorAll('.dropReserve').forEach(function(everydropdown){
+        everydropdown.addEventListener('hidden.bs.dropdown', function () {
+            this.querySelectorAll('.submenu').forEach(function(everysubmenu){
+              everysubmenu.style.display = 'none';
+            });
+        })
+      });
+    
+      document.querySelectorAll('.dropReserve .dropdown-menu a').forEach(function(element){
+        element.addEventListener('click', function (e) {
+            let nextEl = this.nextElementSibling;
+            if(nextEl && nextEl.classList.contains('submenu')) {	
+              e.preventDefault();
+              if(nextEl.style.display == 'block'){
+                nextEl.style.display = 'none';
+              } else {
+                nextEl.style.display = 'block';
+              }
+            }
+        });
+      })
+    }
+      
+    setDimensions(refDiv?.current?.offsetWidth)
+    function handleWindowResize() {
+      setDimensions(refDiv?.current?.offsetWidth)
+    }
+    window.addEventListener('resize', handleWindowResize);
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, [dtlCollapse]);
 
   const detailsBtn = async(dtlCollapseCode, dtlCode) => {
     if(dtlCollapseCode!==dtlCollapse){
@@ -717,7 +718,7 @@ export default function ReservationTray() {
                                       </div>
                                       
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        <div className={s.ServiceStatus.toLowerCase() ==='confirmed' ? 'green' : s.ServiceStatus.toLowerCase() ==='on request' ? 'lblue' : s.ServiceStatus.toLowerCase() ==='on cancellation' ? 'red' : ''}>
+                                        <div className={'serviceStatus' + s.ServiceStatus.toLowerCase() ==='confirmed' ? 'text-success' : s.ServiceStatus.toLowerCase() ==='on request' ? 'lblue' : s.ServiceStatus.toLowerCase() ==='on cancellation' ? 'text-danger' : ''}>
                                           {s.ServiceStatus}
                                         </div>
                                       </div>
@@ -826,11 +827,11 @@ export default function ReservationTray() {
                 :
                 <div className='text-center blue py-5'>
                   <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
-                  <div className="dumwave align-middle">
+                  {/* <div className="dumwave align-middle">
                     <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
                     <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
                     <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                  </div>
+                  </div> */}
                 </div>
               }
 

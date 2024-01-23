@@ -12,6 +12,7 @@ th, strong, .bold{font-weight:600;}
 .fn13{font-size:13px;}
 .fn14{font-size:14px;}
 .fn15{font-size:15px;}
+.fn16{font-size:16px;}
  
 .mt5 {margin-top:5px !important;}
 .mb10 {margin-bottom:10px !important;}
@@ -23,6 +24,7 @@ th, strong, .bold{font-weight:600;}
 .m-h-2 {min-height:2rem;}
 a, .btn-link{text-decoration:none;}
 .pre-line{white-space:pre-line;}
+button:disabled, button[disabled]{cursor:not-allowed;}
 .btn-light{--bs-btn-bg:#f2f2f2;}
 .btn-primary{--bs-btn-bg:#01468a; --bs-btn-border-color:#01468a; --bs-btn-disabled-bg:#01468a;--bs-btn-disabled-border-color:#01468a;}
 .btn-warning{--bs-btn-color:#FFF;--bs-btn-bg:#f19b0f; --bs-btn-border-color:#f19b0f;}

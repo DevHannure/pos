@@ -1023,8 +1023,6 @@ export default function HotelResult(props) {
         </div>
       </div>
 
-      
-
     </>
     :
     <div className="d-lg-table-cell align-top rightResult border-start"> 

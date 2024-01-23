@@ -68,6 +68,36 @@ const MasterService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetCustomers: async function (correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/customer/GetCustomers`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doGetSuppliers: async function (correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/supplier/GetSuppliers`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doGetUsers: async function (correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/employee/GetUsers`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
   
 
 }

@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from "react";
-import Image from 'next/image'
-import Link from 'next/link'
+import Image from 'next/image';
+import Link from 'next/link';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPowerOff } from "@fortawesome/free-solid-svg-icons";
 import { useSession, signOut } from "next-auth/react";
@@ -31,7 +31,7 @@ export default function Header() {
   useEffect(() => {
     dispatch(doUserInfo(data));
     if(data && !customersCreditInfo){
-      customersCreditDetailsBtn(data?.user.userCode)
+      customersCreditDetailsBtn(data?.user.userCode);
     }
   }, [data]);
   

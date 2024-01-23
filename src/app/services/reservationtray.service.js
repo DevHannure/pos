@@ -25,6 +25,17 @@ const ReservationtrayService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetReservationDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetReservationDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': 'pos-psi-two.vercel.app', 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
 
 }
 

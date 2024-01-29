@@ -235,6 +235,8 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 }
 }
 
+.printBg{background-color:#eef5f6; padding-bottom:20px;}
+
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}
 .mainNav .navbar-nav .nav-link{border-top:1px solid #eaeaea;}

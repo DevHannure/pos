@@ -92,7 +92,7 @@ export default function Header() {
     dispatch(doCustCreditDtls(resCustCreditDtls));
   }
 
-  const reservationBtn = async() => {
+  const reservationBtn = () => {
     dispatch(doReserveListOnLoad(null));
     router.push('/pages/booking/reservationTray');
   }

@@ -8,7 +8,7 @@ const ReservationtrayService = {
       const response = await fetch(`${baseUrl}/reservationtray/GetBookingItineraryData`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'pos-psi-two.vercel.app', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -19,7 +19,7 @@ const ReservationtrayService = {
       const response = await fetch(`${baseUrl}/reservationtray/GetReservations`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'pos-psi-two.vercel.app', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -30,12 +30,55 @@ const ReservationtrayService = {
       const response = await fetch(`${baseUrl}/reservationtray/GetReservationDetails`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': 'pos-psi-two.vercel.app', 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}
   },
 
+  doGetBookingSalesReportData: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetBookingSalesReportData`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doGetBookingItineraryReportData: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetBookingItineraryReportData`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doGetBookingVoucherData: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetBookingVoucherData`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doGetBookingInvoiceData: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetBookingInvoiceData`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
 
 }
 

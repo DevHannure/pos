@@ -341,6 +341,51 @@ export default function ReservationTray() {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
   }
+
+  const viewSalesReport = (id) => {
+    let reqRptObj = {
+      "bookingNo": id,
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/rpt/salesRpt?qry=${encData}`);
+  }
+
+  const viewItineraryRpt = (id) => {
+    let reqRptObj = {
+      "bookingNo": id,
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/rpt/itineraryRpt?qry=${encData}`);
+  }
+
+  const viewVoucher = (id) => {
+    let reqRptObj = {
+      "bookingNo": id,
+      "serviceMasterCode": "0",
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/booking/bookingVoucher?qry=${encData}`);
+  }
+
+  const viewInvoice = (id) => {
+    let reqRptObj = {
+      "bookingNo": id,
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
+  }
+
+  
+
+  
   
   return (
     <MainLayout>
@@ -542,10 +587,10 @@ export default function ReservationTray() {
                           <div className='divCell'>{Number(e.totalCustomerPrice).toFixed(2)}</div>
                           <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
                           <div className='divCell'><button type="button" className='sqBtn' title="Service Order" data-bs-toggle="tooltip"><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button type="button" className='sqBtn' title="Sales Report" data-bs-toggle="tooltip"><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button type="button" className='sqBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button type="button" className='sqBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></div>
+                          <div className='divCell'><button onClick={()=> viewSalesReport(e.bookingNo)} type="button" className='sqBtn' title="Sales Report" data-bs-toggle="tooltip"><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
+                          <div className='divCell'><button onClick={()=> viewItineraryRpt(e.bookingNo)} type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></div>
+                          <div className='divCell'><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='sqBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></div>
+                          <div className='divCell'><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='sqBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></div>
                           <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
                         </div>
 

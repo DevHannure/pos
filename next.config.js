@@ -2,7 +2,7 @@
 const nextConfig = {
     reactStrictMode: true,
     images: {
-        domains: ['static.giinfotech.ae','tripadvisor.com'],
+        domains: ['giinfotech.ae','static.giinfotech.ae','tripadvisor.com'],
     }
 }
 

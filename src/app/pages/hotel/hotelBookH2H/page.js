@@ -412,7 +412,7 @@ export default function HotelItinerary() {
           "VATInputAmount": "0",
           "VATOutput": "0",
           "VATOutputAmount": "0",
-          "DueDate": format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime,
+          "DueDate": format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00' ,
           "UniqueId": qry?.sessionId+'-'+uniqId,
           "CustomerCurrencyCode": userInfo?.user?.currencyCode,
           "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),

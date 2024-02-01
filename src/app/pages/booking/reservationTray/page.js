@@ -47,6 +47,7 @@ export default function ReservationTray() {
   const allCustomersList = useSelector((state) => state.reservationListReducer?.allCustomersObj);
   const allSuppliersList = useSelector((state) => state.reservationListReducer?.allSuppliersObj);
   const allUsersList = useSelector((state) => state.reservationListReducer?.allUsersObj);
+  const systemCurrency = userInfo?.user?.systemCurrencyCode;
 
   useEffect(() => {
     if(userInfo?.user){
@@ -92,8 +93,8 @@ export default function ReservationTray() {
   
 
   const [dateType, setDateType] = useState(qry ? qry.DateType : "0");
-  const [dateFrom, setDateFrom] = useState(qry ? new Date(qry.DateFrom) : new Date(new Date().setDate(new Date().getDate() - 5)));
-  const [dateTo, setDateTo] = useState(qry ? new Date(qry.DateTo) : new Date());
+  const [dateFrom, setDateFrom] = useState(qry ? (qry.DateFrom ? new Date(qry.DateFrom) : "") : new Date(new Date().setDate(new Date().getDate() - 5)));
+  const [dateTo, setDateTo] = useState(qry ? (qry.DateTo ? new Date(qry.DateTo) : "") : new Date());
   const dateChange = (dates) => {
     const [start, end] = dates;
     setDateFrom(start);
@@ -184,17 +185,30 @@ export default function ReservationTray() {
       setPagesCount(Math.ceil(resListRes.bookings[0]?.totalBookingCount / Number(pageSize)))
     }
   },[resListRes]);
+
+  const searchById = (e) => {
+    if(e.target.value){
+      setBookingNo(e.target.value);
+      setDateFrom("");
+      setDateTo("")
+    }
+    else{
+      setBookingNo("");
+      setDateFrom(new Date(new Date().setDate(new Date().getDate() - 5)));
+      setDateTo(new Date())
+    }
+  }
   
   const getReservations = () => {
-    if(dateFrom && dateTo){
+    //if(dateFrom && dateTo){
       let qry = {
         "Skip": currentPage?.toString(),
         "Take": pageSize,
         "ActivePage": Number(currentPage),
         "SelBookingStatus": selBookingStatus,
         "DateType": dateType,
-        "DateFrom": format(dateFrom, 'yyyy-MM-dd'),
-        "DateTo": format(dateTo, 'yyyy-MM-dd'),
+        "DateFrom": dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "",
+        "DateTo": dateTo? format(dateTo, 'yyyy-MM-dd') : "",
         "BookingType": bookingType,
         "BookingChannel": bookingChannel,
         "CustomerCode": customerCode,
@@ -207,10 +221,10 @@ export default function ReservationTray() {
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       dispatch(doReserveListOnLoad(null));
       router.push(`/pages/booking/reservationTray?qry=${encData}`);
-    }
-    else{
-      toast.error("Please Select Date",{theme: "colored"});
-    }
+    // }
+    // else{
+    //   toast.error("Please Select Date",{theme: "colored"});
+    // }
   }
 
   const doReservationsOnLoad = async() => {
@@ -220,24 +234,24 @@ export default function ReservationTray() {
       "BookingStatus": bookingStatus?.toString(),
       "BookingType": bookingType,
       "BookingNo": bookingNo,
-      "FromDate": dateType==='0' ? format(dateFrom, 'yyyy-MM-dd') : "",
-      "ToDate": dateType==='0' ? format(dateTo, 'yyyy-MM-dd') : "",
+      "FromDate": dateType==='0' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "ToDate": dateType==='0' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "CreatedBy": userCode?.value,
       "BookingChannel": bookingChannel,
-      "CancellationStartDate": dateType==='6' ? format(dateFrom, 'yyyy-MM-dd') : "",
-      "CancellationEndDate": dateType==='6' ? format(dateTo, 'yyyy-MM-dd') : "",
+      "CancellationStartDate": dateType==='6' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CancellationEndDate": dateType==='6' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "SupplierType": supplierCode?.value,
       "CustomerCode": customerCode?.value,
       "BookingName": "",
       "CartId": "",
       "RateType": rateType,
       "TicketType": Number(ticketType),
-      "CheckinFrom": dateType==='3' ? format(dateFrom, 'yyyy-MM-dd') : "",
-      "CheckinTo": dateType==='3' ? format(dateTo, 'yyyy-MM-dd') : "",
-      "CheckoutFrom": dateType==='4' ? format(dateFrom, 'yyyy-MM-dd') : "",
-      "CheckoutTo": dateType==='4' ? format(dateTo, 'yyyy-MM-dd') : "",
-      "DuedateFrom": dateType==='5' ? format(dateFrom, 'yyyy-MM-dd') : "",
-      "DuedateTo": dateType==='5' ? format(dateTo, 'yyyy-MM-dd') : "",
+      "CheckinFrom": dateType==='3' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CheckinTo": dateType==='3' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "CheckoutFrom": dateType==='4' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CheckoutTo": dateType==='4' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "DuedateFrom": dateType==='5' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "DuedateTo": dateType==='5' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "UserId": userInfo.user.userId,
       "SubUserType": "0"
     }
@@ -382,10 +396,6 @@ export default function ReservationTray() {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
   }
-
-  
-
-  
   
   return (
     <MainLayout>
@@ -439,11 +449,11 @@ export default function ReservationTray() {
                           <option value="Local">Local</option>
                           <option value="Offline">Offline</option>
                           <option value="Xml">Xml</option>
-                          <option value="Hotel">Hotel</option>
-                          <option value="Excursions">Excursions</option>
-                          <option value="Transfer">Transfer</option>
-                          <option value="Visa">Visa</option>
-                          <option value="Other">Other</option>
+                          <option value="HOTEL">Hotel</option>
+                          <option value="EXCURSION">Excursion</option>
+                          <option value="TRANSFER">Transfer</option>
+                          <option value="VISA">Visa</option>
+                          <option value="OTHER">Other</option>
                         </select>
                       </div>
 
@@ -538,7 +548,7 @@ export default function ReservationTray() {
                   <div className='col-md-3 col-6 mb-2 align-self-end'>
                     <div className="input-group input-group-sm">
                       <span className="input-group-text bg-white"><FontAwesomeIcon icon={faSearch} /></span>
-                      <input type="text" className="form-control border-start-0 ps-0" placeholder="Booking/ CartId/ Pax/ SuppConfNo/ CustRefNo" value={bookingNo} onChange={(e)=> setBookingNo(e.target.value)} onKeyDown={(e) => (e.key === "Enter" ? getReservations() : null)} />
+                      <input type="text" className="form-control border-start-0 ps-0" placeholder="Booking/ CartId/ Pax/ SuppConfNo/ CustRefNo" value={bookingNo} onChange={(e)=> searchById(e)} onKeyDown={(e) => (e.key === "Enter" ? getReservations() : null)} />
                     </div>
                   </div>
                 </div>
@@ -710,41 +720,41 @@ export default function ReservationTray() {
                                       {/* //Buying Amount */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         {s.ServiceCode === 17 ?
-                                          <>AED {(Number(s.PayableAmount) + Number(s.VatInputAmount)).toFixed(2)}</>
+                                          <>{systemCurrency} {(Number(s.PayableAmount) + Number(s.VatInputAmount)).toFixed(2)}</>
                                           :
-                                          <>AED {Number(s.PayableAmount).toFixed(2)}</>
+                                          <>{systemCurrency} {Number(s.PayableAmount).toFixed(2)}</>
                                         }
                                       </div>
 
                                       {/* //Buying VAT Amount */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         {s.ServiceCode === 17 ?
-                                          <>AED 0.00</>
+                                          <>{systemCurrency} 0.00</>
                                           :
-                                          <>AED {Number(s.VatInputAmount).toFixed(2)}</>
+                                          <>{systemCurrency} {Number(s.VatInputAmount).toFixed(2)}</>
                                         }
                                       </div>
 
                                       {/* //Total Buying Amount */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        AED {(Number(s.PayableAmount) + Number(s.VatInputAmount)).toFixed(2)}
+                                        {systemCurrency} {(Number(s.PayableAmount) + Number(s.VatInputAmount)).toFixed(2)}
                                       </div>
 
                                       {/* //Selling Amount */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         {s.ServiceCode === 17 ?
-                                          <>AED {(Number(s.NetAmount) + Number(s.VatOutputAmount)).toFixed(2)}</>
+                                          <>{systemCurrency} {(Number(s.NetAmount) + Number(s.VatOutputAmount)).toFixed(2)}</>
                                           :
-                                          <>AED {Number(s.NetAmount).toFixed(2)}</>
+                                          <>{systemCurrency} {Number(s.NetAmount).toFixed(2)}</>
                                         }
                                       </div>
 
                                       {/* //Selling VAT Amount */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         {s.ServiceCode === 17 ?
-                                          <>AED 0.00</>
+                                          <>{systemCurrency} 0.00</>
                                           :
-                                          <>AED {Number(s.VatOutputAmount).toFixed(2)}</>
+                                          <>{systemCurrency} {Number(s.VatOutputAmount).toFixed(2)}</>
                                         }
                                       </div>
                                       
@@ -753,13 +763,13 @@ export default function ReservationTray() {
                                         {s.ServiceCode === 17 ?
                                           <>{s.TripType}</>
                                           :
-                                          <>AED {(Number(s.NetAmount) + Number(s.VatOutputAmount)).toFixed(2)}</>
+                                          <>{systemCurrency} {(Number(s.NetAmount) + Number(s.VatOutputAmount)).toFixed(2)}</>
                                         }
                                       </div>
                                       
                                       {/* //Total Selling Amount (Customer) */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        AED 2396.49
+                                        {s.CustNet?.split(" ")[0] + ' ' + ((Number(s.NetAmount) + Number(s.VatOutputAmount)) / Number(s.ExchangeRate)).toFixed(2)}
                                       </div>
                                       
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">

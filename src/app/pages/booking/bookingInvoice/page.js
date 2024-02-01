@@ -11,6 +11,7 @@ import { enc } from 'crypto-js';
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useSelector } from "react-redux";
 
 export default function BookingInvoice() {
   const router = useRouter();
@@ -19,7 +20,8 @@ export default function BookingInvoice() {
   let decData = search ? enc.Base64.parse(search).toString(enc.Utf8) : null;
   let bytes = decData ? AES.decrypt(decData, 'ekey').toString(enc.Utf8): null;
   const qry = bytes ? JSON.parse(bytes) : null;
-  console.log("qry", qry)
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const systemCurrency = userInfo?.user?.systemCurrencyCode;
 
   useEffect(()=>{
     window.scrollTo(0, 0);
@@ -29,7 +31,6 @@ export default function BookingInvoice() {
   },[searchparams]);
 
   const [resDetails, setResDetails] = useState(null);
-  console.log("resDetails", resDetails)
 
   const doInvoiceLoad = async() => {
     let reqRptObj = {
@@ -69,7 +70,6 @@ export default function BookingInvoice() {
   const [emailLoad, setEmailLoad] = useState(false);
   
   const emailChange = (value) => {
-    console.log(value)
     let error = ''
     if(value===''){
       error = 'Email is required.';
@@ -125,38 +125,39 @@ export default function BookingInvoice() {
     }
   };
 
-  const [totalHotelNet, setTotalHotelNet] = useState(0);
-  console.log("totalHotelNet", totalHotelNet)
-
-  useEffect(()=> {
-    if(resDetails){
-      resDetails.reportDetails?.map((v, i) => {
-        if(v.serviceCode === "1" || v.serviceCode === "2"){
-          if(process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138"){
-            let numNet = 0
-            v.rateTypeName?.split('#')?.map((k, ind) => {numNet = parseFloat(parseFloat(numNet) + parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) );})
-            setTotalHotelNet(numNet)
-          }
-          else{
-            let numNet = 0
-            v.rateTypeName?.split('#')?.map((k, ind) => {numNet = parseFloat(parseFloat(numNet) + (parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) );})
-            setTotalHotelNet(numNet)
-          }
-        }
-      });
+  const dateFormater = (date) => {
+    let dateValue = date
+    if(dateValue?.indexOf('/') > -1){
+      dateValue = format(parse(dateValue, 'dd/MM/yyyy', new Date()), "dd MMM yyyy");
     }
-  },[resDetails]);
+    else{
+      dateValue = format(parse(dateValue, 'dd-MMM-yy', new Date()), "dd MMM yyyy")
+    }
+    return dateValue
+  }
 
-  // const [bookingStatus, setBookingStatus] = useState(0);
-  // const [totalServiceNetAmount, setTotalServiceNetAmount] = useState(0);
-  // const [custExchangeRate, setCustExchangeRate] = useState(0);
-  // const [h2h, setH2h] = useState(0);
-  // for (let i = 0; i <= resDetails?.reportDetails?.length; i++) {
-  //   setH2h(resDetails?.reportDetails[i].h2H)
-  //   setCustExchangeRate(resDetails?.reportDetails[i].custExchangeRate)
-  //   setBookingStatus(resDetails?.reportDetails[i].bookingStatus)
-  // }
-  
+  const dateFormaterTop = (date) => {
+    let dateValue = date
+    if(dateValue?.indexOf('/') > -1){
+      dateValue = format(parse(dateValue, 'dd/MM/yyyy', new Date()), "MMMM dd, yyyy");
+    }
+    else{
+      dateValue = format(parse(dateValue, 'dd-MMM-yy', new Date()), "MMMM dd, yyyy")
+    }
+    return dateValue
+  }
+
+  const dateFormaterSec = (date) => {
+    let dateValue = date
+    if(dateValue?.indexOf('/') > -1){
+      dateValue = format(parse(dateValue, 'dd/MM/yyyy', new Date()), "MMMM");
+    }
+    else{
+      dateValue = format(parse(dateValue, 'dd-MMM-yy', new Date()), "MMMM")
+    }
+    return dateValue
+  }
+
   
 
   return (
@@ -221,26 +222,27 @@ export default function BookingInvoice() {
                             </tbody>
                           </table>
                           }
-                          
 
                           <table width="100%" cellPadding="10" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'20px'}}>
                             <tbody>
                               <tr>
-                                <td width="34%" align="left" valign="top">     
-                                  <strong>From</strong><br />
-                                  <strong className="fn15">{resDetails.reportHeader?.companyName}</strong><br />
-                                  {resDetails.reportHeader?.address} {resDetails.reportHeader?.address2} {resDetails.reportHeader?.cityName}<br />
-                                  Phone: {resDetails.reportHeader?.telephone}<br />
-                                  {process.env.NEXT_PUBLIC_SHORTCODE==='ZAM' || process.env.NEXT_PUBLIC_SHORTCODE==="BTT" || process.env.NEXT_PUBLIC_SHORTCODE==="AFT" ?
-                                  <>
-                                  {/* VAT No: {resDetails.VatRegistrationNumber}<br /> */}
-                                  CR No: {resDetails.crn!=null && resDetails.crn!="" ? resDetails.crn :"4030394200"}
-                                  </>
-                                  :
-                                  <>TRN No: {resDetails.reportHeader?.vattrnNumber}  </>
-                                  }
-                                </td>
-                                  
+                                {process.env.NEXT_PUBLIC_SHORTCODE!=='AORYX' &&
+                                  <td width="34%" align="left" valign="top">     
+                                    <strong>From</strong><br />
+                                    <strong className="fn15">{resDetails.reportHeader?.companyName}</strong><br />
+                                    {resDetails.reportHeader?.address} {resDetails.reportHeader?.address2} {resDetails.reportHeader?.cityName}<br />
+                                    Phone: {resDetails.reportHeader?.telephone}<br />
+                                    {process.env.NEXT_PUBLIC_SHORTCODE==='ZAM' || process.env.NEXT_PUBLIC_SHORTCODE==="BTT" || process.env.NEXT_PUBLIC_SHORTCODE==="AFT" ?
+                                    <>
+                                    {/* VAT No: {resDetails.VatRegistrationNumber}<br /> */}
+                                    CR No: {resDetails.crn!=null && resDetails.crn!="" ? resDetails.crn :"4030394200"}
+                                    </>
+                                    :
+                                    <>TRN No: {resDetails.reportHeader?.vattrnNumber}  </>
+                                    }
+                                  </td>
+                                }
+
                                 <td width="33%" align="left" valign="top">
                                   <strong>To</strong><br />
                                   {invoicetoformat !== "1" ?
@@ -271,27 +273,62 @@ export default function BookingInvoice() {
                                     <tbody>
                                       <tr>
                                         <td style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
-                                          Invoice Date<br />
-                                          <strong>22/01/2024 / January period</strong>
+                                          {process.env.NEXT_PUBLIC_SHORTCODE==='ZAM' || process.env.NEXT_PUBLIC_SHORTCODE==="BTT" || process.env.NEXT_PUBLIC_SHORTCODE==="AFT" ?
+                                          <>
+                                            Invoice Date<br />
+                                            <strong>
+                                              {resDetails?.reportDetails[0]?.bookingDate?.indexOf('#') > -1 ?
+                                                <>{resDetails?.reportDetails[0]?.bookingDate?.split('#')[1]?.split(',')[1]}</>
+                                                :
+                                                <>{dateFormaterTop(resDetails?.reportDetails[0]?.bookingDate)}</>
+                                              }
+                                            </strong>
+                                          </>
+                                          :
+                                          <>
+                                            Invoice Date<br />
+                                            <strong> 
+                                              {resDetails?.reportDetails[0]?.bookingDate?.indexOf('#') > -1 ?
+                                              <>{resDetails?.reportDetails[0]?.bookingDate?.split('#')[1]?.split(',')[1]}</>
+                                              :
+                                              <>{resDetails?.reportDetails[0]?.bookingDate}</>
+                                              } / {resDetails?.reportDetails[0]?.bookingDate && dateFormaterSec(resDetails?.reportDetails[0]?.bookingDate)} period</strong>
+                                          </>
+                                          }
                                         </td>
 
                                         <td style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
-                                          Booking Date<br /> <strong>January 22, 2024</strong>
+                                          Booking Date<br /> 
+                                          <strong>
+                                            {resDetails?.reportDetails[0]?.bookingDate?.indexOf('#') > -1 ?
+                                              <>{dateFormaterTop(resDetails?.reportDetails[0]?.bookingDate?.split('#')[0])}</>
+                                              :
+                                              <>{dateFormaterTop(resDetails?.reportDetails[0]?.bookingDate)}</>
+                                            }
+                                          </strong>
                                         </td>
+
+                                        {process.env.NEXT_PUBLIC_SHORTCODE==='ZAM' || process.env.NEXT_PUBLIC_SHORTCODE==="BTT" || process.env.NEXT_PUBLIC_SHORTCODE==="AFT" ?
+                                        <>
+                                          {resDetails?.reportDetails[0]?.bookingDate?.indexOf('#') > -1 &&
+                                            <td style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
+                                              Invoice No.<br /> <strong>{resDetails?.reportDetails[0]?.bookingDate?.split('#')[1]?.split(',')[0]}</strong>
+                                            </td>
+                                          }
+                                        </>
+                                        : null}
+
                                         <td style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
-                                          Invoice No.<br /> <strong>77</strong>
-                                        </td>
-                                        <td style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
-                                            Booking#<br /> <strong>77</strong>
+                                            Booking#<br /> <strong>{qry?.bookingNo}</strong>
                                         </td>
                                       </tr>
 
                                       <tr>
-                                        {resDetails.reportDetails[0]?.customerReference !==null && resDetails.reportDetails[0]?.customerReference !=='' &&
-                                        <td style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
-                                          Customer Ref.#<br /> <strong>{resDetails.reportDetails[0]?.customerReference}</strong>
+                                        <td colSpan="4" style={{padding:'4px 10px',verticalAlign:'top',lineHeight:'21px'}}>
+                                          {resDetails.reportDetails[0]?.customerReference && resDetails.reportDetails[0]?.customerReference?.trim() !== "" &&
+                                          <>Customer Ref.#<br /> <strong>{resDetails.reportDetails[0]?.customerReference}</strong></>
+                                          }
                                         </td>
-                                        }
                                       </tr>
                                     </tbody>
                                   </table>
@@ -349,682 +386,1464 @@ export default function BookingInvoice() {
 
                           <table width="100%" cellPadding="10" cellSpacing="0">
                             <tbody>
-                              {resDetails.reportDetails?.map((v, i) => (
-                              <React.Fragment key={i}>
-                                {/* Hotel Service Start */}
-                                {v.serviceCode === "1" || v.serviceCode === "2" ?
-                                <tr>
-                                  <td>
-                                    <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                      <tbody>
-                                        <tr>
-                                          <td style={{fontSize:'16px'}}><strong>HOTEL SERVICES</strong></td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                    <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                      <tbody>
-                                        <tr>
-                                          <td>
-                                            <strong style={{color:'#004181', fontSize:'15px', textTransform:'capitalize'}}>{v.productName?.toLowerCase()}</strong> - {v.cityName}
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
+                              {resDetails.reportDetails?.map((v, i) => {
+                                
+                                if(v.serviceCode === "1" || v.serviceCode === "2"){
+                                  
+                                  let numHotelNet = 0
+                                  if(process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138"){
+                                    v.rateTypeName?.split('#')?.map((k, ind) => {numHotelNet = parseFloat(parseFloat(numHotelNet) + parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) );})
+                                  }
+                                  else{
+                                    v.rateTypeName?.split('#')?.map((k, ind) => {numHotelNet = parseFloat(parseFloat(numHotelNet) + (parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) );})
+                                  }
+                                  const totalHotelNet = numHotelNet;
 
-                                    <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                      <thead>
-                                        <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                          <th style={{textAlign:'left'}}>RoomType</th>
-                                          <th width="250" style={{textAlign:'left'}}>Basis</th>
-                                          <th width="90" style={{textAlign:'center'}}>Check In</th>
-                                          <th width="90" style={{textAlign:'center'}}>Check Out</th>
-                                          <th width="40" style={{textAlign:'center'}}>Night(s)</th>
-                                          {v.noOfAdult > 0 &&
-                                            <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
-                                          }
-                                          {v.noOfChild > 0 &&
-                                            <th width="40" style={{textAlign:'center'}}>Child(ren)</th>
-                                          }
-                                          <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
+                                  return(
+                                    <React.Fragment key={i}>
+                                      {/* Hotel Service Start */}
+                                      <tr>
+                                        <td>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td style={{fontSize:'16px'}}><strong>HOTEL SERVICES</strong></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td>
+                                                  <div style={{textTransform:'capitalize'}}><strong style={{color:'#004181', fontSize:'15px', textTransform:'capitalize'}}>{v.productName?.toLowerCase()}</strong> - {v.cityName?.toLowerCase()}</div>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
 
-                                          <th width="80" style={{textAlign:'right'}}>Net</th>
-                                          <th width="80" style={{textAlign:'right'}}>Vat</th>
-                                          <th width="110" style={{textAlign:'right'}}>Gross</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                      {v.rateTypeName?.split('#').map((k, ind) => (
-                                        <tr key={ind}>
-
-                                          <td valign="top">
-                                            <div style={{textTransform:'capitalize'}}>{v.h2HRoomTypeName?.toLowerCase()} ( {v.rateTypeName?.split('#')[ind]} )</div>
-                                          </td>
-
-                                          {ind===0 ?
-                                          <td valign="top" rowSpan={k?.length-1}>
-                                            <div style={{textTransform:'capitalize'}}>{v.h2HRateBasisName?.toLowerCase()}</div>
-                                          </td> : null
-                                          }
-
-                                          {ind===0 ?
-                                          <td valign="top" style={{textAlign:'center'}} rowSpan={k?.length-1}>
-                                            {v.bookedFrom?.indexOf('/') > -1 ?
-                                              <>{format(parse(v.bookedFrom, 'dd/MM/yyyy', new Date()), "dd MMM yyyy")}</>
-                                              :
-                                              <>{format(parse(v.bookedFrom, 'dd-MMM-yy', new Date()), "dd MMM yyyy")}</>
-                                            }
-                                          </td> : null
-                                          }
-
-                                          {ind===0 ?
-                                          <td valign="top" style={{textAlign:'center'}} rowSpan={k?.length-1}>
-                                            {v.bookedTo?.indexOf('/') > -1 ?
-                                              <>{format(parse(v.bookedTo, 'dd/MM/yyyy', new Date()), "dd MMM yyyy")}</>
-                                              :
-                                              <>{format(parse(v.bookedTo, 'dd-MMM-yy', new Date()), "dd MMM yyyy")}</>
-                                            }
-                                          </td> : null
-                                          }
-
-                                          {ind===0 ?
-                                          <td valign="top" style={{textAlign:'center'}} rowSpan={k?.length-1}> {v.bookedNights}
-                                          </td>: null}
-
-                                          {ind===0 ?
-                                          <>{v.noOfAdult > 0 &&
-                                          <td valign="top" style={{textAlign:'center'}} rowSpan={k?.length-1}>{v.noOfAdult}</td>
-                                          }</>: null}
-
-                                          {ind===0 ?
-                                          <>{v.noOfChild > 0 &&
-                                          <td valign="top" style={{textAlign:'center'}} rowSpan={k?.length-1}>{v.noOfChild}</td>
-                                          }</>: null}
-
-                                          <td valign="top" style={{textAlign:'center'}}>
-                                            {v.serviceStatus != "9" ?
-                                              <>{v.noOfUnits.split(',')[ind]}</>:null
-                                            }
-                                          </td>
-
-                                          <td align="right" valign="top">
-                                            {currencyformat !== "1" ?
-                                            <>
-                                              {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
-                                                <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) - parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                                :
-                                                <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                              }
-                                            </>
-                                            :
-                                            <>
-                                              {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
-                                                <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) - parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)).toFixed(2)}</>
-                                                :
-                                                <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0)).toFixed(2)}</>
-                                              }
-                                            </>
-                                            }
-                                          </td>
-
-                                          <td align="right" valign="top">
-                                            {currencyformat !== "1" ?
-                                              <>{parseFloat((parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                              :
-                                              <>{parseFloat(parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)).toFixed(2)}</>
-                                            }
-                                          </td>
-
-
-                                          <td align="right" valign="top">
-                                            {v.serviceCode === "1" && v.complimentary === "1" ?
-                                            <>
-                                              {currencyformat !== "1" ?
-                                              <span>SystemCurrency&nbsp;
-                                                {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
-                                                  <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) - parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                                  :
-                                                  <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) + parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <th style={{textAlign:'left'}}>RoomType</th>
+                                                <th width="250" style={{textAlign:'left'}}>Basis</th>
+                                                <th width="90" style={{textAlign:'center'}}>Check In</th>
+                                                <th width="90" style={{textAlign:'center'}}>Check Out</th>
+                                                <th width="40" style={{textAlign:'center'}}>Night(s)</th>
+                                                {v.noOfAdult > 0 &&
+                                                  <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
                                                 }
-                                              </span>
-                                              :
-                                              <span>
-                                                {v.custCurrency}&nbsp; 
-                                                {v.serviceStatus!== "9" ?
+                                                {v.noOfChild > 0 &&
+                                                  <th width="40" style={{textAlign:'center'}}>Child(ren)</th>
+                                                }
+                                                <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
+                                                {v.isPackage !== '10' ?
                                                 <>
-                                                  {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
-                                                    <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) - parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)).toFixed(2)}</>
-                                                    :
-                                                    <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) + parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)).toFixed(2)}</>
-                                                  }
-                                                </>
-                                                :
-                                                <>{ parseFloat(v.actCancellationCharges * 2).toFixed(2) }</>
+                                                <th width="80" style={{textAlign:'right'}}>Net</th>
+                                                <th width="80" style={{textAlign:'right'}}>Vat</th>
+                                                <th width="110" style={{textAlign:'right'}}>Gross</th>
+                                                </> :null
                                                 }
-                                              </span>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {v.rateTypeName?.split('#').map((k, ind) => (
+                                                <tr key={ind}>
+                                                  <td valign="top">
+                                                    <div style={{textTransform:'capitalize'}}>{v.h2HRoomTypeName?.toLowerCase()} ( {v.rateTypeName?.split('#')[ind]} )</div>
+                                                  </td>
+
+                                                  {ind===0 ?
+                                                  <td valign="top" rowSpan={v.rateTypeName?.split('#').length}>
+                                                    <div style={{textTransform:'capitalize'}}>{v.h2HRateBasisName?.toLowerCase()}</div>
+                                                  </td> : null
+                                                  }
+
+                                                  {ind===0 ?
+                                                  <td valign="top" style={{textAlign:'center'}} rowSpan={v.rateTypeName?.split('#').length}>
+                                                    {dateFormater(v.bookedFrom)}
+                                                  </td> : null
+                                                  }
+
+                                                  {ind===0 ?
+                                                  <td valign="top" style={{textAlign:'center'}} rowSpan={v.rateTypeName?.split('#').length}>
+                                                    {dateFormater(v.bookedTo)}
+                                                  </td> : null
+                                                  }
+
+                                                  {ind===0 ?
+                                                  <td valign="top" style={{textAlign:'center'}} rowSpan={v.rateTypeName?.split('#').length}> {v.bookedNights}
+                                                  </td>: null}
+
+                                                  {ind===0 ?
+                                                  <>{v.noOfAdult > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}} rowSpan={v.rateTypeName?.split('#').length}>{v.noOfAdult}</td>
+                                                  }</>: null}
+
+                                                  {ind===0 ?
+                                                  <>{v.noOfChild > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}} rowSpan={v.rateTypeName?.split('#').length}>{v.noOfChild}</td>
+                                                  }</>: null}
+
+                                                  <td valign="top" style={{textAlign:'center'}}>
+                                                    {v.serviceStatus != "9" ?
+                                                      <>{v.noOfUnits.split(',')[ind]}</>:null
+                                                    }
+                                                  </td>
+                                                  {v.isPackage !== '10' ?
+                                                    <>
+                                                    <td align="right" valign="top">
+                                                      {currencyformat !== "1" ?
+                                                      <>
+                                                        {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
+                                                          <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) - parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>
+                                                        {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
+                                                          <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) - parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      }
+                                                    </td>
+
+                                                    <td align="right" valign="top">
+                                                      {currencyformat !== "1" ?
+                                                        <>{parseFloat((parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                      }
+                                                    </td>
+
+
+                                                    <td align="right" valign="top">
+                                                      {v.serviceCode === "1" && v.complimentary === "1" ?
+                                                      <>
+                                                        {currencyformat !== "1" ?
+                                                        <span>{systemCurrency}&nbsp;
+                                                          {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
+                                                            <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) - parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                            :
+                                                            <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          }
+                                                        </span>
+                                                        :
+                                                        <span>
+                                                          {v.custCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>
+                                                            {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
+                                                              <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) - parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                              :
+                                                              <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                            }
+                                                          </>
+                                                          :
+                                                          <>{ parseFloat(v.actCancellationCharges * 2).toFixed(2) }</>
+                                                          }
+                                                        </span>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>
+                                                      {currencyformat !== "1" ?
+                                                        <span>{systemCurrency}&nbsp;
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>
+                                                            {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
+                                                              <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                              :
+                                                              <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                            }
+                                                          </>
+                                                          :
+                                                          <>{ parseFloat(v.sysCancellationCharge).toFixed(2) }</>
+                                                          }
+                                                        </span>
+                                                        :
+                                                        <span>
+                                                          {v.custCurrency}&nbsp;
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>
+                                                            {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
+                                                              <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                              :
+                                                              <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                            }
+                                                          </>
+                                                          :
+                                                          <>{ parseFloat(v.actCancellationCharges).toFixed(2) }</>
+                                                          }
+                                                        </span>
+                                                        }
+                                                      </>
+                                                      }
+                                                    </td>
+                                                    </> :null 
+                                                  }
+                                                </tr>
+                                              ))}
+
+                                              {v.isPackage !== '10' ?
+                                              <>
+                                                <tr>
+                                                  <td colSpan="11" align="right">
+                                                    <strong>Total Service Cost (Including VAT): </strong>
+                                                    {v.serviceCode === "1" && v.complimentary === "1" ?
+                                                      <strong>
+                                                        {currencyformat !== "1" ?
+                                                        <>{systemCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalHotelNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.sysCancellationCharge*2).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        :
+                                                        <>{v.custCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalHotelNet).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.actCancellationCharges * 2).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        }
+                                                      </strong>
+                                                    :
+                                                      <strong>
+                                                        {currencyformat !== "1" ?
+                                                        <>{systemCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalHotelNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        :
+                                                        <>{v.custCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalHotelNet).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        }
+                                                      </strong>
+                                                    }
+                                                  </td>
+                                                </tr>
+
+                                                {v.serviceStatus=== "9" ?
+                                                <tr>
+                                                  <td colSpan="11" align="right">
+                                                    <strong>Cancelation Penality: </strong>
+                                                    <strong>
+                                                      {currencyformat !== "1" ?
+                                                      <>{systemCurrency} {parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                      :
+                                                      <>{v.custCurrency} {parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                      }
+                                                    </strong>
+                                                  </td>
+                                                </tr> : null
+                                                }
+                                              </> : null
                                               }
-                                            </>
-                                            :
-                                            <>
-                                            {currencyformat !== "1" ?
-                                              <span>SystemCurrency&nbsp;
-                                                {v.serviceStatus!== "9" ?
+
+                                              {v.supplierRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Supplier Remarks: </strong> {v.supplierRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.itineraryRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Service Remarks: </strong> {v.itineraryRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.consultantRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Consultant Remarks: </strong> {v.consultantRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.fairName ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Promotion: </strong> {v.fairName}</td>
+                                              </tr> : null
+                                              }
+                                            </tbody>
+                                          </table>
+                                          
+                                          {v.serviceCode === "1" && v.complimentary === "1" ?
+                                          <>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                                <tr>
+                                                  <td style={{fontSize:'16px'}}><strong>COMPLIMENTARY TRANSFER</strong></td>
+                                                </tr>
+                                              </tbody>
+                                          </table>
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <tbody>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <td valign="top">Transfer Details</td>
+                                                <td valign="top">Transfer Type</td>
+                                                <td valign="top">Service Type</td>
+                                              </tr>
+                                              <tr>
+                                                <td valign="top">Complimentary Transfer With {v.productName}, {v.cityName}</td>
+                                                <td valign="top">
+                                                  {v.arrival === "0" && v.departure == "0" ? "Inter City"
+                                                  : v.arrival === "1" && v.departure === "0" && v.serviceCode === "1" && v.complimentary == "1" ? "Return Transfer(Complimentary)" 
+                                                  : v.arrival === "1" && v.departure === "0" ? "Arrival" 
+                                                  : v.arrival === "0" && v.departure === "1" ? "Departure" 
+                                                  : "Return"
+                                                  }
+                                                </td>
+                                                <td valign="top">{v.h2HRoomTypeName}</td>
+                                              </tr>
+                                              
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <td valign="top">Service Date</td>
+                                                <td valign="top">Pickup Location</td>
+                                                <td valign="top">Dropoff Location</td>
+                                              </tr>
+                                              <tr>
+                                                <td valign="top">
+                                                  {dateFormater(v.bookedFrom)}
+                                                </td>
+                                                <td valign="top">{v.locationFromName}</td>
+                                                <td valign="top">{v.locationToName}</td>
+                                              </tr>
+
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <td valign="top">Pick up Date &amp; Time</td>
+                                                <td valign="top">Drop off Date &amp;  Time</td>
+                                                <td valign="top">Arr., Dep. Pickup Points</td>
+                                              </tr>
+                                              <tr>
+                                                <td valign="top">
+                                                  {v.pickupDate && v.pickupDate !== "01-Jan-1900 12:00:00 AM" && v.pickupDate !== "1/1/1900 12:00:00 AM" ?
+                                                  <>{format(new Date(v.pickupDate), 'dd MMM yyyy')} {v.pickupTime}</>
+                                                  :null
+                                                  }
+                                                </td>
+                                                <td valign="top">
+                                                  {v.dropoffDate && v.dropoffDate !== "01-Jan-1900 12:00:00 AM" && v.dropoffDate !== "1/1/1900 12:00:00 AM" ?
+                                                  <>{format(new Date(v.dropoffDate), 'dd MMM yyyy')} {v.dropoffTime}</>
+                                                  :null
+                                                  }
+                                                </td>
+                                                <td valign="top">
+                                                  {v.pickupLoc }<br />
+                                                  {v.dropoffLoc }
+                                                </td>
+                                              </tr>
+
+                                              <tr>
+                                                <td colSpan="3">
+                                                <strong>Flight Details:</strong> {v.flightDtls}
+                                                {v.noOfAdult > "0" ? <><strong class="bold"> Adult(s): </strong> {v.noOfAdult}</> : null}
+                                                {v.noOfChild > "0" ? <><strong class="bold">, Child(ren): </strong> {v.noOfChild}</> : null}
+                                                {v.supplierRemarks ? <><br /><strong class="bold">Supplier Remarks: </strong> {v.supplierRemarks}</> : null}
+                                                {v.itineraryRemarks ? <><br /><strong class="bold">Service Remarks: </strong> {v.itineraryRemarks}</> : null}
+                                                {v.consultantRemarks ? <><br /><strong class="bold">Consultant Remarks: </strong> {v.consultantRemarks}</> : null}
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          </>
+                                          :
+                                          v.serviceCode === "16" ?
+                                          <>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                                <tr>
+                                                  <td style={{fontSize:'16px'}}><strong>GALA DINNER SERVICES</strong></td>
+                                                </tr>
+                                              </tbody>
+                                          </table>
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <th style={{textAlign:'left'}}>Gala Dinner Details</th>
+                                                <th style={{textAlign:'left'}}>From</th>
+                                                <th style={{textAlign:'left'}}>To</th>
+                                                {v.isPackage !== '10' ?
                                                 <>
-                                                  {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
-                                                    <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                                    :
-                                                    <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) + parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                                  }
-                                                </>
-                                                :
-                                                <>{ parseFloat(v.sysCancellationCharge).toFixed(2) }</>
+                                                  <th style={{textAlign:'left'}}>Amount</th>
+                                                </> :null
                                                 }
-                                              </span>
-                                              :
-                                              <span>
-                                                {v.custCurrency}&nbsp;
-                                                {v.serviceStatus!== "9" ?
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              <tr>
+                                                <td valign="top">
+                                                  <strong>{v.productName}</strong> At {v.fairName}<br />
+                                                  {v.noOfAdult > "0" ? <><strong class="bold"> Adult(s): </strong> {v.noOfAdult}</> : null}
+                                                  {v.noOfChild > "0" ? <><strong class="bold">, Child(ren): </strong> {v.noOfChild}</> : null}
+                                                  {v.supplierRemarks ? <><br /><strong class="bold">Supplier Remarks: </strong> {v.supplierRemarks}</> : null}
+                                                  {v.itineraryRemarks ? <><br /><strong class="bold">Service Remarks: </strong> {v.itineraryRemarks}</> : null}
+                                                  {v.consultantRemarks ? <><br /><strong class="bold">Consultant Remarks: </strong> {v.consultantRemarks}</> : null}
+                                                </td>
+                                                <td valign="top">{dateFormater(v.bookedFrom)}</td>
+                                                <td valign="top">{dateFormater(v.bookedTo)}</td>
+                                                {v.isPackage !== '10' ?
                                                 <>
-                                                  {process.env.NEXT_PUBLIC_SHORTCODE!=='EFX' && process.env.NEXT_PUBLIC_SHORTCODE!=='AFT' && process.env.NEXT_PUBLIC_SHORTCODE!=='GTD' && process.env.NEXT_PUBLIC_SHORTCODE!=='PLT' && v.h2H !=="0" && v.h2H !=="138" ?
-                                                    <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0)).toFixed(2)}</>
+                                                <td valign="top">
+                                                  {currencyformat !== "1" ?
+                                                  <>{systemCurrency}&nbsp; 
+                                                    {v.serviceStatus !== "9" ?
+                                                    <>{parseFloat(v.netAmount).toFixed(2)}</>
                                                     :
-                                                    <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[i] ? v.netPerUnit?.split('#')[i]:0) + parseFloat(v.vatPerUnit?.split('#')[i] ? v.vatPerUnit?.split('#')[i]:0)).toFixed(2)}</>
+                                                    <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                    }
+                                                  </>
+                                                  :
+                                                  <>{v.custCurrency}&nbsp; 
+                                                    {v.serviceStatus !== "9" ?
+                                                    <>{parseFloat(v.net).toFixed(2)}</>
+                                                    :
+                                                    <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                    }
+                                                  </>
                                                   }
+                                                </td>
+                                                </> :null
+                                                }
+                                              </tr>
+
+                                              {v.isPackage !== '10' ?
+                                              <tr>
+                                                {v.serviceStatus === "9" ?
+                                                <>
+                                                <td valign="top" colSpan="3">Service status <span style={{color:'#f00'}}>cancelled</span> and the cancellation charges applied: {v.custCurrency} {parseFloat(v.actCancellationCharges).toFixed(2)}</td>
+
+                                                <td valign="top" colSpan="1" style={{textAlign:'right'}}>
+                                                  Total Service Cost(Including VAT):
+                                                  {currencyformat !== "1" ?
+                                                  <>{systemCurrency}&nbsp; 
+                                                    {v.serviceStatus !== "9" ?
+                                                    <>{parseFloat(v.netAmount).toFixed(2)}</>
+                                                    :
+                                                    <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                    }
+                                                  </>
+                                                  :
+                                                  <>{v.custCurrency}&nbsp; 
+                                                    {v.serviceStatus !== "9" ?
+                                                    <>{parseFloat(v.net).toFixed(2)}</>
+                                                    :
+                                                    <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                    }
+                                                  </>
+                                                  }
+                                                </td>
                                                 </>
                                                 :
-                                                <>{ parseFloat(v.actCancellationCharges).toFixed(2) }</>
+                                                <td valign="top" colSpan="4" style={{textAlign:'right'}}>
+                                                  Total Service Cost(Including VAT):
+                                                  {currencyformat !== "1" ?
+                                                  <>{systemCurrency}&nbsp; 
+                                                    {v.serviceStatus !== "9" ?
+                                                    <>{parseFloat(v.netAmount).toFixed(2)}</>
+                                                    :
+                                                    <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                    }
+                                                  </>
+                                                  :
+                                                  <>{v.custCurrency}&nbsp; 
+                                                    {v.serviceStatus !== "9" ?
+                                                    <>{parseFloat(v.net).toFixed(2)}</>
+                                                    :
+                                                    <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                    }
+                                                  </>
+                                                  }
+                                                </td>
                                                 }
-                                              </span>
+                                              </tr>
+                                              :null
                                               }
-                                            </>
-                                            }
-                                          </td>
-                                        </tr>
-                                      ))}
 
-                                        <tr>
-                                          <td colSpan="10" align="right">
-                                            <strong>Total Service Cost (Including VAT): </strong>
-                                            {v.serviceCode === "1" && v.complimentary === "1" ?
-                                              <strong>
-                                                {currencyformat !== "1" ?
-                                                <>SystemCurrency&nbsp; 
-                                                  {v.serviceStatus!== "9" ?
-                                                  <>{parseFloat(totalHotelNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                                  :
-                                                  <>{parseFloat(v.sysCancellationCharge*2).toFixed(2)}</>
-                                                  }
-                                                </>
-                                                :
-                                                <>{v.custCurrency}&nbsp; 
-                                                  {v.serviceStatus!== "9" ?
-                                                  <>{parseFloat(totalHotelNet).toFixed(2)}</>
-                                                  :
-                                                  <>{parseFloat(v.actCancellationCharges * 2).toFixed(2)}</>
-                                                  }
-                                                </>
-                                                }
-                                              </strong>
-                                            :
-                                              <strong>
-                                                {currencyformat !== "1" ?
-                                                <>SystemCurrency&nbsp; 
-                                                  {v.serviceStatus!== "9" ?
-                                                  <>{parseFloat(totalHotelNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
-                                                  :
-                                                  <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
-                                                  }
-                                                </>
-                                                :
-                                                <>{v.custCurrency}&nbsp; 
-                                                  {v.serviceStatus!== "9" ?
-                                                  <>{parseFloat(totalHotelNet).toFixed(2)}</>
-                                                  :
-                                                  <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
-                                                  }
-                                                </>
-                                                }
-                                              </strong>
-                                            }
-                                          </td>
-                                        </tr>
-
-                                        {v.serviceStatus=== "9" ?
-                                        <tr>
-                                          <td colSpan="10" align="right">
-                                            <strong>Cancelation Penality: </strong>
-                                            <strong>
-                                              {currencyformat !== "1" ?
-                                              <>SystemCurrency&nbsp; {parseFloat(v.sysCancellationCharge).toFixed(2)}</>
-                                              :
-                                              <>{v.custCurrency}&nbsp; {parseFloat(v.actCancellationCharges).toFixed(2)}</>
-                                              }
-                                            </strong>
-                                          </td>
-                                        </tr> : null
-                                        }
-
-                                        {v.supplierRemarks ?
-                                        <tr>
-                                          <td colSpan="10" align="right"><strong>Supplier Remarks: </strong> {v.supplierRemarks}</td>
-                                        </tr> : null
-                                        }
-
-                                        {v.itineraryRemarks ?
-                                        <tr>
-                                          <td colSpan="10" align="right"><strong>Service Remarks: </strong> {v.itineraryRemarks}</td>
-                                        </tr> : null
-                                        }
-
-                                        {v.consultantRemarks ?
-                                        <tr>
-                                          <td colSpan="10" align="right"><strong>Consultant Remarks: </strong> {v.consultantRemarks}</td>
-                                        </tr> : null
-                                        }
-
-                                        {v.fairName ?
-                                        <tr>
-                                          <td colSpan="10" align="right"><strong>Promotion: </strong> {v.fairName}</td>
-                                        </tr> : null
-                                        }
-                                      </tbody>
-                                    </table>
-                                    
-                                    {v.serviceCode === "1" && v.complimentary === "1" ?
-                                    <>
-                                    <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                      <tbody>
-                                          <tr>
-                                            <td style={{fontSize:'16px'}}><strong>COMPLIMENTARY TRANSFER</strong></td>
-                                          </tr>
-                                        </tbody>
-                                    </table>
-                                    <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                      <tbody>
-                                        <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                          <td valign="top">Transfer Details</td>
-                                          <td valign="top">Transfer Type</td>
-                                          <td valign="top">Service Type</td>
-                                        </tr>
-                                        <tr>
-                                          <td valign="top">Complimentary Transfer With {v.productName}, {v.cityName}</td>
-                                          <td valign="top">
-                                            {v.arrival === "0" && v.departure == "0" ? "Inter City"
-                                            : v.arrival === "1" && v.departure === "0" && v.serviceCode === "1" && v.complimentary == "1" ? "Return Transfer(Complimentary)" 
-                                            : v.arrival === "1" && v.departure === "0" ? "Arrival" 
-                                            : v.arrival === "0" && v.departure === "1" ? "Departure" 
-                                            : "Return"
-                                            }
-                                          </td>
-                                          <td valign="top">{v.h2HRoomTypeName}</td>
-                                        </tr>
-                                        
-                                        <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                          <td valign="top">Service Date</td>
-                                          <td valign="top">Pickup Location</td>
-                                          <td valign="top">Dropoff Location</td>
-                                        </tr>
-                                        <tr>
-                                          <td valign="top">
-                                            {v.bookedFrom?.indexOf('/') > -1 ?
-                                              <>{format(parse(v.bookedFrom, 'dd/MM/yyyy', new Date()), "dd MMM yyyy")}</>
-                                              :
-                                              <>{format(parse(v.bookedFrom, 'dd-MMM-yy', new Date()), "dd MMM yyyy")}</>
-                                            }
-                                          </td>
-                                          <td valign="top">{v.locationFromName}</td>
-                                          <td valign="top">{v.locationToName}</td>
-                                        </tr>
-
-                                        <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                          <td valign="top">Pick up Date &amp; Time</td>
-                                          <td valign="top">Drop off Date &amp;  Time</td>
-                                          <td valign="top">Arr., Dep. Pickup Points</td>
-                                        </tr>
-                                        <tr>
-                                          <td valign="top">
-                                            {v.pickupDate && v.pickupDate !== "01-Jan-1900 12:00:00 AM" && v.pickupDate !== "1/1/1900 12:00:00 AM" ?
-                                            <>{format(new Date(v.pickupDate), 'dd MMM yyyy')} {v.pickupTime}</>
-                                            :null
-                                            }
-                                          </td>
-                                          <td valign="top">
-                                            {v.dropoffDate && v.dropoffDate !== "01-Jan-1900 12:00:00 AM" && v.dropoffDate !== "1/1/1900 12:00:00 AM" ?
-                                            <>{format(new Date(v.dropoffDate), 'dd MMM yyyy')} {v.dropoffTime}</>
-                                            :null
-                                            }
-                                          </td>
-                                          <td valign="top">
-                                            {v.pickupLoc }<br />
-                                            {v.dropoffLoc }
-                                          </td>
-                                        </tr>
-
-                                        <tr>
-                                          <td colSpan="3">
-                                          <strong>Flight Details:</strong> {v.flightDtls}
-                                          {v.noOfAdult > "0" ? <><strong class="bold"> Adult(s): </strong> {v.noOfAdult}</> : null}
-                                          {v.noOfChild > "0" ? <><strong class="bold">, Child(ren): </strong> {v.noOfChild}</> : null}
-                                          {v.supplierRemarks ? <><br /><strong class="bold">Supplier Remarks: </strong> {v.supplierRemarks}</> : null}
-                                          {v.itineraryRemarks ? <><br /><strong class="bold">Service Remarks: </strong> {v.itineraryRemarks}</> : null}
-                                          {v.consultantRemarks ? <><br /><strong class="bold">Consultant Remarks: </strong> {v.consultantRemarks}</> : null}
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                    </>
-                                    :
-                                    v.serviceCode === "16" ?
-                                    <>
-                                    <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                      <tbody>
-                                          <tr>
-                                            <td style={{fontSize:'16px'}}><strong>GALA DINNER SERVICES</strong></td>
-                                          </tr>
-                                        </tbody>
-                                    </table>
-                                    <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                      <thead>
-                                        <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                          <th style={{textAlign:'left'}}>Gala Dinner Details</th>
-                                          <th style={{textAlign:'left'}}>From</th>
-                                          <th style={{textAlign:'left'}}>To</th>
-                                          <th style={{textAlign:'left'}}>Amount</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        <tr>
-                                          <td valign="top">
-                                            <strong>{v.productName}</strong> At {v.fairName}<br />
-                                            {v.noOfAdult > "0" ? <><strong class="bold"> Adult(s): </strong> {v.noOfAdult}</> : null}
-                                            {v.noOfChild > "0" ? <><strong class="bold">, Child(ren): </strong> {v.noOfChild}</> : null}
-                                            {v.supplierRemarks ? <><br /><strong class="bold">Supplier Remarks: </strong> {v.supplierRemarks}</> : null}
-                                            {v.itineraryRemarks ? <><br /><strong class="bold">Service Remarks: </strong> {v.itineraryRemarks}</> : null}
-                                            {v.consultantRemarks ? <><br /><strong class="bold">Consultant Remarks: </strong> {v.consultantRemarks}</> : null}
-                                          </td>
-                                          <td valign="top">
-                                            {v.bookedFrom?.indexOf('/') > -1 ?
-                                              <>{format(parse(v.bookedFrom, 'dd/MM/yyyy', new Date()), "dd MMM yyyy")}</>
-                                              :
-                                              <>{format(parse(v.bookedFrom, 'dd-MMM-yy', new Date()), "dd MMM yyyy")}</>
-                                            }
-                                          </td>
-                                          <td valign="top">
-                                            {v.bookedTo?.indexOf('/') > -1 ?
-                                              <>{format(parse(v.bookedTo, 'dd/MM/yyyy', new Date()), "dd MMM yyyy")}</>
-                                              :
-                                              <>{format(parse(v.bookedTo, 'dd-MMM-yy', new Date()), "dd MMM yyyy")}</>
-                                            }
-                                          </td>
-                                          <td valign="top">
-                                            {currencyformat !== "1" ?
-                                              <>SystemCurrency&nbsp; 
-                                                {v.serviceStatus !== "9" ?
-                                                <>{parseFloat(v.netAmount).toFixed(2)}</>
-                                                :
-                                                <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
-                                                }
-                                              </>
-                                              :
-                                              <>{v.custCurrency}&nbsp; 
-                                                {v.serviceStatus !== "9" ?
-                                                <>{parseFloat(v.net).toFixed(2)}</>
-                                                :
-                                                <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
-                                                }
-                                              </>
-                                              }
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                    </>
-                                    :
-                                    <>
-                                    <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                      <tbody>
-                                          <tr>
-                                            <td style={{fontSize:'16px'}}><strong>GALA DINNER SERVICES</strong></td>
-                                          </tr>
-                                        </tbody>
-                                    </table>
-                                    </>
-                                    }
-                                    
-                                  </td>
-                                </tr>
-                                : null
+                                            </tbody>
+                                          </table>
+                                          </>
+                                          :
+                                          null
+                                          }
+                                        </td>
+                                      </tr>
+                                      {/* Hotel Service End */}
+                                    </React.Fragment>
+                                  )
                                 }
-                                {/* Hotel Service End */}
 
-                                <tr></tr>
-                              </React.Fragment>
-                              ))}
-                            </tbody>
-                          </table>
-
-                          
-                          
-
-                          
-
-                          {/* TOUR Service Start */}
-                          <table width="100%" cellPadding="10" cellSpacing="0">
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                    <tbody>
-                                      <tr>
-                                        <td style={{fontSize:'16px'}}><strong>TOURS SERVICES</strong></td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-
-                                  <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                    <tbody>
+                                else if(v.serviceCode === "4"){
+                                  let numTourNet = 0;
+                                  v.rateTypeName?.split('#')?.map((k, ind) => {numTourNet = parseFloat(parseFloat(numTourNet) + (parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) );});
+                                  const totalTourNet = numTourNet
+                                  return(
+                                    <React.Fragment key={i}>
+                                      {/* TOUR Service Start */}
                                       <tr>
                                         <td>
-                                          <strong style={{color:'#004181', fontSize:'15px'}}>Dhow Cruise Dinner Dubai Marina</strong> - Dubai, United Arab Emirates
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td style={{fontSize:'16px'}}><strong>TOURS SERVICES</strong></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td>
+                                                  <div style={{textTransform:'capitalize'}}><strong style={{color:'#004181', fontSize:'15px', textTransform:'capitalize'}}>{v.productName?.toLowerCase()}</strong> - {v.cityName?.toLowerCase()}, {v.countryName?.toLowerCase()}</div>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                              <th style={{textAlign:'left'}}>Tours Details</th>
+                                              <th style={{textAlign:'left'}}>Service Type</th>
+                                              <th width="90" style={{textAlign:'center'}}>Service Date</th>
+                                              {v.noOfAdult > 0 &&
+                                              <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
+                                              }
+                                              {v.noOfChild > 0 &&
+                                              <th width="40" style={{textAlign:'center'}}>Child(ren)</th>
+                                              }
+                                              {v.noOfInfant > 0 &&
+                                              <th width="40" style={{textAlign:'center'}}>Infant(s)</th>
+                                              }
+                                              <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
+                                              {v.isPackage !== '10' ?
+                                              <>
+                                              <th width="80" style={{textAlign:'right'}}>Net</th>
+                                              <th width="80" style={{textAlign:'right'}}>Vat</th>
+                                              <th width="110" style={{textAlign:'right'}}>Gross</th>
+                                              </> :null
+                                              } 
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {v.rateTypeName?.split('#').map((k, ind) => {
+                                                const arrPickupDetails = v.pickupDetails ? v.pickupDetails?.split("|") : [];
+                                                const TransferType = arrPickupDetails[0] ? arrPickupDetails[0] : '';
+                                                const Timing = arrPickupDetails[1] ?  arrPickupDetails[1] : '';
+                                                const PickupFrom = arrPickupDetails[2] ? arrPickupDetails[2] : '';
+                                                return (
+                                                <tr key={ind}>
+                                                  <td valign="top">
+                                                    <div style={{textTransform:'capitalize'}}><strong>Option Name:</strong> {v.h2HRateBasisName ? v.h2HRateBasisName?.toLowerCase() : 'N.A.'}</div>
+                                                    {TransferType && <><strong>Transfer Type:</strong> {TransferType}<br /></>}
+                                                    {Timing && <><strong>Timing:</strong> {Timing}<br /></>}
+                                                    {PickupFrom && <><strong>Pickup From:</strong> {PickupFrom}<br /></>}
+                                                  </td>
+
+                                                  <td valign="top"><div style={{textTransform:'capitalize'}}>{v.roomTypeName?.toLowerCase()}</div></td>
+
+                                                  <td valign="top" style={{textAlign:'center'}}>{dateFormater(v.bookedFrom)}</td>
+
+                                                  {v.noOfAdult > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfAdult}</td>
+                                                  }
+                                                  {v.noOfChild > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfChild}</td>
+                                                  }
+                                                  {v.noOfInfant > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfInfant}</td>
+                                                  }
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfUnits.split(',')[ind]}</td>
+                                                
+                                                  {v.isPackage !== '10' ?
+                                                    <>
+                                                    <td align="right" valign="top">
+                                                      {currencyformat !== "1" ?
+                                                      <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                      :
+                                                      <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                      }
+                                                    </td>
+
+                                                    <td align="right" valign="top">
+                                                      {currencyformat !== "1" ?
+                                                        <>{parseFloat((parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                      }
+                                                    </td>
+
+                                                    <td align="right" valign="top">
+                                                      <>
+                                                      {currencyformat !== "1" ?
+                                                        <>{systemCurrency} {parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{v.custCurrency} {parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                    </td>
+                                                    </> :null 
+                                                  }
+                                                </tr>
+                                                )
+                                              })}
+
+                                              {v.isPackage !== '10' ?
+                                              <>
+                                                {v.serviceStatus=== "9" ?
+                                                <tr>
+                                                  <td colSpan="5">
+                                                  Service status: <span style={{color:'#f00'}}>cancelled</span> and the cancellation charges applied: {v.custCurrency} {v.actCancellationCharges}
+                                                  </td>
+
+                                                  <td colSpan="6" align="right">
+                                                    <strong>Total Service Cost(Including VAT): </strong>
+                                                    <strong>
+                                                      {currencyformat !== "1" ?
+                                                      <>{systemCurrency}&nbsp; 
+                                                        {v.serviceStatus!== "9" ?
+                                                        <>{parseFloat(totalTourNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>{v.custCurrency}&nbsp; 
+                                                        {v.serviceStatus!== "9" ?
+                                                        <>{parseFloat(totalTourNet).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      }
+                                                    </strong>
+                                                  </td>
+                                                </tr> 
+                                                : 
+                                                <tr>
+                                                  <td colSpan="11" align="right">
+                                                    <strong>Total Service Cost (Including VAT): </strong>
+                                                    <strong>
+                                                        {currencyformat !== "1" ?
+                                                        <>{systemCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalTourNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        :
+                                                        <>{v.custCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalTourNet).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        }
+                                                      </strong>
+                                                  </td>
+                                                </tr>
+                                                }
+                                              </> : null
+                                              }
+
+                                              {v.supplierRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Supplier Remarks: </strong> {v.supplierRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.itineraryRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Service Remarks: </strong> {v.itineraryRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.consultantRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Consultant Remarks: </strong> {v.consultantRemarks}</td>
+                                              </tr> : null
+                                              }
+                                            </tbody>
+                                          </table>
+
                                         </td>
                                       </tr>
-                                    </tbody>
-                                  </table>
+                                      {/* TOUR Service End */} 
+                                    </React.Fragment>
+                                  )
+                                }
 
-                                  <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                    <thead>
-                                      <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                        <th style={{textAlign:'left'}}>Tours Details</th>
-                                        <th style={{textAlign:'left'}}>Service Type</th>
-                                        <th width="90" style={{textAlign:'center'}}>Service Date</th>
-                                        <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
-                                        <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
-                                        <th width="80" style={{textAlign:'right'}}>Net</th>
-                                        <th width="80" style={{textAlign:'right'}}>Vat</th>
-                                        <th width="110" style={{textAlign:'right'}}>Gross</th>   
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td valign="top"><strong>Option Name:</strong> Seat In Coach</td>
-                                        <td valign="top">Dhow Cruise Dinner Dubai Marina - Basic</td>
-                                        <td valign="top" style={{textAlign:'center'}}>04-Jan-2024</td>
-                                        <td valign="top" style={{textAlign:'center'}}>2</td>
-                                        <td valign="top" style={{textAlign:'center'}}>6</td>
-                                        <td align="right" valign="top">428.57</td>
-                                        <td align="right" valign="top">21.43</td>
-                                        <td align="right" valign="top">450.00</td>
-                                      </tr>
-                                      <tr>
-                                        <td colSpan="10" align="right">
-                                          <strong>Total Service Cost (Including VAT): AED 450.00</strong>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          {/* TOUR Service End */}
+                                else if(v.serviceCode === "3"){
+                                  const isArrival = (v.arrival == "1" && v.departure == "0");
+                                  const isDeparture = (v.arrival == "0" && v.departure == "1"); 
+                                  const isIntercity = (v.arrival == "0" && v.departure == "0");
+                                  let isRoundTrip = (v.arrival == "1" && v.departure == "1"); 
+                                  const counterLoop =(v.arrival == "1" && v.departure == "1" ? 2:1);
+                                  const arrPickupDetails = v.pickupDetails ? v.pickupDetails?.split("|") : [];
+                                  const arrDropoffDetails = v.dropoffDetails ? v.dropoffDetails?.split("|") : []; 
+                                  //const OnwardPickupLoc,OnwardDropoffLoc,OnwardPickupDate,OnwardPickupTime,OnwardDropoffDate,OnwardDropoffTime,OnwardTerminal,OnwardFromType,OnwardToType,OnwardFlightNumber,OnwardTrainNumber,OnwardTrainCarriageNumber,OnwardAdditionalLocations,OnwardDropoffFlightNumber,OnwardDropoffTerminal, OnwardPickupFlightDate, OnwardPickupFlightTime, OnwardDropoffFlightDate, OnwardDropoffFlightTime, OnwardPickupRailDate, OnwardPickupRailTime; 
+                                  //const ReturnPickupLoc,ReturnDropoffLoc,ReturnPickupDate,ReturnPickupTime,ReturnDropoffDate,ReturnDropoffTime,ReturnTerminal,ReturnFromType,ReturnToType,ReturnFlightNumber,ReturnTrainNumber,ReturnTrainCarriageNumber,ReturnDropoffFlightNumber,ReturnDropoffTerminal, ReturnPickupFlightDate, ReturnPickupFlightTime, ReturnDropoffFlightDate, ReturnDropoffFlightTime, ReturnPickupRailDate, ReturnPickupRailTime;
+                                  const OnwardPickupLoc = arrPickupDetails[0] ? arrPickupDetails[0] : ''; 
+                                  const OnwardDropoffLoc = arrPickupDetails[1] ? arrPickupDetails[1] : ''; 
+                                  const OnwardPickupDate = arrPickupDetails[2] ? arrPickupDetails[2] : ''; 
+                                  const OnwardPickupTime = arrPickupDetails[3] ? arrPickupDetails[3] : ''; 
+                                  const OnwardDropoffDate = arrPickupDetails[4] ? arrPickupDetails[4] : ''; 
+                                  const OnwardDropoffTime = arrPickupDetails[5] ? arrPickupDetails[5] : ''; 
+                                  const OnwardTerminal = arrPickupDetails[6] ? arrPickupDetails[6] : ''; 
+                                  const OnwardFromType = arrPickupDetails[7] ? arrPickupDetails[7] : ''; 
+                                  const OnwardToType = arrPickupDetails[8] ? arrPickupDetails[8] : ''; 
+                                  const OnwardTrainNumber = arrPickupDetails[9] ? arrPickupDetails[9] : ''; 
+                                  const OnwardTrainCarriageNumber = arrPickupDetails[10] ? arrPickupDetails[10] : ''; 
+                                  const OnwardFlightNumber = arrPickupDetails[11] ? arrPickupDetails[11] : ''; 
+                                  const OnwardAdditionalLocations = arrPickupDetails[12] ? arrPickupDetails[12] : ''; 
+                                  const OnwardDropoffFlightNumber = arrPickupDetails[13] ? arrPickupDetails[13] : ''; 
+                                  const OnwardDropoffTerminal = arrPickupDetails[14] ? arrPickupDetails[14] : ''; 
+                                  const OnwardPickupFlightDate = arrPickupDetails[22] ? arrPickupDetails[22] : ''; 
+                                  const OnwardPickupFlightTime = arrPickupDetails[23] ? arrPickupDetails[23] : ''; 
+                                  const OnwardDropoffFlightDate = arrPickupDetails[24] ? arrPickupDetails[24] : ''; 
+                                  const OnwardDropoffFlightTime = arrPickupDetails[25] ? arrPickupDetails[25] : ''; 
+                                  const OnwardPickupRailDate = arrPickupDetails[26] ? arrPickupDetails[26] : ''; 
+                                  const OnwardPickupRailTime = arrPickupDetails[27] ? arrPickupDetails[27] : ''; 
+                                  const ReturnPickupLoc = arrDropoffDetails[0] ? arrDropoffDetails[0] : ''; 
+                                  const ReturnDropoffLoc = arrDropoffDetails[1] ? arrDropoffDetails[1] : ''; 
+                                  const ReturnPickupDate = arrDropoffDetails[2] ? arrDropoffDetails[2] : ''; 
+                                  const ReturnPickupTime = arrDropoffDetails[3] ? arrDropoffDetails[3] : ''; 
+                                  const ReturnDropoffDate = arrDropoffDetails[4] ? arrDropoffDetails[4] : ''; 
+                                  const ReturnDropoffTime = arrDropoffDetails[5] ? arrDropoffDetails[5] : ''; 
+                                  const ReturnTerminal = arrDropoffDetails[6] ? arrDropoffDetails[6] : ''; 
+                                  const ReturnFromType = arrDropoffDetails[7] ? arrDropoffDetails[7] : ''; 
+                                  const ReturnToType = arrDropoffDetails[8] ? arrDropoffDetails[8] : ''; 
+                                  const ReturnTrainNumber = arrDropoffDetails[9] ? arrDropoffDetails[9] : ''; 
+                                  const ReturnTrainCarriageNumber = arrDropoffDetails[10] ? arrDropoffDetails[10] : ''; 
+                                  const ReturnFlightNumber = arrDropoffDetails[11] ? arrDropoffDetails[11] : ''; 
+                                  const ReturnDropoffFlightNumber = arrDropoffDetails[12] ? arrDropoffDetails[12] : ''; 
+                                  const ReturnDropoffTerminal = arrDropoffDetails[13] ? arrDropoffDetails[13] : ''; 
+                                  const ReturnPickupFlightDate = arrDropoffDetails[18] ? arrDropoffDetails[18] : ''; 
+                                  const ReturnPickupFlightTime = arrDropoffDetails[19] ? arrDropoffDetails[19] : '';
+                                  const ReturnDropoffFlightDate = arrDropoffDetails[20] ? arrDropoffDetails[20] : '';
+                                  const ReturnDropoffFlightTime = arrDropoffDetails[21] ? arrDropoffDetails[21] : ''; 
+                                  const ReturnPickupRailDate = arrDropoffDetails[22] ? arrDropoffDetails[22] : '';
+                                  const ReturnPickupRailTime = arrDropoffDetails[23] ? arrDropoffDetails[23] : ''; 
 
-                          {/* Transfer Service Start */}
-                          <table width="100%" cellPadding="10" cellSpacing="0">
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                    <tbody>
-                                      <tr>
-                                        <td style={{fontSize:'16px'}}><strong>TRANSFER SERVICES</strong></td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
+                                  let locnamesVar = '';
+                                  if (OnwardAdditionalLocations !== '') {
+                                    if (OnwardAdditionalLocations.indexOf('***') !== -1) {
+                                      var arr = OnwardAdditionalLocations.split('***');
+                                      locnamesVar += '(';
+                                      for (var i=0; i < arr.length; i++) {
+                                        var locDetails = arr[i]?.toString();
+                                        if (locDetails?.indexOf(';') !== -1) {
+                                          locnamesVar += locDetails?.split(';')[0]?.toString() + ';';
+                                        }
+                                      }
+                                      locnamesVar = locnamesVar?.replace(/;\s*$/, "");
+                                      locnamesVar += ')';
+                                    }
+                                    else{
+                                      if (OnwardAdditionalLocations.indexOf(';') !== -1) {
+                                        locnamesVar += OnwardAdditionalLocations.split(';')[0].toString();
+                                      }
+                                    }
+                                  }
+                                  const locnames = locnamesVar
 
-                                  <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                    <tbody>
+                                  let numTransferNet = 0;
+                                  v.rateTypeName?.split('#')?.map((k, ind) => {numTransferNet = parseFloat(parseFloat(numTransferNet) + (parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) );});
+                                  const totalTransferNet = numTransferNet
+
+                                  return(
+                                    <React.Fragment key={i}>
+                                      {/* Transfer Service Start */}
                                       <tr>
                                         <td>
-                                          <strong style={{color:'#004181', fontSize:'15px'}}>Airport Transfer</strong>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td style={{fontSize:'16px'}}><strong>TRANSFER SERVICES</strong></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td>
+                                                  <div style={{textTransform:'capitalize'}}><strong style={{color:'#004181', fontSize:'15px', textTransform:'capitalize'}}>{v.productName?.toLowerCase()} {v.carName?.toLowerCase()}</strong></div>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
 
-                                  <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                    <thead>
-                                      <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                        <th style={{textAlign:'left'}}>Transfer Type</th>
-                                        <th style={{textAlign:'left'}}>Service Type</th>
-                                        <th width="90" style={{textAlign:'center'}}>Service Date</th>
-                                        <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
-                                        <th style={{textAlign:'left'}}>Pickup</th>
-                                        <th style={{textAlign:'left'}}>Dropoff</th>
-                                        <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
-                                        <th width="80" style={{textAlign:'right'}}>Net</th>
-                                        <th width="80" style={{textAlign:'right'}}>Vat</th>
-                                        <th width="110" style={{textAlign:'right'}}>Gross</th>   
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td valign="top">Inter City</td>
-                                        <td valign="top">Transfer</td>
-                                        <td valign="top" style={{textAlign:'center'}}>07-Jan-2024	</td>
-                                        <td valign="top" style={{textAlign:'center'}}>6</td>
-                                        <td valign="top">Dubai / 07-Jan-2024 @ 00:00</td>
-                                        <td valign="top">Dubai</td>
-                                        <td valign="top" style={{textAlign:'center'}}>1</td>
-                                        <td align="right" valign="top">95.24</td>
-                                        <td align="right" valign="top">4.76</td>
-                                        <td align="right" valign="top">100.00</td>
-                                      </tr>
-                                      <tr>
-                                        <td colSpan="10" align="right">
-                                          <strong>Total Service Cost(Including VAT): AED 100.00</strong>
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                              <th style={{textAlign:'left'}}>Transfer Details</th>
+                                              <th style={{textAlign:'left'}}>Service Type</th>
+                                              <th width="90" style={{textAlign:'center'}}>Service Date</th>
+                                              {v.noOfAdult > 0 &&
+                                              <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
+                                              }
+                                              {v.noOfChild > 0 &&
+                                              <th width="40" style={{textAlign:'center'}}>Child(ren)</th>
+                                              }
+                                              {v.noOfInfant > 0 &&
+                                              <th width="40" style={{textAlign:'center'}}>Infant(s)</th>
+                                              }
+                                              <th style={{textAlign:'left'}}>Pickup</th>
+                                              <th style={{textAlign:'left'}}>Dropoff</th>
+                                              <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
+                                              {v.isPackage !== '10' ?
+                                              <>
+                                              <th width="80" style={{textAlign:'right'}}>Net</th>
+                                              <th width="80" style={{textAlign:'right'}}>Vat</th>
+                                              <th width="110" style={{textAlign:'right'}}>Gross</th>
+                                              </> :null
+                                              } 
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {Array.apply(null, { length:counterLoop}).map((k, ind) => {
+                                                let ReturnTransferCounterVar = 0
+                                                if(isIntercity){
+                                                  if(ind==0){
+                                                    ReturnTransferCounterVar = 0
+                                                  }
+                                                  if(ind==1){
+                                                    ReturnTransferCounterVar = 1
+                                                    isRoundTrip = true
+                                                  }
+                                                }
+                                                const ReturnTransferCounter = ReturnTransferCounterVar
+                                                
+                                                return (
+                                                <tr key={ind}>
+                                                  <td valign="top">
+                                                    {isIntercity ?
+                                                    <>Inter City</>
+                                                    :
+                                                    isArrival ?
+                                                    <>Arrival</>
+                                                    :
+                                                    isDeparture ?
+                                                    <>Departure</>
+                                                    :
+                                                    <>
+                                                    {ReturnTransferCounter===0 && 
+                                                      <>Round Trip (Onward)</>
+                                                    }
+                                                    {ReturnTransferCounter===1 && 
+                                                      <>Round Trip (Return)</>
+                                                    }
+                                                    </>
+                                                    }
+                                                  </td>
+
+                                                  <td valign="top"><div style={{textTransform:'capitalize'}}>{v.roomTypeName?.toLowerCase()}</div></td>
+
+                                                  <td valign="top" style={{textAlign:'center'}}>
+                                                    {isIntercity ?
+                                                    <>
+                                                      {ReturnTransferCounter==0 && <>{dateFormater(v.bookedFrom)}</>}
+                                                      {ReturnTransferCounter==1 && <>{dateFormater(v.bookedTo)}</>}
+                                                    </>
+                                                    :
+                                                    isArrival ? <>{dateFormater(v.bookedFrom)}</>
+                                                    :
+                                                    isDeparture ? <>{dateFormater(v.bookedFrom)}</>
+                                                    :
+                                                    isRoundTrip ? 
+                                                      <>
+                                                      {ReturnTransferCounter==0 && <>{dateFormater(v.bookedFrom)}</>}
+                                                      {ReturnTransferCounter==1 && <>{dateFormater(v.bookedTo)}</>}
+                                                      </>
+                                                    :
+                                                    null
+                                                    }
+                                                  </td>
+
+                                                  {v.noOfAdult > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfAdult}</td>
+                                                  }
+                                                  {v.noOfChild > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfChild}</td>
+                                                  }
+                                                  {v.noOfInfant > 0 &&
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfInfant}</td>
+                                                  }
+
+                                                  <td valign="top">
+                                                    {
+                                                    isRoundTrip == false ?
+                                                      <>{OnwardPickupLoc}
+                                                        {
+                                                          OnwardFromType == "Airport" ? 
+                                                            <>{OnwardTerminal && <>Terminal {OnwardTerminal}</>} &nbsp;/&nbsp; {OnwardPickupDate && format(new Date(OnwardPickupDate), 'dd MMM yyyy')} @ {OnwardPickupTime} &nbsp;/&nbsp; Flight#: {OnwardFlightNumber}</>
+                                                          :
+                                                          OnwardFromType == "RailStation" ?
+                                                            <>&nbsp;/&nbsp; {OnwardPickupDate && format(new Date(OnwardPickupDate), 'dd MMM yyyy')} @ {OnwardPickupTime} &nbsp;/&nbsp; Train#: {OnwardTrainNumber} &nbsp;/&nbsp; Train Carriage#: {OnwardTrainCarriageNumber}</>
+                                                          :
+                                                            <>&nbsp;/&nbsp; {OnwardPickupDate && format(new Date(OnwardPickupDate), 'dd MMM yyyy')} @ {OnwardPickupTime}</>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>
+                                                        {
+                                                          ReturnTransferCounter == 0 && OnwardFromType == "Airport" ?
+                                                            <>{OnwardPickupLoc} {OnwardTerminal && <>Terminal {OnwardTerminal}</>} &nbsp;/&nbsp; {OnwardPickupDate && format(new Date(OnwardPickupDate), 'dd MMM yyyy')} @ {OnwardPickupTime} &nbsp;/&nbsp; Flight#: {OnwardFlightNumber}</>
+                                                          :
+                                                          ReturnTransferCounter == 1 && ReturnFromType == "Airport" ?
+                                                            <>{ReturnPickupLoc} {ReturnTerminal && <>Terminal {ReturnTerminal}</>} &nbsp;/&nbsp; {format(new Date(ReturnPickupDate), 'dd MMM yyyy')} @ {ReturnPickupTime} &nbsp;/&nbsp; Flight#: {ReturnFlightNumber}</>
+                                                          :
+                                                          ReturnTransferCounter == 0 && OnwardFromType == "RailStation" ?
+                                                            <>{OnwardPickupLoc} &nbsp;/&nbsp; {OnwardPickupDate && format(new Date(OnwardPickupDate), 'dd MMM yyyy')} @ {OnwardPickupTime} &nbsp;/&nbsp; Train#: {OnwardTrainNumber} &nbsp;/&nbsp; Train Carriage#: {OnwardTrainCarriageNumber}</>
+                                                          :
+                                                          ReturnTransferCounter == 1 && OnwardFromType == "RailStation" ?
+                                                            <>{ReturnPickupLoc} &nbsp;/&nbsp; {format(new Date(ReturnPickupDate), 'dd MMM yyyy')} @ {ReturnPickupTime} &nbsp;/&nbsp; Train#: {ReturnTrainNumber} &nbsp;/&nbsp; Train Carriage#: {ReturnTrainCarriageNumber}</>
+                                                          :
+                                                          ReturnTransferCounter == 0 && OnwardFromType !== "Airport" && OnwardFromType !== "RailStation" ?
+                                                            <>{OnwardPickupLoc} &nbsp;/&nbsp; {OnwardPickupDate && format(new Date(OnwardPickupDate), 'dd MMM yyyy')} @ {OnwardPickupTime}</>
+                                                          :
+                                                          ReturnTransferCounter == 1 && OnwardFromType !== "Airport" && OnwardFromType !== "RailStation" ?
+                                                            <>{ReturnPickupLoc} &nbsp;/&nbsp; {format(new Date(ReturnPickupDate), 'dd MMM yyyy')} @ {ReturnPickupTime}</>
+                                                          :
+                                                          null
+                                                        }
+                                                      </>
+                                                    }
+                                                  </td>
+
+                                                  <td valign="top">
+                                                    {
+                                                    isRoundTrip == false ?
+                                                      <>{ReturnPickupLoc}
+                                                        {
+                                                          OnwardToType == "Airport" ? 
+                                                            <>{OnwardDropoffTerminal && <>Terminal {OnwardDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(OnwardDropoffFlightDate), 'dd MMM yyyy')} @ {OnwardDropoffFlightTime} &nbsp;/&nbsp; Flight#: {OnwardDropoffFlightNumber}</>
+                                                          :
+                                                          OnwardToType == "RailStation" ?
+                                                            <>&nbsp;/&nbsp; {format(new Date(ReturnDropoffDate), 'dd MMM yyyy')} @ {ReturnDropoffTime}</>
+                                                          :
+                                                          null
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>
+                                                        {OnwardDropoffLoc}
+                                                        {OnwardToType == "Airport" ? 
+                                                            <>{OnwardDropoffTerminal && <>Terminal {OnwardDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(OnwardDropoffFlightDate), 'dd MMM yyyy')} @ {OnwardDropoffFlightTime} &nbsp;/&nbsp; Flight#: {OnwardDropoffFlightNumber}</>
+                                                          :
+                                                          OnwardToType == "RailStation" ?
+                                                            <>&nbsp;/&nbsp; {format(new Date(OnwardDropoffDate), 'dd MMM yyyy')} @ {OnwardDropoffTime}</>
+                                                          :
+                                                          null}
+
+                                                        {
+                                                          ReturnTransferCounter == 1 && ReturnFromType == "Airport" ?
+                                                          <>{ReturnDropoffLoc}
+                                                            {ReturnToType == "Airport" ? 
+                                                            <>{ReturnDropoffTerminal && <>Terminal {ReturnDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(ReturnDropoffFlightDate), 'dd MMM yyyy')} @ {ReturnDropoffFlightTime} &nbsp;/&nbsp; Flight#: {ReturnDropoffFlightNumber}</> 
+                                                            : 
+                                                            ReturnToType == "RailStation" ? 
+                                                            <>&nbsp;/&nbsp; {format(new Date(ReturnDropoffDate), 'dd MMM yyyy')} @ {ReturnDropoffTime}</>
+                                                            :
+                                                            null
+                                                            }
+                                                          </>
+                                                          :
+                                                          ReturnTransferCounter == 0 && OnwardFromType == "RailStation" ?
+                                                          <>{OnwardDropoffLoc}
+                                                            {OnwardToType == "Airport" ? 
+                                                            <>{OnwardDropoffTerminal && <>Terminal {OnwardDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(OnwardDropoffFlightDate), 'dd MMM yyyy')} @ {OnwardDropoffFlightTime} &nbsp;/&nbsp; Flight#: {OnwardDropoffFlightNumber}</> 
+                                                            : 
+                                                            OnwardToType == "RailStation" ? 
+                                                            <>&nbsp;/&nbsp; {format(new Date(OnwardDropoffDate), 'dd MMM yyyy')} @ {OnwardDropoffTime}</>
+                                                            :
+                                                            null
+                                                            }
+                                                          </>
+                                                          :
+                                                          ReturnTransferCounter == 1 && ReturnFromType == "RailStation" ?
+                                                          <>{ReturnDropoffLoc}
+                                                            {ReturnToType == "Airport" ? 
+                                                            <>{ReturnDropoffTerminal && <>Terminal {ReturnDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(ReturnDropoffFlightDate), 'dd MMM yyyy')} @ {ReturnDropoffFlightTime} &nbsp;/&nbsp; Flight#: {ReturnDropoffFlightNumber}</> 
+                                                            : 
+                                                            ReturnToType == "RailStation" ? 
+                                                            <>&nbsp;/&nbsp; {format(new Date(ReturnDropoffDate), 'dd MMM yyyy')} @ {ReturnDropoffTime}</>
+                                                            :
+                                                            null
+                                                            }
+                                                          </>
+                                                          :
+                                                          ReturnTransferCounter == 0 && OnwardFromType !== "Airport" && OnwardFromType !== "RailStation" ?
+                                                          <>{OnwardDropoffLoc}
+                                                            {OnwardToType == "Airport" ? 
+                                                            <>{OnwardDropoffTerminal && <>Terminal {OnwardDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(OnwardDropoffFlightDate), 'dd MMM yyyy')} @ {OnwardDropoffFlightTime} &nbsp;/&nbsp; Flight#: {OnwardDropoffFlightNumber}</> 
+                                                            : 
+                                                            OnwardToType == "RailStation" ? 
+                                                            <>&nbsp;/&nbsp; {format(new Date(OnwardDropoffDate), 'dd MMM yyyy')} @ {OnwardDropoffTime}</>
+                                                            :
+                                                            null
+                                                            }
+                                                          </>
+                                                          :
+                                                          ReturnTransferCounter == 1 && ReturnFromType !== "Airport" && ReturnFromType !== "RailStation" ?
+                                                          <>{ReturnDropoffLoc}
+                                                            {ReturnToType == "Airport" ? 
+                                                            <>{ReturnDropoffTerminal && <>Terminal {ReturnDropoffTerminal}</>} &nbsp;/&nbsp; {format(new Date(ReturnDropoffFlightDate), 'dd MMM yyyy')} @ {ReturnDropoffFlightTime} &nbsp;/&nbsp; Flight#: {ReturnDropoffFlightNumber}</> 
+                                                            : 
+                                                            ReturnToType == "RailStation" ? 
+                                                            <>&nbsp;/&nbsp; {format(new Date(ReturnDropoffDate), 'dd MMM yyyy')} @ {ReturnDropoffTime}</>
+                                                            :
+                                                            null
+                                                            }
+                                                          </>
+                                                          :
+                                                          null
+                                                        }
+                                                      </>
+                                                    }
+                                                  </td>
+
+                                                  <td valign="top" style={{textAlign:'center'}}>{v.noOfUnits}</td>
+                                                
+                                                  {v.isPackage !== '10' ?
+                                                    <>
+                                                    {ind === 0 ?
+                                                    <td align="right" valign="top" rowSpan={isRoundTrip==false ? "1":"2"}>
+                                                      {currencyformat !== "1" ?
+                                                      <>{parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                      :
+                                                      <>{parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                      }
+                                                    </td>
+                                                    : null
+                                                    }
+
+                                                    {ind === 0 ?
+                                                    <td align="right" valign="top" rowSpan={isRoundTrip==false ? "1":"2"}>
+                                                      {currencyformat !== "1" ?
+                                                        <>{parseFloat((parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                      }
+                                                    </td>
+                                                    : null
+                                                    }
+
+                                                    {ind === 0 ?
+                                                    <td align="right" valign="top" rowSpan={isRoundTrip==false ? "1":"2"}>
+                                                      {currencyformat !== "1" ?
+                                                        <>{systemCurrency} {parseFloat((parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{v.custCurrency} {parseFloat(parseFloat(v.netPerUnit?.split('#')[ind] ? v.netPerUnit?.split('#')[ind]:0) + parseFloat(v.vatPerUnit?.split('#')[ind] ? v.vatPerUnit?.split('#')[ind]:0)).toFixed(2)}</>
+                                                      }
+                                                    </td>
+                                                    : null
+                                                    }
+                                                    </> 
+                                                    : null 
+                                                  }
+                                                </tr>
+                                                )
+                                              })}
+
+                                              {v.isPackage !== '10' ?
+                                              <>
+                                                {v.serviceStatus=== "9" ?
+                                                <tr>
+                                                  <td colSpan="5">
+                                                  Service status: <span style={{color:'#f00'}}>cancelled</span> and the cancellation charges applied: {v.custCurrency} {v.actCancellationCharges}
+                                                  </td>
+
+                                                  <td colSpan="6" align="right">
+                                                    <strong>Total Service Cost(Including VAT): </strong>
+                                                    <strong>
+                                                      {currencyformat !== "1" ?
+                                                      <>{systemCurrency}&nbsp; 
+                                                        {v.serviceStatus!== "9" ?
+                                                        <>{parseFloat(totalTransferNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>{v.custCurrency}&nbsp; 
+                                                        {v.serviceStatus!== "9" ?
+                                                        <>{parseFloat(totalTransferNet).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      }
+                                                    </strong>
+                                                  </td>
+                                                </tr> 
+                                                : 
+                                                <tr>
+                                                  <td colSpan="11" align="right">
+                                                    <strong>Total Service Cost (Including VAT): </strong>
+                                                    <strong>
+                                                        {currencyformat !== "1" ?
+                                                        <>{systemCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalTransferNet * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        :
+                                                        <>{v.custCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{parseFloat(totalTransferNet).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        }
+                                                      </strong>
+                                                  </td>
+                                                </tr>
+                                                }
+                                              </> : null
+                                              }
+
+                                              {v.supplierRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Supplier Remarks: </strong> {v.supplierRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.itineraryRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Service Remarks: </strong> {v.itineraryRemarks}</td>
+                                              </tr> : null
+                                              }
+
+                                              {v.consultantRemarks ?
+                                              <tr>
+                                                <td colSpan="11"><strong>Consultant Remarks: </strong> {v.consultantRemarks}</td>
+                                              </tr> : null
+                                              }
+                                            </tbody>
+                                          </table>
                                         </td>
                                       </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
+                                      {/* Transfer Service End */}
+                                    </React.Fragment>
+                                  )
+                                }
+
+                                else if(v.serviceCode === "7"){
+                                  return(
+                                    <React.Fragment key={i}>
+                                      {/* VISA Service Start */}
+                                      <tr>
+                                        <td>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td style={{fontSize:'16px'}}><strong>VISA SERVICES</strong></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <th style={{textAlign:'left'}}>Visa Details</th>
+                                                <th style={{textAlign:'left'}}>Visa Type</th>
+                                                <th width="40" style={{textAlign:'right'}}>Unit(s)</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              <tr>
+                                                <td valign="top" style={{textAlign:'left'}}><strong>{v.productName }</strong> - {v.productAddress}</td>
+                                                <td valign="top" style={{textAlign:'left'}}>{v.rateBasisName}</td>
+                                                <td align="right" valign="top">{v.serviceStatus !== "9" ? <>{v.noOfUnits}</>:null}</td>
+                                              </tr>
+                                              <tr>
+                                                <td colSpan="3">
+                                                  <strong>Remarks:</strong> Visa can not be cancel and amount will not be refundable.
+                                                  {v.noOfAdult > 0 && <><br /><strong>Adult(s): </strong>{v.noOfAdult}</>}
+                                                  {v.noOfChild > 0 && <>, <strong>Child(ren): </strong>{v.noOfChild}</>}
+                                                  {v.noOfInfant > 0 && <>, <strong>Infant(s): </strong>{v.noOfInfant}</>}
+                                                  {v.supplierRemarks && <><br /><strong>Supplier Remarks: </strong>{v.supplierRemarks}</>}
+                                                  {v.itineraryRemarks && <><br /><strong>Service Remarks: </strong>{v.itineraryRemarks}</>}
+                                                  {v.consultantRemarks && <><br /><strong>Consultant Remarks: </strong>{v.consultantRemarks}</>}
+                                                </td>
+                                              </tr>
+                                              <tr>                      
+                                                <td colSpan="3"><strong>Emergency Contact Details:</strong> {resDetails.reportHeader?.emergencyPhone}</td>
+                                              </tr>
+
+                                              {v.isPackage !== '10' ?
+                                                <tr>
+                                                  {v.serviceStatus=== "9" ?
+                                                    <>
+                                                      <td colSpan="2">Service status <span style={{color:'#f00'}}>cancelled</span> and the cancellation charges applied: {v.custCurrency} {v.actCancellationCharges}</td>
+                                                      <td colSpan="1" align="right">
+                                                        <strong>Total Service Cost (Including VAT): </strong>
+                                                        <strong>
+                                                          {currencyformat !== "1" ?
+                                                          <>{systemCurrency}&nbsp; 
+                                                            {v.serviceStatus!== "9" ?
+                                                            <>{parseFloat(v.netAmount * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                            :
+                                                            <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                            }
+                                                          </>
+                                                          :
+                                                          <>{v.custCurrency}&nbsp; 
+                                                            {v.serviceStatus!== "9" ?
+                                                            <>{((parseFloat(v.netAmount) + parseFloat(v.vatOutPutAmt))/parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                            :
+                                                            <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                            }
+                                                          </>
+                                                          }
+                                                        </strong>
+                                                      </td>
+                                                    </>
+                                                    :
+                                                    <td colSpan="3" align="right">
+                                                      <strong>Total Service Cost (Including VAT): </strong>
+                                                      <strong>
+                                                        {currencyformat !== "1" ?
+                                                        <>{systemCurrency}&nbsp; 
+                                                          {v.serviceStatus !== "9" ?
+                                                          <>{parseFloat(v.netAmount * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        :
+                                                        <>{v.custCurrency}&nbsp; 
+                                                          {v.serviceStatus!== "9" ?
+                                                          <>{((parseFloat(v.netAmount) + parseFloat(v.vatOutPutAmt))/parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                          :
+                                                          <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                          }
+                                                        </>
+                                                        }
+                                                      </strong>
+                                                    </td>
+                                                  }
+                                                </tr>
+                                                : null
+                                              }
+                                            </tbody>
+                                          </table>
+                                        </td>
+                                      </tr>
+                                      {/* VISA Service End */}
+                                    </React.Fragment>
+                                  )
+                                }
+
+                                else if(v.serviceCode === "15"){
+                                  return(
+                                    <React.Fragment key={i}>
+                                      {/* Other Service Start */}
+                                      <tr>
+                                        <td>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td style={{fontSize:'16px'}}><strong>OTHER SERVICES</strong></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <th width="90" style={{textAlign:'center'}}>Service Date</th>
+                                                {v.noOfAdult > 0 && <th width="40" style={{textAlign:'center'}}>Adult(s)</th>}
+                                                {v.noOfChild > 0 && <th width="40" style={{textAlign:'center'}}>Child(ren)</th>}
+                                                {v.noOfInfant > 0 && <th width="40" style={{textAlign:'center'}}>Infant(ren)</th>}
+                                                <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
+                                                {v.isPackage !== '10' ?
+                                                  <>
+                                                  <th width="80" style={{textAlign:'right'}}>Net</th>
+                                                  <th width="80" style={{textAlign:'right'}}>Vat</th>
+                                                  <th width="110" style={{textAlign:'right'}}>Gross</th>
+                                                  </> :null
+                                                } 
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              <tr>
+                                                <td valign="top" style={{textAlign:'center'}}>{dateFormater(v.bookedFrom)}</td>
+                                                {v.noOfAdult > 0 && <td valign="top" style={{textAlign:'center'}}>{v.noOfAdult}</td>}
+                                                {v.noOfChild > 0 && <td valign="top" style={{textAlign:'center'}}>{v.noOfChild}</td>}
+                                                {v.noOfInfant > 0 && <td valign="top" style={{textAlign:'center'}}>{v.noOfInfant}</td>}
+                                                <td valign="top" style={{textAlign:'center'}}>{v.noOfUnits}</td>
+                                                {v.isPackage !== '10' ?
+                                                  <>
+                                                  <td align="right" valign="top">{parseFloat(v.netPerUnit).toFixed(2)}</td>
+                                                  <td align="right" valign="top">{parseFloat(v.vatPerUnit).toFixed(2)}</td>
+                                                  <td align="right" valign="top">{parseFloat(parseFloat(v.netPerUnit) + parseFloat(v.vatPerUnit)).toFixed(2)}</td>
+                                                  </> :null
+                                                } 
+                                              </tr>
+
+                                              {v.isPackage !== '10' ?
+                                              <>
+                                                {v.serviceStatus=== "9" ?
+                                                <tr>
+                                                  <td colSpan="3">Service Status: <span style={{color:'#f00'}}>cancelled</span> and the cancellation charges applied: {v.custCurrency} {v.actCancellationCharges}</td>
+                                                  <td colSpan="4" align="right">
+                                                    <strong>Total Service Cost(Including VAT): </strong>
+                                                    <strong>
+                                                      {currencyformat !== "1" ?
+                                                      <>{systemCurrency}&nbsp; 
+                                                        {v.serviceStatus !== "9" ?
+                                                        <>{parseFloat(parseFloat(v.netAmount) + parseFloat(v.vatOutPutAmt) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>{v.custCurrency}&nbsp; 
+                                                        {v.serviceStatus!== "9" ?
+                                                        <>{((parseFloat(v.netAmount) + parseFloat(v.vatOutPutAmt))/parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      }
+                                                    </strong>
+                                                  </td>
+                                                </tr> 
+                                                : 
+                                                <tr>
+                                                  <td colSpan="7" align="right">
+                                                    <strong>Total Service Cost (Including VAT): </strong>
+                                                    <strong>
+                                                      {currencyformat !== "1" ?
+                                                      <>{systemCurrency}&nbsp; 
+                                                        {v.serviceStatus !== "9" ?
+                                                        <>{parseFloat(parseFloat(v.netAmount) + parseFloat(v.vatOutPutAmt) * parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      :
+                                                      <>{v.custCurrency}&nbsp; 
+                                                        {v.serviceStatus!== "9" ?
+                                                        <>{((parseFloat(v.netAmount) + parseFloat(v.vatOutPutAmt))/parseFloat(v.custExchangeRate)).toFixed(2)}</>
+                                                        :
+                                                        <>{parseFloat(v.actCancellationCharges).toFixed(2)}</>
+                                                        }
+                                                      </>
+                                                      }
+                                                    </strong>
+                                                  </td>
+                                                </tr>
+                                                }
+                                              </> : null
+                                              }
+                                              {v.supplierRemarks &&
+                                                <tr><td colSpan="7"><strong>Supplier Remarks:</strong> {v.supplierRemarks}</td></tr>
+                                              }
+                                              {v.itineraryRemarks &&
+                                                <tr><td colSpan="7"><strong>Service Remarks:</strong> {v.itineraryRemarks}</td></tr>
+                                              }
+                                              {v.consultantRemarks &&
+                                                <tr><td colSpan="7"><strong>Consultant Remarks:</strong> {v.consultantRemarks}</td></tr>
+                                              }
+                                            </tbody>
+                                          </table>
+                                          
+                                        </td>
+                                      </tr>
+                                      {/* Other Service End */}
+                                    </React.Fragment>
+                                  )
+                                }
+
+                                else if(v.serviceCode === "17" && v.Misc1 !='Split'){
+                                  return(
+                                    <React.Fragment key={i}>
+                                      {/* Air Service Start */}
+                                      <tr>
+                                        <td>
+                                          <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
+                                            <tbody>
+                                              <tr>
+                                                <td style={{fontSize:'16px'}}><strong>AIRLINE SERVICES</strong></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+
+                                          <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                            <thead>
+                                              <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
+                                                <th style={{textAlign:'left'}}>Airline Details</th>
+                                                <th style={{textAlign:'left'}}>Service Type</th>
+                                                <th style={{textAlign:'left'}}>PNR No. #</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              <tr>
+                                                <td valign="top">
+                                                  {v.h2H==0 ?
+                                                  <>{v.rateBasisName}</>
+                                                  :
+                                                  <>{v.productName}</>
+                                                  }
+                                                  <br />
+                                                </td>
+                                                <td valign="top">{v.roomTypeName}</td>
+                                                <td valign="top">{v.h2HBookingNo && v.h2HBookingNo}</td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          
+                                        </td>
+                                      </tr>
+                                      {/* Air Service End */}
+                                    </React.Fragment>
+                                  )
+                                }
+
+                                else if(v.serviceCode == "11" && (v.h2H =="0" || v.h2H =="138")){
+                                  return(
+                                    <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" bordercolor="#dfdede" border="1" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                      <tbody>
+                                        <tr>
+                                          <td style={{textAlign:'right'}}>Handling Charge: {v.custCurrency} {parseFloat(v.net).toFixed(2)}</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  )
+                                }
+
+                                else{
+                                  return(
+                                    <React.Fragment key={i}>
+                                      <tr>
+                                        <td></td>
+                                      </tr>
+                                    </React.Fragment>
+                                  )
+                                }
+                            
+                              })}
                             </tbody>
                           </table>
-                          {/* Transfer Service End */}
-
-                          {/* Visa Service Start */}
-                          <table width="100%" cellPadding="10" cellSpacing="0">
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                    <tbody>
-                                      <tr>
-                                        <td style={{fontSize:'16px'}}><strong>VISA SERVICES</strong></td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-
-                                  <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                    <thead>
-                                      <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                        <th style={{textAlign:'left'}}>Visa Details</th>
-                                        <th style={{textAlign:'left'}}>Visa Type</th>
-                                        <th width="40" style={{textAlign:'right'}}>Unit(s)</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td valign="top" style={{textAlign:'left'}}><strong>Tourist Visa Extension</strong> - DUBAI</td>
-                                        <td valign="top" style={{textAlign:'left'}}>Tourist Visa</td>
-                                        <td align="right" valign="top">1</td>
-                                      </tr>
-                                      <tr>
-                                        <td colSpan="3"><strong>Remarks:</strong> Visa can not be cancel and amount will not be refundable.</td>
-                                      </tr>
-                                      <tr>                      
-                                        <td colSpan="3"><strong>Emergency Contact Details:</strong> +97155353545</td>
-                                      </tr>
-                                      <tr>                      
-                                      <td colSpan="3" align="right">
-                                          <strong>Total Service Cost(Including VAT): AED 2.10</strong>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          {/* Visa Service End */}
-
-                          {/* Other Service Start */}
-                          <table width="100%" cellPadding="10" cellSpacing="0">
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <table width="100%" cellPadding="5" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
-                                    <tbody>
-                                      <tr>
-                                        <td style={{fontSize:'16px'}}><strong>OTHER SERVICES</strong></td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-
-                                  <table className="table-bordered" width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dfdede" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                    <thead>
-                                      <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
-                                        <th width="90" style={{textAlign:'center'}}>Service Date</th>
-                                        <th width="40" style={{textAlign:'center'}}>Adult(s)</th>
-                                        <th width="40" style={{textAlign:'center'}}>Unit(s)</th>
-                                        <th width="80" style={{textAlign:'right'}}>Net</th>
-                                        <th width="80" style={{textAlign:'right'}}>Vat</th>
-                                        <th width="110" style={{textAlign:'right'}}>Gross</th>   
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td valign="top" style={{textAlign:'center'}}>08 Jan 2024</td>
-                                        <td valign="top" style={{textAlign:'center'}}>6</td>
-                                        <td valign="top" style={{textAlign:'center'}}>6</td>
-                                        <td align="right" valign="top">835.26</td>
-                                        <td align="right" valign="top">41.76</td>
-                                        <td align="right" valign="top">877.02</td>
-                                      </tr>
-                                      <tr>
-                                        <td colSpan="7" align="right">
-                                          <strong>Total Service Cost(Including VAT): AED 877.02</strong>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                          {/* Other Service End */}
-                        
-                          
 
                           <table width="100%" cellPadding="0" cellSpacing="0">
                             <tbody>
@@ -1032,11 +1851,12 @@ export default function BookingInvoice() {
                             </tbody>
                           </table>
 
+                          {process.env.NEXT_PUBLIC_SHORTCODE==='ZAM' || process.env.NEXT_PUBLIC_SHORTCODE==="BTT" || process.env.NEXT_PUBLIC_SHORTCODE==="AFT" || process.env.NEXT_PUBLIC_SHORTCODE==="AORYX" ?
                           <table width="100%" cellPadding="10" cellSpacing="0">
                             <tbody>
                               <tr>
                                 <td bgcolor="#eef5f6" style={{backgroundColor:'#eef5f6 !important'}} valign="middle">
-                                  <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" bordercolor="#dfdede" border="1" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                  {/* <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" bordercolor="#dfdede" border="1" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
                                     <thead>
                                       <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9 !important'}}>
                                         <th style={{textAlign:'left'}} colSpan="2">Amount Paid</th>
@@ -1044,8 +1864,14 @@ export default function BookingInvoice() {
                                     </thead>
                                     <tbody>
                                       <tr bgcolor="#ffffff" style={{backgroundColor:'#ffffff !important'}}>
-                                        <td><strong>Service Charge:</strong></td>
-                                        <td>AED 108.68</td>
+                                        <td><strong>Service Charge: </strong>
+                                          {currencyformat !== "1" ?
+                                            <>{systemCurrency}  {parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                          :
+                                          <>{v.custCurrency}&nbsp;  {parseFloat(v.sysCancellationCharge).toFixed(2)}</>
+                                          }
+                                        </td>
+                                       
                                       </tr>
                                       <tr bgcolor="#ffffff" style={{backgroundColor:'#ffffff !important'}}>
                                         <td><strong>Cancellation Charge:</strong></td>
@@ -1060,11 +1886,14 @@ export default function BookingInvoice() {
                                         <td>AED 114.16</td>
                                       </tr>
                                     </tbody>
-                                  </table>
+                                  </table> */}
                                 </td>
                               </tr>
                             </tbody>
                           </table>
+                          : 
+                          null
+                          }
 
                           <table width="100%" cellPadding="8" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px'}}>
                             <tbody>
@@ -1104,11 +1933,11 @@ export default function BookingInvoice() {
                                     <tbody>
                                       <tr>
                                         <td width="33%" style={{textAlign:'left'}}>
-                                          <strong>Web:</strong> <a href="www.tickat.com" target='_blank' style={{color:'#333'}}>www.tickat.com</a>
+                                          <strong>Web:</strong> <a href={resDetails.reportHeader?.webUrl} target='_blank' style={{color:'#333'}}>www.{resDetails.reportHeader?.webUrl?.replace(/(^\w+:|^)\/\//, '')}</a>
                                         </td>
-                                        <td width="34%" style={{textAlign:'center'}}><strong>Ph:</strong> +971 4 3485467</td>
+                                        <td width="34%" style={{textAlign:'center'}}><strong>Ph:</strong> {resDetails.reportHeader?.telephone}</td>
                                         <td width="33%" style={{textAlign:'right'}}>
-                                          <strong>Email:</strong> <a href="mailto:bookings@tickat.com" style={{color:'#333',cursor:'pointer'}}>bookings@tickat.com</a>
+                                          <strong>Email:</strong> <a href={'mailto:' + resDetails.reportHeader?.email} style={{color:'#333',cursor:'pointer'}}>{resDetails.reportHeader?.email}</a>
                                         </td>
                                       </tr>
                                     </tbody>

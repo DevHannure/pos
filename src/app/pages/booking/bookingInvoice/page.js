@@ -1821,13 +1821,15 @@ export default function BookingInvoice() {
 
                                 else if(v.serviceCode == "11" && (v.h2H =="0" || v.h2H =="138")){
                                   return(
-                                    <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" bordercolor="#dfdede" border="1" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
-                                      <tbody>
-                                        <tr>
-                                          <td style={{textAlign:'right'}}>Handling Charge: {v.custCurrency} {parseFloat(v.net).toFixed(2)}</td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
+                                    <React.Fragment key={i}>
+                                      <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" bordercolor="#dfdede" border="1" style={{borderCollapse:'collapse',borderSpacing:'0px',fontFamily:'Arial, Helvetica, sans-serif',fontSize:'13px',lineHeight:'21px'}}>
+                                        <tbody>
+                                          <tr>
+                                            <td style={{textAlign:'right'}}>Handling Charge: {v.custCurrency} {parseFloat(v.net).toFixed(2)}</td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </React.Fragment>
                                   )
                                 }
 

@@ -69,12 +69,12 @@ export default function ReservationTray() {
     }
     const responseItinerary = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
     const resItinerary = await responseItinerary;
-    if(!resItinerary.ErrorInfo){
-      setBkngDetails(resItinerary);
-      doServiceComb(resItinerary);
+    if(resItinerary?.ErrorInfo){
+      toast.error(resItinerary.ErrorInfo,{theme: "colored"});
     }
     else{
-      toast.error(resItinerary.ErrorInfo,{theme: "colored"});
+      setBkngDetails(resItinerary);
+      doServiceComb(resItinerary);
     }
   }
 
@@ -287,7 +287,10 @@ export default function ReservationTray() {
       const resItineraryNew = await responseItineraryNew;
       
       console.log("resItineraryNew", resItineraryNew)
-      if(!resItineraryNew.ErrorInfo){
+      if(resItineraryNew?.ErrorInfo){
+        toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
+      }
+      else{
         setBkngDetails(resItineraryNew);
         doServiceComb(resItineraryNew);
         if(payMode === "CC") {
@@ -313,11 +316,6 @@ export default function ReservationTray() {
             }
           });
         }
-        
-
-      }
-      else{
-        toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
       }
     }
   };

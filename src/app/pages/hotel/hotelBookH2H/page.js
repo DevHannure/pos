@@ -396,7 +396,8 @@ export default function HotelItinerary() {
           "ClassificationCode": htlDetails?.hotelDetail?.rating,
           "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
           "SupplierCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCodeFK,
-          "SupplierConsultantCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+          "ReservationCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+          "SupplierConsultantCode": "111", //For ADS 111 & Local 138
           "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
           "SupplierRemarks": "",
           "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
@@ -565,7 +566,7 @@ export default function HotelItinerary() {
                                       <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                       <td className="text-center">{m.percentage}</td>
                                       <td className="text-center">{m.nights}</td>
-                                      <td>{m.fixed}</td>
+                                      <td>{m.fixed && Number(m.fixed).toFixed(2)}</td>
                                     </tr>
                                     ))}
                                     </>

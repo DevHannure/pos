@@ -36,6 +36,7 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .lblue{color:#0099cc;}
 .starGold{color:#FFA822;}
 .starBlank{color:#e0e0e0;}
+.txtred{color:#ea2330;}
 .curpointer{cursor:pointer;}
 .tablePad0>tbody>tr>td,.tablePad0>tbody>tr>th,.tablePad0>tfoot>tr>td,.tablePad0>tfoot>tr>th,.tablePad0>thead>tr>td,.tablePad0>thead>tr>th{padding:0}
 .nav-underline .nav-link.active, .nav-underline .show > .nav-link{font-weight:normal;}
@@ -116,6 +117,9 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .react-datepicker__day--in-range, .react-datepicker__day--in-selecting-range{border-radius:0px !important;}
 .react-datepicker__day--range-start, .react-datepicker__day--selecting-range-start{border-top-left-radius:6px !important; border-bottom-left-radius:6px !important;}
 .react-datepicker__day--range-end, .react-datepicker__day--selecting-range-end{border-top-right-radius:6px !important; border-bottom-right-radius:6px !important;}
+.react-datepicker{font-size:0.72rem !important;}
+.react-datepicker__day-name, .react-datepicker__day, .react-datepicker__time-name{margin:0.095rem !important;}
+.react-datepicker-popper{z-index:11 !important;}
 
 .yearwiseCal .react-datepicker__month-container{padding-top:30px;}
 .yearwiseCal .react-datepicker__header__dropdown{position: absolute; top:-15px; left:0px; right:0px;}

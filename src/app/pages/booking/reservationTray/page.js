@@ -202,7 +202,7 @@ export default function ReservationTray() {
   const getReservations = () => {
     //if(dateFrom && dateTo){
       let qry = {
-        "Skip": currentPage?.toString(),
+        "Skip": (pageSize * currentPage)?.toString(),
         "Take": pageSize,
         "ActivePage": Number(currentPage),
         "SelBookingStatus": selBookingStatus,
@@ -229,7 +229,7 @@ export default function ReservationTray() {
 
   const doReservationsOnLoad = async() => {
     let reservationObj = {
-      "Skip": currentPage?.toString(),
+      "Skip": (pageSize * currentPage)?.toString(),
       "Take": pageSize,
       "BookingStatus": bookingStatus?.toString(),
       "BookingType": bookingType,
@@ -396,6 +396,18 @@ export default function ReservationTray() {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
   }
+
+  const viewServiceLpo = (bkgNo, masterCode, suppCode) => {
+    let reqRptObj = {
+      "bookingNo": bkgNo,
+      "serviceMasterCode": masterCode,
+      "supplier": suppCode,
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/rpt/bookingForm?qry=${encData}`);
+  }
   
   return (
     <MainLayout>
@@ -434,7 +446,7 @@ export default function ReservationTray() {
                   <div className='col-lg-2 mb-2'>
                     <label>Date Range</label>
                     <DatePicker className="form-control form-control-sm px-1" dateFormat="dd MMM yyyy" 
-                    monthsShown={2} selectsRange={true} 
+                    monthsShown={3} selectsRange={true} 
                     minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 1))} 
                     startDate={dateFrom} endDate={dateTo}
                     onChange={dateChange} />
@@ -591,7 +603,7 @@ export default function ReservationTray() {
                           <div className='divCell'>{e.passengerName}</div>
                           <div className='divCell'>{e.customerName}</div>
                           <div className='divCell'>{e.customerRefNo}</div>
-                          <div className='divCell'>{e.createdby}</div>
+                          <div className='divCell'>{e.customerName}</div>
                           <div className='divCell'>{e.status}</div>
                           <div className='divCell'>{Number(e.totalPrice).toFixed(2)}</div>
                           <div className='divCell'>{Number(e.totalCustomerPrice).toFixed(2)}</div>
@@ -694,7 +706,13 @@ export default function ReservationTray() {
                                         <>
                                         <div style={{width:115}}>
                                           <div className='row gx-0'>
-                                            <div className='col-9'><DatePicker className="border-end-0 rounded-end-0 form-control px-1 fn12" dateFormat="dd MMM yyyy" selected={new Date()} monthsShown={2} /></div>
+                                            <div className='col-9'>
+                                              {s.DueDate && s.DueDate !=="01 Jan 1900" ?
+                                              <><DatePicker className="border-end-0 rounded-end-0 form-control px-1 fn12" dateFormat="dd MMM yyyy" selected={new Date(s.DueDate)} monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 1))} /></>
+                                              :
+                                              <><DatePicker className="border-end-0 rounded-end-0 form-control px-1 fn12" dateFormat="dd MMM yyyy" monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 1))} /></>
+                                              }
+                                            </div>
                                             <div className='col-3'><button className="rounded-start-0 btn btn-outline-secondary btn-sm"><FontAwesomeIcon icon={faFloppyDisk} /></button></div>
                                           </div>
                                         </div>
@@ -781,7 +799,7 @@ export default function ReservationTray() {
                                       <ul className="dropdown-menu fn14">
                                         <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;LPO</a>
                                           <ul className="submenu dropdown-menu fn14">
-                                            <li><a href="#" className="dropdown-item">Servicewise</a></li>
+                                            <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode)} type="button" className='dropdown-item' >Servicewise</button></li>
                                             <li><a href="#" className="dropdown-item">Supplierwise</a></li>
                                           </ul>
                                         </li>

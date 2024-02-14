@@ -172,11 +172,11 @@ export default function SalesRpt() {
                                     <tbody>
                                       <tr>
                                         <td width="33%" style={{textAlign:'left'}}>
-                                          <strong>Web:</strong> <a href="www.tickat.com" target='_blank' style={{color:'#333'}}>www.tickat.com</a>
+                                          <strong>Web:</strong> <a href={resDetails.reportHeader?.webUrl} target='_blank' style={{color:'#333'}}>www.{resDetails.reportHeader?.webUrl?.replace(/(^\w+:|^)\/\//, '')}</a>
                                         </td>
-                                        <td width="34%" style={{textAlign:'center'}}><strong>Ph:</strong> +971 4 3485467</td>
+                                        <td width="34%" style={{textAlign:'center'}}><strong>Ph:</strong> {resDetails.reportHeader?.telephone}</td>
                                         <td width="33%" style={{textAlign:'right'}}>
-                                          <strong>Email:</strong> <a href="mailto:bookings@tickat.com" style={{color:'#333',cursor:'pointer'}}>bookings@tickat.com</a>
+                                          <strong>Email:</strong> <a href={'mailto:' + resDetails.reportHeader?.email} style={{color:'#333',cursor:'pointer'}}>{resDetails.reportHeader?.email}</a>
                                         </td>
                                       </tr>
                                     </tbody>
@@ -184,7 +184,7 @@ export default function SalesRpt() {
                                 </td>
                               </tr>
                             </tbody>
-                          </table>             
+                          </table>            
                                 
                       </td>
                     </tr>

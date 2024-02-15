@@ -39,14 +39,29 @@ export default function BookingForm() {
     const responseRpt = ReservationtrayService.doGetBookingLPOData(reqRptObj, qry.correlationId);
     let resRpt = await responseRpt;
     if(resRpt?.errorInfo ===null) {
-      let dtlArray = [];
-      resRpt.lpoReportDetails?.map((v) => {
-        if(v.servicemasterCode === qry.serviceMasterCode?.toString()){
-          dtlArray.push(v)
-        }
-      });
-      resRpt.lpoReportDetails = dtlArray;
-      setResDetails(resRpt);
+      if(qry.lpo==="service"){
+        let dtlArray = [];
+        resRpt.lpoReportDetails?.map((v) => {
+          if(v.servicemasterCode === qry.serviceMasterCode?.toString()){
+            dtlArray.push(v)
+          }
+        });
+        resRpt.lpoReportDetails = dtlArray;
+        setResDetails(resRpt);
+      }
+      else if(qry.lpo==="supplier"){
+        // let dtlArray = [];
+        // resRpt.lpoReportDetails?.map((v) => {
+        //   if(v.servicemasterCode === qry.supplier?.toString()){
+        //     dtlArray.push(v)
+        //   }
+        // });
+        // resRpt.lpoReportDetails = dtlArray;
+        setResDetails(resRpt);
+      }
+      else{
+        setResDetails(resRpt);
+      }
     }
     else {
       toast.error(resRpt?.errorInfo,{theme: "colored"});

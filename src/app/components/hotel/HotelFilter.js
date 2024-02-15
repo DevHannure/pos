@@ -46,9 +46,9 @@ export default function HotelFilter(props) {
   const getOrgHtlResult = useSelector((state) => state.hotelResultReducer?.htlResOrgObj);
   const htlFilterSortVar = useSelector((state) => state.hotelResultReducer?.htlFilterSort);
 
-  const [priceFilter, setPriceFilter] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && [Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice).toFixed(2)), Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice).toFixed(2))]);
-  const [minPrice, setMinPrice] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice).toFixed(2)));
-  const [maxPrice, setMaxPrice] = useState(getOrgHtlResult?.hotels.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice).toFixed(2)));
+  const [priceFilter, setPriceFilter] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && [Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice-0.01).toFixed(2)), Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice + 0.01).toFixed(2))]);
+  const [minPrice, setMinPrice] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice-0.01).toFixed(2)));
+  const [maxPrice, setMaxPrice] = useState(getOrgHtlResult?.hotels.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2)));
   const [startRating, setStartRating] = useState([]);
   const [triptRating, setTriptRating] = useState([]);
   const [srchTxt, setSrchTxt] = useState('');

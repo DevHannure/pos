@@ -397,11 +397,12 @@ export default function ReservationTray() {
     router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
   }
 
-  const viewServiceLpo = (bkgNo, masterCode, suppCode) => {
+  const viewServiceLpo = (bkgNo, masterCode, suppCode, lpo) => {
     let reqRptObj = {
       "bookingNo": bkgNo,
       "serviceMasterCode": masterCode,
       "supplier": suppCode,
+      "lpo": lpo,
       "correlationId": userInfo.correlationId
     }
     let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
@@ -799,8 +800,8 @@ export default function ReservationTray() {
                                       <ul className="dropdown-menu fn14">
                                         <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;LPO</a>
                                           <ul className="submenu dropdown-menu fn14">
-                                            <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode)} type="button" className='dropdown-item' >Servicewise</button></li>
-                                            <li><a href="#" className="dropdown-item">Supplierwise</a></li>
+                                            <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode, 'service')} type="button" className='dropdown-item' >Servicewise</button></li>
+                                            <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode, 'supplier')} type="button" className='dropdown-item' >Supplierwise</button></li>
                                           </ul>
                                         </li>
                                         <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Service Voucher</a></li>

@@ -9,7 +9,7 @@ import Bowser from "bowser";
 import AuthService from '@/app/services/auth.service';
 import MasterService from '@/app/services/master.service';
 import { useSelector, useDispatch } from "react-redux";
-import { doUserInfo, doCustCreditDtls } from '@/app/store/commonStore/common';
+import { doUserInfo, doCustCreditDtls, doAppFeatures } from '@/app/store/commonStore/common';
 import { doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 import { useRouter } from 'next/navigation';
 
@@ -19,6 +19,7 @@ export default function Header() {
   const router = useRouter();
   const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
   const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
+  const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
   //console.log("session666", data)
   // console.log("session", status)
 
@@ -35,6 +36,9 @@ export default function Header() {
     dispatch(doUserInfo(data));
     if(data && !customersCreditInfo){
       customersCreditDetailsBtn(data?.user.userCode);
+    }
+    if(data && !appFeaturesInfo){
+      appFeaturesBtn();
     }
   }, [data]);
   
@@ -96,8 +100,13 @@ export default function Header() {
     dispatch(doReserveListOnLoad(null));
     router.push('/pages/booking/reservationTray');
   }
-  
 
+  const appFeaturesBtn = async() => {
+    const responseAppFeatures = MasterService.doGetFeatures(data?.correlationId);
+    const resAppFeatures = await responseAppFeatures;
+    dispatch(doAppFeatures(resAppFeatures));
+  }
+  
   return (
     <>
     <header className={"headerMain " + (fixedClass ? 'fixedNav': 'absoluteNav')}>

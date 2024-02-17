@@ -98,6 +98,16 @@ const MasterService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetFeatures: async function (correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/app/GetFeatures`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
   
 
 }

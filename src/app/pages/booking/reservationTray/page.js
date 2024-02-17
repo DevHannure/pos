@@ -3,12 +3,11 @@ import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch, faEyeSlash, faTrash } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
-import { useSearchParams  } from 'next/navigation';
+import {useRouter, useSearchParams} from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
@@ -18,6 +17,7 @@ import { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersL
 import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import {useSession} from "next-auth/react";
 
 const selBookingOptions = [
   { value: 'On Request', label:'On Request'},
@@ -48,6 +48,8 @@ export default function ReservationTray() {
   const allSuppliersList = useSelector((state) => state.reservationListReducer?.allSuppliersObj);
   const allUsersList = useSelector((state) => state.reservationListReducer?.allUsersObj);
   const systemCurrency = userInfo?.user?.systemCurrencyCode;
+  const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
+  const {data} = useSession();
 
   useEffect(() => {
     if(userInfo?.user){
@@ -65,8 +67,6 @@ export default function ReservationTray() {
       }
     }
   }, [userInfo, resListRes]);
-
-  
 
   const getAllCustomers = async() => {
     const responseAllCustomer = MasterService.doGetCustomers(userInfo.correlationId);
@@ -341,7 +341,6 @@ export default function ReservationTray() {
       dtlItems[dtlCode] = resDtls;
       dispatch(doSubDtlsList(dtlItems));
     }
-
   }
 
   const viewBooking = (id) => {
@@ -409,6 +408,180 @@ export default function ReservationTray() {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/rpt/bookingForm?qry=${encData}`);
   }
+  const [sonumber, setSonumber] = useState('');
+  const [soLoad, setSoLoad] = useState(false);
+  const soModalClose = useRef(null);
+
+  const generateSOBtn = async() => {
+    setSoLoad(true)
+    let reqSoObj = {
+      "BookingNo": sonumber,
+      "UserId": ""
+    }
+    const responseDtls = ReservationtrayService.doGenerateSO(reqSoObj, userInfo?.correlationId);
+    const resDtls = await responseDtls;
+    if(resDtls==='Success'){
+      toast.success("Generate SO Successfully!",{theme: "colored"});
+      setSoLoad(false);
+      soModalClose.current?.click();
+      getReservations();
+    }
+    else{
+      toast.error("Something went wrong! Please try after sometime.",{theme: "colored"});
+      setSoLoad(false);
+      soModalClose.current?.click();
+    }
+  }
+
+  const [amndmentHistory, setAmndmentHistory] = useState(null);
+
+  const viewAmndmentHistory = async(bkgNo, masterCode) => {
+    let reqAmndObj = {
+      "BookingNo": bkgNo,
+      "ServiceMasterCode": masterCode
+    }
+    const responseDtls = ReservationtrayService.doGetServiceAmendmentHistory(reqAmndObj, userInfo?.correlationId);
+    const resDtls = await responseDtls;
+    console.log("resDtls", resDtls)
+    setAmndmentHistory(resDtls)
+  }
+
+  const ifMenuExist = (feature) => {
+    let ifexist = false;
+    const featureInclude = appFeaturesInfo?.find(v => v.featureName === feature);
+
+    if(featureInclude){
+      if(process.env.NEXT_PUBLIC_APPCODE==='0'){
+        if(featureInclude.showInPOS){
+          ifexist = true
+        }
+      }
+      if(process.env.NEXT_PUBLIC_APPCODE==='1'){
+        if(featureInclude.showInB2B){
+          ifexist = true
+        }
+      }
+    }
+    return ifexist
+  }
+
+  const IfUserHasreadWriteAccess = (feature) => {
+    let ifexist = false;
+    const featureInclude = data?.userPermissions?.find(v => v.featureName === feature);
+    if(featureInclude?.canView){
+      ifexist = true
+    }
+    return ifexist
+  }
+
+  const DisablePopupMenu = (s, key) => {
+    let bServiceStatus = s.ServiceStatus?.toLowerCase();
+    let serviceFlag = '';
+    if (bServiceStatus == "on request" || bServiceStatus == "sent to supp.") {serviceFlag = 1;} 
+    else if (bServiceStatus == "supp.confirmed") {serviceFlag = 2;} 
+    else if (bServiceStatus == "cust.confirmed") {serviceFlag = 3;} 
+    else if (bServiceStatus == "cancelled" || bServiceStatus == "cancelled(p)") {serviceFlag = 4;} 
+    else if (bServiceStatus == "not available") {serviceFlag = 5;} 
+    else if (bServiceStatus == "on cancellation") {serviceFlag = 6;} 
+    else if (bServiceStatus == "posted") {serviceFlag = 7;} 
+    else if (bServiceStatus == "failed" || bServiceStatus == "not available") {serviceFlag = 12;} 
+    else if (bServiceStatus == "not confirm") {serviceFlag = 13;}
+    else if (bServiceStatus == "so generated") {serviceFlag = 14;}
+    else{serviceFlag = ''}
+
+    let manualService = s.OtherServiceBkg;
+    let h2hservice = s.H2H;
+
+    let serviceFlagNew = '';
+    if (manualService == 1) {serviceFlagNew = "m";} 
+    else if (manualService == 2) {serviceFlagNew = "i";} 
+    else if (h2hservice >= 1 && h2hservice != 138) {serviceFlagNew = "h";} 
+    else if (manualService == 0) {serviceFlagNew = "n";} 
+    else{serviceFlagNew = "";}
+
+    let serviceCode = s.ServiceCode;
+    let bookingno = s.BookingNo;
+    let servicemastercode = s.ServiceMasterCode;
+    let customercode = s.CustomerCode;
+    let custexchrate = s.ExchangeRate;
+    let policyRateType = s.PolicyRateType;
+    let bkgPosted = s.BkgPosted;
+    let suppType = s.SupplierType
+
+    debugger;
+    switch (key) {
+      //LPO
+      case 'lpo':
+        if (!(serviceFlagNew == "h" && bServiceStatus == "on request")) {
+          if (ifMenuExist('ViewLPO')) {
+            if (IfUserHasreadWriteAccess('ViewLPO')) {return true;}
+            else {return false;}
+          }
+        }
+        else{return true;}
+        break;
+
+      //Service Voucher
+      case 'sv':
+        if (((serviceFlag == 2 || serviceFlag == 3) && !(serviceFlagNew == "h" && bServiceStatus == "on request")) || serviceCode == 17) {
+          if (ifMenuExist('ViewVoucher')) {
+            if (IfUserHasreadWriteAccess('ViewVoucher')) {return true;} 
+            else {return false;}
+          }
+        }
+        else{return true;}
+        break;
+
+      //Invoice Report
+      case 'pi':
+        if (ifMenuExist('ViewInvoice')) {
+          if (IfUserHasreadWriteAccess('ViewInvoice')) {return true;} 
+          else {return false;}
+        }
+        else{return true;}
+        break;
+
+      //Reprice
+      case 'reprice':
+        if (serviceCode == 1 && manualService == 0 && policyRateType == "R") {return true;}
+        else{return false;}
+        break;
+
+      //Switch Supplier
+      case 'switchsupp':
+        if (IfUserHasreadWriteAccess('SwitchSupplier')) {return true;}
+        if (serviceCode !== 17 && (serviceFlag == 1 || serviceFlag == 2 || serviceFlag == 3 || serviceFlag == 7) && h2hservice !== "999" && bkgPosted == 0 && !(serviceFlagNew == "h" && bServiceStatus == "on request")) {return false;}
+        else{return true;}
+        break;
+
+      //Amendment History
+      case 'checkhistory':
+        if (IfUserHasreadWriteAccess('ReservationAmendmentHistory')) {return true;}
+        if (serviceCode !== 17) {return false;}
+        else{return true;}
+        break;
+
+      //Amendment
+      case 'editservice-key0':
+        if (IfUserHasreadWriteAccess('ReservationEditService')) {return true;}
+        if (suppType?.toLowerCase() !== 'xml' && suppType?.toLowerCase() !== 'local' && (serviceFlag == 1 || serviceFlag == 2 || serviceFlag == 3 || serviceFlag == 14) && (manualService == 0 || manualService == 1) && !(serviceFlagNew == "h" && bServiceStatus == "on request")) {
+          if (serviceCode == 17) {
+            if (h2hservice == 0) {return false;}
+          }
+          else{
+            return false;
+          }
+        }
+
+        else{return true;}
+        break;
+
+      default:
+        return false;
+    }
+
+  }
+
   
   return (
     <MainLayout>
@@ -585,13 +758,55 @@ export default function ReservationTray() {
                           <div className='divCell text-nowrap'><span className='sorticon'>Status <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
                           <div className='divCell text-nowrap'><span className='sorticon'>Total <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
                           <div className='divCell text-nowrap'><span className='sorticon'>Total (Cust.) <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                          <div className='divCell text-nowrap'>View</div>
-                          <div className='divCell text-nowrap'>SO</div>
-                          <div className='divCell text-nowrap'>SR</div>
-                          <div className='divCell text-nowrap'>IR</div>
-                          <div className='divCell text-nowrap'>VR</div>
-                          <div className='divCell text-nowrap'>PI</div>
-                          <div className='divCell text-nowrap'>PR</div>
+                          {ifMenuExist('ViewItinerary') &&
+                            <>
+                              {IfUserHasreadWriteAccess('ViewItinerary') &&
+                                <div className='divCell text-nowrap'>View</div>
+                              }
+                            </>
+                          }
+                          {process.env.NEXT_PUBLIC_APPCODE!=='0' &&
+                          <>
+                            {ifMenuExist('ViewServiceOrder') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewServiceOrder') &&
+                                  <div className='divCell text-nowrap'>SO</div>
+                                }
+                              </>
+                            }
+                            {ifMenuExist('ViewSalesReport') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewSalesReport') &&
+                                  <div className='divCell text-nowrap'>SR</div>
+                                }
+                              </>
+                            }
+                            {ifMenuExist('ViewItineraryReport') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
+                                  <div className='divCell text-nowrap'>IR</div>
+                                }
+                              </>
+                            }
+                            {ifMenuExist('ViewVoucher') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewVoucher') &&
+                                  <div className='divCell text-nowrap'>VR</div>
+                                }
+                              </>
+                            }
+                            {ifMenuExist('ViewInvoice') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewInvoice') &&
+                                  <div className='divCell text-nowrap'>PI</div>
+                                }
+                              </>
+                            }
+
+                            <div className='divCell text-nowrap'>PR</div>
+                          </>
+                          } 
+                          
                         </div>
 
                         {resListRes?.bookings?.map((e, i) => (
@@ -604,17 +819,98 @@ export default function ReservationTray() {
                           <div className='divCell'>{e.passengerName}</div>
                           <div className='divCell'>{e.customerName}</div>
                           <div className='divCell'>{e.customerRefNo}</div>
-                          <div className='divCell'>{e.customerName}</div>
+                          <div className='divCell'>{e.userName}</div>
                           <div className='divCell'>{e.status}</div>
                           <div className='divCell'>{Number(e.totalPrice).toFixed(2)}</div>
                           <div className='divCell'>{Number(e.totalCustomerPrice).toFixed(2)}</div>
-                          <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button type="button" className='sqBtn' title="Service Order" data-bs-toggle="tooltip"><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button onClick={()=> viewSalesReport(e.bookingNo)} type="button" className='sqBtn' title="Sales Report" data-bs-toggle="tooltip"><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button onClick={()=> viewItineraryRpt(e.bookingNo)} type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='sqBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='sqBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></div>
-                          <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
+                          {ifMenuExist('ViewItinerary') &&
+                            <>
+                              {IfUserHasreadWriteAccess('ViewItinerary') &&
+                                <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                              }
+                            </>
+                          }
+                          
+                          {process.env.NEXT_PUBLIC_APPCODE!=='0' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
+                          <>
+                            {ifMenuExist('ViewServiceOrder') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewServiceOrder') &&
+                                  <div className='divCell'>
+                                    {e.status?.toLowerCase() == "so generated" || e.status?.toLowerCase() == "on request" || e.status?.toLowerCase() == "not available" || e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "posted" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
+                                    <><button type="button" className='sqBtn disabledBtn' title="Service Order"><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></>
+                                    :
+                                    <>
+                                    {ifMenuExist('MidOfficeIntegration') ==false ?
+                                    <><button data-bs-toggle="modal" data-bs-target="#serOrderModal" onClick={()=> setSonumber(e.bookingNo)} type="button" className='sqBtn' title="Service Order"><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></>
+                                    :
+                                    <><button type="button" className='sqBtn disabledBtn' title="Service Order"><Image src='/images/icon2.png' alt='icon' width={14} height={14} /></button></>
+                                    }
+                                    </>
+                                    }
+                                  </div>
+                                }
+                              </>
+                            }
+
+                            {ifMenuExist('ViewSalesReport') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewSalesReport') &&
+                                  <div className='divCell'><button onClick={()=> viewSalesReport(e.bookingNo)} type="button" className='sqBtn' title="Sales Report" data-bs-toggle="tooltip"><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
+                                }
+                              </>
+                            }
+
+                            {ifMenuExist('ViewItineraryReport') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
+                                  <div className='divCell'>
+                                    {e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
+                                    <><button type="button" className='sqBtn disabledBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></>
+                                    :
+                                    <><button onClick={()=> viewItineraryRpt(e.bookingNo)} type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></>
+                                    }
+                                  </div>
+                                }
+                              </>
+                            }
+
+                            {ifMenuExist('ViewVoucher') &&
+                              <>
+                              {IfUserHasreadWriteAccess('ViewVoucher') &&
+                                <div className='divCell'>
+                                  {e.status?.toLowerCase() == "supp.confirmed" || e.status?.toLowerCase() == "on request" || e.status?.toLowerCase() == "on request(p-allc)" || e.status?.toLowerCase() == "sent to supp." || e.status?.toLowerCase() == "not available" || e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
+                                  <><button className='sqBtn disabledBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></>
+                                  :
+                                  <><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='sqBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></>
+                                  }
+                                </div>
+                              }
+                              </>
+                            }
+
+                            {ifMenuExist('ViewInvoice') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewInvoice') &&
+                                  <div className='divCell'>
+                                  {e.status?.toLowerCase() !== "on cancellation" || e.status?.toLowerCase() !== "open" ?
+                                  <><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='sqBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></>
+                                  :
+                                  <><button type="button" className='sqBtn disabledBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></>
+                                  }
+                                </div>
+                                }
+                              </>
+                            }
+
+                            {e.isCCBkg == "True" ?
+                            <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
+                            :
+                            <div className='divCell'><button type="button" className='sqBtn disabledBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
+                            }
+                          </>
+                          : null
+                          }
                         </div>
 
                         <div className='divRow'>
@@ -628,7 +924,9 @@ export default function ReservationTray() {
                                   <div className='divTable border mb-0 table-bordered'>
                                     <div className='divHeading bg-light'>
                                       {/* <div className='divCell text-nowrap'>Select</div> */}
-                                      <div className='divCell text-nowrap'>Service Id</div>
+                                      {ifMenuExist('ViewCartId') &&
+                                        <div className='divCell text-nowrap'>Service Id</div>
+                                      }
                                       <div className='divCell text-nowrap'>Product &nbsp; &nbsp; &nbsp; &nbsp;</div>
                                       <div className='divCell text-nowrap'>Service Type / Rate Basis</div>
                                       <div className='divCell text-nowrap'>Service</div>
@@ -638,12 +936,15 @@ export default function ReservationTray() {
                                       <div className='divCell text-nowrap'>No. of Guest</div>
                                       }
                                       <div className='divCell text-nowrap'>Time Limit</div>
+                                      {ifMenuExist('ViewServiceDetails') &&
                                       <div className='divCell'>Details</div>
-                                      {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
+                                      }
+
+                                      {process.env.NEXT_PUBLIC_APPCODE==='2' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
                                       <>
                                       <div className='divCell'>Supplier</div>
                                       <div className='divCell'>Supplier Type</div>
-                                      </>
+                                      </> : null
                                       }
                                       <div className='divCell'>Buying</div>
                                       <div className='divCell'>Buying VAT</div>
@@ -658,15 +959,35 @@ export default function ReservationTray() {
 
                                       <div className='divCell'>Total Selling (Cust.)</div>
                                       <div className='divCell'>Status</div>
+                                      {dtlData?.[e.bookingNo]?.ServiceDetails[0].ServiceCode === 17 &&
+                                        <>
+                                        {ifMenuExist('ViewTicketing') &&
+                                          <div className='divCell'>TKT</div>
+                                        }
+                                        </>
+                                      }
+                                      {dtlData?.[e.bookingNo]?.ServiceDetails[0].ServiceCode === 17 &&
+                                        <div className='divCell'>PNR</div>
+                                      }
+                                      {dtlData?.[e.bookingNo]?.ServiceDetails[0].ServiceCode === 25 &&
+                                        <div className='divCell'>Policy</div>
+                                      }
+
+                                      {dtlData?.[e.bookingNo]?.ServiceDetails.find(item => item.ServiceCode == 17) || dtlData?.[e.bookingNo]?.ServiceDetails.find(item =>item.ServiceCode == 3 && item.SupplierType?.toLowerCase() == 'xml') ?
+                                      <div className='divCell'>Sync</div> :null
+                                      }
                                     </div>
 
                                     {dtlData?.[e.bookingNo]?.ServiceDetails.map((s, ind) => (
                                     <div key={ind} className='divRow dropend dropReserve'>
                                       {/* <div className='divCell text-center'><input type="checkbox" /></div> */}
-                                      <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">{s.ServiceMasterCode}</div>
+                                      {ifMenuExist('ViewCartId') &&
+                                        <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">{s.ServiceMasterCode}</div>
+                                      }
+                                      
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         {s.ServiceCode === 17 ?
-                                          <>{s.SectorDetail}</>
+                                          <div dangerouslySetInnerHTML={{ __html: s.SectorDetail }}></div>
                                           :
                                           <>
                                           {s.ProductName && s.ProductName !== "" ? s.ProductName : "Others"}, {s.CityName} 
@@ -702,7 +1023,13 @@ export default function ReservationTray() {
 
                                       <div className='divCell'>
                                         {s.ServiceCode === 17 ?
-                                        <></>
+                                        <div className="text-nowrap">
+                                        {s.IsLCC == false && s.H2H != 0 && s.H2H != 138 ?
+                                          <>{s.CancellationDate}</>
+                                          :
+                                          <>N/A</>
+                                        }
+                                        </div>
                                         :
                                         <>
                                         <div style={{width:115}}>
@@ -720,20 +1047,22 @@ export default function ReservationTray() {
                                         </>
                                         }
                                       </div>
-                                      
+
+                                      {ifMenuExist('ViewServiceDetails') &&
                                       <div className='divCell'><span className="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-html="true" data-bs-content="<strong>Service Type :</strong> Deluxe Skyline View Room 53-58Sqm<br /><strong>Adults :</strong> 1<br /><strong>Children :</strong> 0<br /><strong>Infants :</strong> 0<br /><strong>CRN/DBN Status :</strong> N/A<br /><strong>INV/PB Remark :</strong> N/A<br/><strong>City :</strong> <br /><strong>Supplier :</strong> Mandarin Oriental Jumeira">Details</span></div>
-                                      
-                                      {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
-                                      <>
-                                      <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        {s.ServiceCode === 25 ?
-                                        <>{s.Supplier_Name}</>
-                                        :
-                                        <>{s.SuppName}</>
-                                        }
-                                      </div>
-                                      <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside"><span className='badge bg-primary fn12 fw-semibold'> {s.SupplierType} </span></div>
-                                      </>
+                                      }
+
+                                      {process.env.NEXT_PUBLIC_APPCODE==='2' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
+                                       <>
+                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                         {s.ServiceCode === 25 ?
+                                         <>{s.Supplier_Name}</>
+                                         :
+                                         <>{s.SuppName}</>
+                                         }
+                                       </div>
+                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside"><span className='badge bg-primary fn12 fw-semibold'> {s.SupplierType} </span></div>
+                                       </> : null
                                       }
 
                                       {/* //Buying Amount */}
@@ -793,27 +1122,107 @@ export default function ReservationTray() {
                                       
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         <div className={'serviceStatus' + s.ServiceStatus.toLowerCase() ==='confirmed' ? 'text-success' : s.ServiceStatus.toLowerCase() ==='on request' ? 'lblue' : s.ServiceStatus.toLowerCase() ==='on cancellation' ? 'text-danger' : ''}>
-                                          {s.ServiceStatus}
+                                          {s.ServiceCode == 17 && s.IsTicketed == false && s.ExchangeTicketStatus == '' ?
+                                          <>
+                                            {s.ServiceCode == 17 && s.IsLCC == true ?
+                                              <>Ticketed</>
+                                              :
+                                              <>UnTicketed</>
+                                            }
+                                          </>
+                                          :
+                                          s.ServiceCode == 17 && s.IsTicketed == true && s.TicketStatus != 'Exchange' ?
+                                          <>Ticketed</>
+                                          :
+                                          s.ServiceCode == 17 && s.TicketStatus == 'Exchange' ?
+                                          <>Exchange</>
+                                          :
+                                          s.ServiceCode == 17 && s.TicketStatus == 'Void' ?
+                                          <>Void</>
+                                          :
+                                          s.ServiceCode == 17 && s.TicketStatus == 'Split' ?
+                                          <>Split</>
+                                          :
+                                          s.ServiceStatus == "Posted" ?
+                                          <>Posted</>
+                                          :
+                                          <>{s.ServiceStatus}</>
+                                          }
                                         </div>
                                       </div>
 
+                                      {s.ServiceCode === 17 &&
+                                        <>
+                                        {ifMenuExist('ViewTicketing') &&
+                                          <div className='divCell'> </div>
+                                        }
+                                        </>
+                                      }
+
+                                      {s.ServiceCode === 17 &&
+                                        <div className='divCell'> </div>
+                                      }
+                                      {s.ServiceCode === 25 &&
+                                        <div className='divCell'> </div>
+                                      }
+
+                                      {s.ServiceCode == 17 || s.ServiceCode == 3 && s.SupplierType?.toLowerCase() == 'xml' ?
+                                      <div className='divCell'> </div> :null
+                                      }
+
                                       <ul className="dropdown-menu fn14">
-                                        <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;LPO</a>
-                                          <ul className="submenu dropdown-menu fn14">
-                                            <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode, 'service')} type="button" className='dropdown-item' >Servicewise</button></li>
-                                            <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode, 'supplier')} type="button" className='dropdown-item' >Supplierwise</button></li>
-                                          </ul>
-                                        </li>
-                                        <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Service Voucher</a></li>
-                                        <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Invoice Report</a></li>
+                                        
+                                        {DisablePopupMenu(s, 'lpo') ?
+                                          <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;LPO</a>
+                                            <ul className="submenu dropdown-menu fn14">
+                                              <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode, 'service')} type="button" className='dropdown-item' >Servicewise</button></li>
+                                              <li><button onClick={()=> viewServiceLpo(s.BookingNo, s.ServiceMasterCode, s.SupplierCode, 'supplier')} type="button" className='dropdown-item' >Supplierwise</button></li>
+                                            </ul>
+                                          </li>
+                                          :
+                                          <li><a href="#" className="dropdown-item disabled"><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;LPO</a></li>
+                                        }
+
+                                        {DisablePopupMenu(s, 'sv') ?
+                                          <li><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='dropdown-item'><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Service Voucher</button></li>
+                                          : 
+                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;Service Voucher</button></li>
+                                        }
+
+                                        {DisablePopupMenu(s, 'pi') ?
+                                          <li><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='dropdown-item'><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Invoice Report</button></li>
+                                          : 
+                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;Invoice Report</button></li>
+                                        }
                                         <li><hr className="dropdown-divider my-1" /></li>
-                                        <li><a href="#" className="dropdown-item disabled"><FontAwesomeIcon icon={faTag} className='fn12 blue' /> &nbsp;Reprice</a></li>
-                                        <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faShuffle} className='fn12 blue' /> &nbsp;Switch Supplier</a></li>
-                                        <li><a href="#" className="dropdown-item"><FontAwesomeIcon icon={faCircleInfo} className='fn12 blue' /> &nbsp;Amendment History</a></li>
+                                        {DisablePopupMenu(s, 'reprice') ?
+                                          <li><button type="button" className='dropdown-item'><FontAwesomeIcon icon={faTag} className='fn12 blue' /> &nbsp;Reprice</button></li>
+                                          : 
+                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faTag} className='fn12' /> &nbsp;Reprice</button></li>
+                                        }
+
+                                        {DisablePopupMenu(s, 'switchsupp') ?
+                                          <li><button type="button" className='dropdown-item'><FontAwesomeIcon icon={faShuffle} className='fn12 blue' /> &nbsp;Switch Supplier</button></li>
+                                          : 
+                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faShuffle} className='fn12' /> &nbsp;Switch Supplier</button></li>
+                                        }
+
+                                        {DisablePopupMenu(s, 'checkhistory') ?
+                                          <li><button data-bs-toggle="modal" data-bs-target="#amendmentHistoryModal" onClick={()=> viewAmndmentHistory(s.BookingNo, s.ServiceMasterCode)} type="button" className='dropdown-item'><FontAwesomeIcon icon={faCircleInfo} className='fn12 blue' /> &nbsp;Amendment History</button></li>
+                                          : 
+                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faCircleInfo} className='fn12' /> &nbsp;Amendment History</button></li>
+                                        }
                                         <li><hr className="dropdown-divider my-1" /></li>
+
                                         <li><a href="#" className="dropdown-item dropIcon"><FontAwesomeIcon icon={faPencil} className='fn12 blue' /> &nbsp;Edit Service</a>
                                           <ul className="submenu dropdown-menu fn14">
-                                            <li><a href="#" className="dropdown-item disabled">Amendment</a></li>
+                                            {DisablePopupMenu(s, 'editservice-key0') ?
+                                              <li><button type="button" className='dropdown-item'>Amendment</button></li>
+                                              : 
+                                              <li><button type="button" className='dropdown-item disabled'>Amendment</button></li>
+                                            }
+
+                                            
                                             <li><hr className="dropdown-divider my-1" /></li>
                                             <li><a href="#" className="dropdown-item disabled">Edit Guest Information</a></li>
                                             <li><a href="#" className="dropdown-item disabled">Edit Payable</a></li>
@@ -835,7 +1244,6 @@ export default function ReservationTray() {
                                             <li><a href="#" className="dropdown-item">Hotel Confirmation Number</a></li>
                                           </ul>
                                         </li>
-                                        
                                     </ul>
                                     </div>
                                     ))}
@@ -890,6 +1298,37 @@ export default function ReservationTray() {
                         <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
                       </ul>
                       </nav>
+                    </div>
+
+                    <div className="modal fade" id="serOrderModal" data-bs-backdrop="static" data-bs-keyboard="false">
+                      <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                          <div className="modal-body">
+                            <div className="fs-5 lh-base">
+                              Are you sure you want to Generate SO for this Booking #{sonumber} ?
+                            </div>
+                          </div>
+                          <div className='modal-footer'>
+                            <button type="button" className='btn btn-primary' onClick={generateSOBtn} disabled={soLoad}> {soLoad ? 'Submitting...' : 'Generate SO'} </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={soModalClose}>Close</button> 
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="modal fade" id="amendmentHistoryModal">
+                      <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                          <div className="modal-header">
+                            <h5 className="modal-title">Booking History for Booking No</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div className="modal-body">
+                            <div className="fs-5 lh-base">
+                              dd
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                   </div>

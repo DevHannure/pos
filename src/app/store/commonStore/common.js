@@ -6,6 +6,7 @@ const initialState = {
   b2bXmlSupplier:null,
   regionCodeSaver:null,
   custCreditDtls:null,
+  appFeaturesDtls: null
 };
 
 export const commonResult = createSlice({
@@ -30,10 +31,14 @@ export const commonResult = createSlice({
       state.regionCodeSaver = action.payload
     },
 
+    doAppFeatures:  (state, action) => {
+      state.appFeaturesDtls = action.payload
+    },
+
   }
 
 });
 
-export const {doUserInfo, doCustCreditDtls, doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode} = commonResult.actions
+export const {doUserInfo, doCustCreditDtls, doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doAppFeatures} = commonResult.actions
 
 export default commonResult.reducer;

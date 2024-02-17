@@ -5,8 +5,7 @@ import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerar
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faSpinner} from "@fortawesome/free-solid-svg-icons";
 import {format, addDays, differenceInDays} from 'date-fns';
-import { useRouter } from 'next/navigation';
-import { useSearchParams  } from 'next/navigation';
+import {useRouter, useSearchParams} from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import PaymentService from '@/app/services/payment.service';

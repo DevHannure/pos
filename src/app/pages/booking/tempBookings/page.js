@@ -3,44 +3,20 @@ import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faSearch } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
-import { useSearchParams  } from 'next/navigation';
+import {useRouter, useSearchParams} from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import MasterService from '@/app/services/master.service';
-import { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
+import { doCartReserveListOnLoad, doGetCustomersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
 import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-const selBookingOptions = [
-  { value: '0', label:'On Request'},
-  { value: '1', label:'Supp.Confirmed'},
-  { value: '2', label:'Cust.Confirmed'},
-  { value: '3', label:'SO Generated'},
-  { value: '4', label:'Posted'},
-  { value: '5', label:'On Cancellation'},
-  { value: '6', label:'Cancelled'},
-  { value: '7', label:'Not Available'}
-];
-
-const selCreatedOptions = [
-  { value: '0', label:'On Request'},
-  { value: '1', label:'Supp.Confirmed'},
-  { value: '2', label:'Cust.Confirmed'},
-  { value: '3', label:'SO Generated'},
-  { value: '4', label:'Posted'},
-  { value: '5', label:'On Cancellation'},
-  { value: '6', label:'Cancelled'},
-  { value: '7', label:'Not Available'}
-];
-
 
 export default function TempBookings() {
   const _ = require("lodash");
@@ -53,9 +29,8 @@ export default function TempBookings() {
   const router = useRouter();
   const refDiv = useRef(null);
   const dispatch = useDispatch();
-  const [dimensions, setDimensions] = useState(null);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
-  const resListRes = useSelector((state) => state.reservationListReducer?.reserveListObj);
+  const resListRes = useSelector((state) => state.reservationListReducer?.cartReserveListObj);
   const allCustomersList = useSelector((state) => state.reservationListReducer?.allCustomersObj);
   const allSuppliersList = useSelector((state) => state.reservationListReducer?.allSuppliersObj);
   const allUsersList = useSelector((state) => state.reservationListReducer?.allUsersObj);
@@ -69,6 +44,9 @@ export default function TempBookings() {
       if(!allCustomersList) {
         getAllCustomers();
       }
+      if(!allUsersList) {
+        getAllUsers();
+      }
     }
   }, [userInfo, resListRes]);
 
@@ -78,11 +56,11 @@ export default function TempBookings() {
     dispatch(doGetCustomersList(resAllCustomer));
   };
 
-  const [selBookingStatus, setSelBookingStatus] = useState(qry ? qry.SelBookingStatus : null);
-  const bookingStatus = selBookingStatus?.map(function(item) {
-    return item['value'];
-  });
-  
+  const getAllUsers = async() => {
+    const responseAllUsers = MasterService.doGetUsers(userInfo.correlationId);
+    const resAllUsers = await responseAllUsers;
+    dispatch(doGetUsersList(resAllUsers));
+  };
 
   const [dateType, setDateType] = useState(qry ? qry.DateType : "0");
   const [dateFrom, setDateFrom] = useState(qry ? (qry.DateFrom ? new Date(qry.DateFrom) : "") : new Date(new Date().setDate(new Date().getDate() - 5)));
@@ -92,11 +70,10 @@ export default function TempBookings() {
     setDateFrom(start);
     setDateTo(end);
   };
-  const [bookingType, setBookingType] = useState(qry ? qry.BookingType : "");
-  const [bookingChannel, setBookingChannel] = useState(qry ? qry.BookingChannel : "");
   
   const [customerCode, setCustomerCode] = useState(qry ? qry.CustomerCode : null);
   const [customerNameOptions, setCustomerNameOptions] =  useState([]);
+
   useEffect(() => {
     if(allCustomersList){
       let itemCustomer = [{label: 'All', value: ''}]
@@ -107,8 +84,7 @@ export default function TempBookings() {
     }
   }, [allCustomersList]);
 
-  const [supplierCode, setSupplierCode] = useState(qry ? qry.SupplierCode : null);
-  const [supplierNameOptions, setSupplierNameOptions] =  useState([]);
+  
   useEffect(() => {
     if(allSuppliersList){
       let itemSupplier = [{label: 'All', value: ""}]
@@ -121,6 +97,7 @@ export default function TempBookings() {
 
   const [userCode, setUserCode] = useState(null);
   const [userNameOptions, setUserNameOptions] =  useState([]);
+
   useEffect(() => {
     if(allUsersList){
       let itemUser = [{label: 'All', value: ""}]
@@ -192,22 +169,22 @@ export default function TempBookings() {
   }
   
   const getReservations = () => {
-      let qry = {
-        "Skip": (pageSize * currentPage)?.toString(),
-        "Take": pageSize,
-        "ActivePage": Number(currentPage),
-        "DateType": dateType,
-        "DateFrom": dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "",
-        "DateTo": dateTo? format(dateTo, 'yyyy-MM-dd') : "",
-        "CustomerCode": customerCode,
-        "CreatedBy": "",
-        "BookingName": "",
-        "BookingNo": bookingNo
-      }
-      let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      dispatch(doReserveListOnLoad(null));
-      router.push(`/pages/booking/tempBookings?qry=${encData}`);
+    let qry = {
+      "Skip": (pageSize * currentPage)?.toString(),
+      "Take": pageSize,
+      "ActivePage": Number(currentPage),
+      "DateType": dateType,
+      "DateFrom": dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "",
+      "DateTo": dateTo? format(dateTo, 'yyyy-MM-dd') : "",
+      "CustomerCode": customerCode,
+      "CreatedBy": "",
+      "BookingName": "",
+      "BookingNo": bookingNo
+    }
+    let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    dispatch(doCartReserveListOnLoad(null));
+    router.push(`/pages/booking/tempBookings?qry=${encData}`);
   }
 
   const doReservationsOnLoad = async() => {
@@ -216,7 +193,7 @@ export default function TempBookings() {
       "Take": pageSize,
       "BookingStatus": "",
       "BookingType": "",
-      "BookingNo": "",
+      "BookingNo": bookingNo,
       "BookingName": "",
       "CustomerType": "",
       "FromDate": dateType==='0' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
@@ -228,12 +205,12 @@ export default function TempBookings() {
       "SupplierType": "",
       "CustomerCode": customerCode?.value,
     }
-    const responseReservList = ReservationtrayService.doGetReservations(reservationObj, userInfo.correlationId);
+    const responseReservList = ReservationtrayService.doGetCartReservations(reservationObj, userInfo.correlationId);
     const resReservList = await responseReservList;
     setActivePage(Number(currentPage));
     setCurrentPageObj(false);
     setCurrentPage("0");
-    dispatch(doReserveListOnLoad(resReservList));
+    dispatch(doCartReserveListOnLoad(resReservList));
   }
   
   const resetFilter = () => {
@@ -248,74 +225,10 @@ export default function TempBookings() {
     setCurrentPage("0");
   }
 
-  const dtlData = useSelector((state) => state.reservationListReducer?.subDtlsList);
-
-  const [dtlCollapse, setDtlCollapse] = useState('');
-
-  useEffect(() => {
-    if (window.innerWidth < 992) {
-      document.querySelectorAll('.dropReserve').forEach(function(everydropdown){
-        everydropdown.addEventListener('hidden.bs.dropdown', function () {
-            this.querySelectorAll('.submenu').forEach(function(everysubmenu){
-              everysubmenu.style.display = 'none';
-            });
-        })
-      });
-    
-      document.querySelectorAll('.dropReserve .dropdown-menu a').forEach(function(element){
-        element.addEventListener('click', function (e) {
-            let nextEl = this.nextElementSibling;
-            if(nextEl && nextEl.classList.contains('submenu')) {	
-              e.preventDefault();
-              if(nextEl.style.display == 'block'){
-                nextEl.style.display = 'none';
-              } else {
-                nextEl.style.display = 'block';
-              }
-            }
-        });
-      })
-    }
-      
-    setDimensions(refDiv?.current?.offsetWidth)
-    function handleWindowResize() {
-      setDimensions(refDiv?.current?.offsetWidth)
-    }
-    window.addEventListener('resize', handleWindowResize);
-    return () => {
-      window.removeEventListener('resize', handleWindowResize);
-    };
-  }, [dtlCollapse]);
-
-  const detailsBtn = async(dtlCollapseCode, dtlCode) => {
-    if(dtlCollapseCode!==dtlCollapse){
-      setDtlCollapse(dtlCollapseCode)
-    }
-    else{
-      setDtlCollapse('')
-    }
-    let getDtlObj = {
-      "BookingNo": dtlCode,
-      "UserId": userInfo?.user?.userId
-    }
-
-    let dtlItems = {...dtlData}
-    if (_.isEmpty(dtlData[dtlCode])) {
-      const responseDtls = ReservationtrayService.doGetReservationDetails(getDtlObj, userInfo?.correlationId);
-      let resDtls = await responseDtls;
-      if (_.isEmpty(dtlData)) {
-        dtlItems = {}
-      }
-      dtlItems[dtlCode] = resDtls;
-      dispatch(doSubDtlsList(dtlItems));
-    }
-
-  }
-
   const viewBooking = (id) => {
     let bookItnery = {
       "bcode": id,
-      "btype": "",
+      "btype": "O",
       "returnurl": '/pages/booking/tempBookings',
       "correlationId": userInfo.correlationId
     }
@@ -323,60 +236,6 @@ export default function TempBookings() {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
   }
-
-  const viewSalesReport = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/salesRpt?qry=${encData}`);
-  }
-
-  const viewItineraryRpt = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/itineraryRpt?qry=${encData}`);
-  }
-
-  const viewVoucher = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "serviceMasterCode": "0",
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingVoucher?qry=${encData}`);
-  }
-
-  const viewInvoice = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
-  }
-
-  const viewServiceLpo = (bkgNo, masterCode, suppCode) => {
-    let reqRptObj = {
-      "bookingNo": bkgNo,
-      "serviceMasterCode": masterCode,
-      "supplier": suppCode,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/bookingForm?qry=${encData}`);
-  }
-  
 
   return (
     <MainLayout>
@@ -415,61 +274,110 @@ export default function TempBookings() {
                       options={customerNameOptions} 
                       classNamePrefix="selectSm" />
                   </div>
+                  <div className='col-lg-2 mb-2'>
+                    <label>Created by</label>
+                    <Select
+                      id="userName"
+                      instanceId="userName"
+                      isClearable={true}
+                      value={userCode}
+                      onChange={(e) => setUserCode(e)}
+                      options={userNameOptions} 
+                      classNamePrefix="selectSm" />
+                  </div>
                   <div className='col-lg-4 mb-2 align-self-end'>
                     <button type='button' className='btn btn-sm btn-warning' onClick={() => getReservations()}>Filter Bookings</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-light' onClick={() => resetFilter()}>Reset</button> &nbsp;
-                    <button type='button' className='btn btn-sm btn-primary'>Export To Excel</button>
                   </div>
-
-
                 </div>
 
                 <div className='row gx-2 justify-content-end'>
-                  <div className='col-md-3 col-6 mb-2 align-self-end'>
+                  <div className='col-md-3 col-6 mt-2 align-self-end'>
                     <div className="input-group input-group-sm">
                       <span className="input-group-text bg-white"><FontAwesomeIcon icon={faSearch} /></span>
-                      <input type="text" className="form-control border-start-0 ps-0" placeholder="Booking/ CartId/ Pax/ SuppConfNo/ CustRefNo" />
+                      <input type="text" className="form-control border-start-0 ps-0" placeholder="Booking/ CartId/ Pax/ SuppConfNo/ CustRefNo" value={bookingNo} onChange={(e)=> searchById(e)} onKeyDown={(e) => (e.key === "Enter" ? getReservations() : null)} />
                     </div>
                   </div>
                 </div>
 
               </div>
+              {resListRes ?
+                <>
+                  {resListRes?.bookings?.length ?
+                  <>
+                  <div className='fn12 p-2'>
+                    <div className='table-responsive'>
+                      <div className='divTable border'>
+                        <div className='divHeading bg-light' ref={refDiv}>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Temp Booking # <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Booking Date <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Passenger Name <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Customer Name <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'>Customer Ref. #</div>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Status <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Total Price ({systemCurrency}) <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'><span className='sorticon'>Customer Net <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
+                          <div className='divCell text-nowrap'>View</div>
+                        </div>
 
-              <div className='fn12 p-2'>
-                <div className='table-responsive'>
-                  <div className='divTable border'>
-                    <div className='divHeading bg-light' ref={refDiv}>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Temp Booking # <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Booking Date <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Passenger Name <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Customer Name <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'>Customer Ref. #</div>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Status <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Total Price (AED) <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'><span className='sorticon'>Customer Net <FontAwesomeIcon icon={faSort} className='fn9 text-secondary' /></span></div>
-                      <div className='divCell text-nowrap'>View</div>
+                        {resListRes?.bookings?.map((e, i) => (
+                        <React.Fragment key={i}>
+                        <div className='divRow'>
+                          <div className='divCell'>{e.bookingNo}</div>
+                          <div className='divCell'>{e.bookingDate}</div>
+                          <div className='divCell'>{e.passengerName}</div>
+                          <div className='divCell'>{e.customerName}</div>
+                          <div className='divCell'>{e.customerRefNo}</div>
+                          <div className='divCell'>{e.status}</div>
+                          <div className='divCell'>{Number(e.totalPrice).toFixed(2)}</div>
+                          <div className='divCell'>{e.customerCurrency} {Number(e.totalCustomerPrice).toFixed(2)}</div>
+                          <div className='divCell'>
+                            <button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button>
+                          </div>
+                        </div>
+                        
+                        </React.Fragment>
+                      ))
+                      }
+                      </div>
                     </div>
+                  </div>
+                  <div className='p-2 d-flex justify-content-between'>
+                    <div>
+                      <select className="form-select form-select-sm" value={pageSize} onChange={(e)=> changePageSize(e.target.value)}>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="75">75</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                    <div>
+                      <nav>
+                      <ul className="pagination pagination-sm justify-content-center m-0">
+                        <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
+                        {[...Array(pagesCount)].map((page, i) => 
+                        <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
+                        )}
 
-                    {Array.apply(null, { length: 10 }).map((e, i) => (
-                    <React.Fragment key={i}>
-                    <div className='divRow'>
-                      <div className='divCell'>369854</div>
-                      <div className='divCell'>27 Oct 2023</div>
-                      <div className='divCell'>Mr.Danilov family</div>
-                      <div className='divCell'>Imaginative Agency</div>
-                      <div className='divCell'>HTL-WBD-474628015</div>
-                      <div className='divCell'>Cancelled</div>
-                      <div className='divCell'>9125.00</div>
-                      <div className='divCell'>2500.00</div>
-                      <div className='divCell'><button onClick={()=> viewBooking()} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
+                      </ul>
+                      </nav>
                     </div>
-                    
-                    </React.Fragment>
-                   ))
+                  </div>
+                  </>
+                  :
+                  <div className='text-danger fs-5 p-2 text-center my-3'>No Data Available</div>
                   }
-                  </div>
+                </>
+                :
+                <div className='text-center blue py-5'>
+                  <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
                 </div>
-              </div>
+              }
+
             </div>
           </div>
         </div>

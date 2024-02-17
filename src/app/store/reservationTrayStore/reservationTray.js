@@ -5,7 +5,8 @@ const initialState = {
   subDtlsList:{},
   allCustomersObj:null,
   allSuppliersObj: null,
-  allUsersObj: null
+  allUsersObj: null,
+  cartReserveListObj:null
 };
 
 export const reservationList = createSlice({
@@ -32,10 +33,14 @@ export const reservationList = createSlice({
       state.allUsersObj = action.payload
     },
 
+    doCartReserveListOnLoad: (state, action) => {
+      state.cartReserveListObj = action.payload
+    },
+
   }
 
 });
 
-export const { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList} = reservationList.actions
+export const { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList, doCartReserveListOnLoad} = reservationList.actions
 
 export default reservationList.reducer;

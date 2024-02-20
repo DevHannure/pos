@@ -98,7 +98,8 @@ export default function Header() {
 
   const reservationBtn = () => {
     dispatch(doReserveListOnLoad(null));
-    router.push('/pages/booking/reservationTray');
+    router.push('/pages/booking/b2bReservationTray');
+    //router.push('/pages/booking/reservationTray');
   }
 
   const appFeaturesBtn = async() => {
@@ -129,17 +130,18 @@ export default function Header() {
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="/pages/booking/tempBookings">Cart</Link></li>
-                <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li>
-                <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
-                <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li>
+                {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
+                <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li>
+                {/* <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
+                <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li> */}
                 {/* <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dashboard</Link>
                   <ul className="dropdown-menu">
                     <li><Link className="dropdown-item" href="#">Action</Link></li>
                     <li><Link className="dropdown-item" href="#">Another action</Link></li>
                     <li><Link className="dropdown-item" href="#">Something else here</Link></li>
                   </ul>
-                </li> */}
-                <li className="nav-item"><Link className="nav-link" href="#">More</Link></li>
+                </li> 
+                <li className="nav-item"><Link className="nav-link" href="#">More</Link></li>*/}
               </ul>
             </div>
           </div>

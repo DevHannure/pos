@@ -33,6 +33,8 @@ export default function HotelItinerary() {
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
 
+  console.log("qry", qry)
+
   let uniqId = getUID();
   const [room1, setRoom1] = useState(null);
   const [room2, setRoom2] = useState(null);
@@ -80,7 +82,7 @@ export default function HotelItinerary() {
   useEffect(()=> {
     if(resReprice && resReprice.hotel && room1){
       exchangerateBtn(resReprice?.hotel?.rooms?.room[0]?.price?.supplierCurrency);
-      htlDetail(resReprice.hotel.code);
+      htlDetail(qry.systemId);
       setSupplierNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierNet, 0)).toFixed(2));
       setNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.net, 0)).toFixed(2));
       setMarkUpAmount(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.markUpValue, 0)).toFixed(2));
@@ -351,7 +353,7 @@ export default function HotelItinerary() {
       let addServiceCartObj = {
         "BookingNo": "0",
         "IsNewBooking": true,
-        "UserId": userInfo?.user?.userId,
+        "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.userEmail : userInfo?.user?.userId,
         //"UserId": userInfo?.user?.userEmail,
         "BookingDetail": {
           "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
@@ -566,7 +568,7 @@ export default function HotelItinerary() {
                                       <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                       <td className="text-center">{m.percentage}</td>
                                       <td className="text-center">{m.nights}</td>
-                                      <td>{m.fixed && Number(m.fixed).toFixed(2)}</td>
+                                      <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
                                     </tr>
                                     ))}
                                     </>
@@ -604,7 +606,7 @@ export default function HotelItinerary() {
                                         <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                         <td className="text-center">{m.percentage}</td>
                                         <td className="text-center">{m.nights}</td>
-                                        <td>{m.fixed}</td>
+                                        <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
                                       </tr>
                                       ))}
                                       </>
@@ -643,7 +645,7 @@ export default function HotelItinerary() {
                                         <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                         <td className="text-center">{m.percentage}</td>
                                         <td className="text-center">{m.nights}</td>
-                                        <td>{m.fixed}</td>
+                                        <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
                                       </tr>
                                       ))}
                                       </>
@@ -734,7 +736,8 @@ export default function HotelItinerary() {
                     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <div className='fn12'><strong >Supplier:</strong> {v.shortCode}</div>
                     }
-                    <div className="fn12"><strong className='blue'>Pax:</strong> {v.adult} Adult(s){v.children && <span>, {v.children.count} Child(ren)</span>}</div>
+                    
+                    <div className="fn12"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren)</span>:null}</div>
                   </div>
                   ))}
                   

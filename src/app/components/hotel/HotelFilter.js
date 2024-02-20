@@ -48,15 +48,15 @@ export default function HotelFilter(props) {
 
   const [priceFilter, setPriceFilter] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && [Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice-0.01).toFixed(2)), Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice + 0.01).toFixed(2))]);
   const [minPrice, setMinPrice] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice-0.01).toFixed(2)));
-  const [maxPrice, setMaxPrice] = useState(getOrgHtlResult?.hotels.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2)));
+  const [maxPrice, setMaxPrice] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2)));
   const [startRating, setStartRating] = useState([]);
   const [triptRating, setTriptRating] = useState([]);
   const [srchTxt, setSrchTxt] = useState('');
 
-  const ratingCount = getOrgHtlResult.hotels.b2BHotel.map(rec => {
+  const ratingCount = getOrgHtlResult.hotels?.b2BHotel.map(rec => {
     return rec.starRating
   });
-  const tripCount = getOrgHtlResult.hotels.b2BHotel.map(rec => {
+  const tripCount = getOrgHtlResult.hotels?.b2BHotel.map(rec => {
     return rec.tripAdvisorRating
   });
   // const amentiesCount = getOrgHtlResult.hotels.b2BHotel.map(amt => {
@@ -107,9 +107,9 @@ export default function HotelFilter(props) {
   };
 
   const reset = () =>{
-    setPriceFilter(getOrgHtlResult?.hotels?.b2BHotel?.length && [Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice).toFixed(2)), Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice).toFixed(2))]);
-    setMinPrice(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice).toFixed(2)));
-    setMaxPrice(getOrgHtlResult?.hotels.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice).toFixed(2)));
+    setPriceFilter(getOrgHtlResult?.hotels?.b2BHotel?.length && [Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice-0.01).toFixed(2)), Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2))]);
+    setMinPrice(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[0].minPrice-0.01).toFixed(2)));
+    setMaxPrice(getOrgHtlResult?.hotels.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2)));
     setStartRating([]);
     setTriptRating([]);
     setSrchTxt('');
@@ -164,8 +164,8 @@ export default function HotelFilter(props) {
                   renderThumb={(props, state) => <div {...props} key={state.index}></div>}
                   />
                 <div className="my-1 text-muted d-flex justify-content-between fn12">
-                  <span>{qry?.currency} {priceFilter[0]}</span>
-                  <span>{qry?.currency} {priceFilter[1]}</span>
+                  <span>{qry?.currency} {priceFilter && priceFilter[0]}</span>
+                  <span>{qry?.currency} {priceFilter && priceFilter[1]}</span>
                 </div>
               </div>
             </div>

@@ -22,7 +22,7 @@ import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode } from '@/app/sto
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 
-
+function getUID() {return Date.now().toString(36);}
 const starOptions = [
   { value: '5', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
   { value: '4', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
@@ -570,7 +570,7 @@ export default function ModifySearch(props) {
   }
 
   const [searchLoading, setSearchLoading] = useState(false)
-  
+  let uniqId = getUID();
   const srchHtl = () => {
     let allowMe = validate();
     if(allowMe){
@@ -595,6 +595,7 @@ export default function ModifySearch(props) {
         "starRating": starOpt,
         "hotelName": selectedHotel,
         "num_rooms": parseInt(rmCountArr.length),
+        "uniqId": uniqId,
         "paxInfoArr": rmCountArr
       }
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString()

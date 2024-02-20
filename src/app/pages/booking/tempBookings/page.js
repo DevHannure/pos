@@ -32,7 +32,6 @@ export default function TempBookings() {
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const resListRes = useSelector((state) => state.reservationListReducer?.cartReserveListObj);
   const allCustomersList = useSelector((state) => state.reservationListReducer?.allCustomersObj);
-  const allSuppliersList = useSelector((state) => state.reservationListReducer?.allSuppliersObj);
   const allUsersList = useSelector((state) => state.reservationListReducer?.allUsersObj);
   const systemCurrency = userInfo?.user?.systemCurrencyCode;
 
@@ -84,17 +83,6 @@ export default function TempBookings() {
     }
   }, [allCustomersList]);
 
-  
-  useEffect(() => {
-    if(allSuppliersList){
-      let itemSupplier = [{label: 'All', value: ""}]
-      allSuppliersList?.map(supplier =>{
-        itemSupplier.push({label: supplier.supplierName, value: supplier.supplierCode})
-      });
-      setSupplierNameOptions(itemSupplier)
-    }
-  }, [allSuppliersList]);
-
   const [userCode, setUserCode] = useState(null);
   const [userNameOptions, setUserNameOptions] =  useState([]);
 
@@ -108,8 +96,6 @@ export default function TempBookings() {
     }
   }, [allUsersList]);
 
-  const [rateType, setRateType] = useState(qry ? qry.RateType : "");
-  const [ticketType, setTicketType] = useState(qry ? qry.TicketType : "0");
   const [bookingNo, setBookingNo] = useState(qry ? qry.BookingNo : "");
   
   const [takeNumberObj, setTakeNumberObj] = useState(false);
@@ -214,7 +200,6 @@ export default function TempBookings() {
   }
   
   const resetFilter = () => {
-    setSelBookingStatus(null);
     setDateType("0");
     setDateFrom(new Date(new Date().setDate(new Date().getDate() - 5)));
     setDateTo(new Date());

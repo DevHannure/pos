@@ -30,7 +30,9 @@ export default function HotelListing() {
     //}
   },[search]);
 
-  const doHtlResultOnLoad = async() =>{
+  
+
+  const doHtlResultOnLoad = async() => {
     let htlSrchObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
@@ -42,25 +44,45 @@ export default function HotelListing() {
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
         "Nationality": qry.nationality.split('-')[1],
-        "Rooms":{}
+        "Rooms":{},
+        "TassProInfo": {
+          "CustomerCode": qry.customerCode,
+          "RegionID": qry.regionCode?.toString(),
+          "Adults": qry.paxInfoArr.reduce((totalAdlt, v) => totalAdlt + parseInt(v.adtVal), 0)?.toString(),
+          "Children": qry.paxInfoArr.reduce((totalChld, v) => totalChld + parseInt(v.chdVal), 0)?.toString(),
+          "ChildrenAges": "",
+          "NoOfRooms": qry.num_rooms?.toString(),
+          "ClassificationCode": qry.starRating?.toString(),
+          "ProductCode": qry.hotelName[0]?.hotelCode,
+          "ProductName": qry.hotelName[0]?.hotelName,
+          "UniqueId": qry.uniqId,
+          "OccupancyStr": "",
+          "ActiveSuppliers": qry.activeSuppliers
+        }
       }
     }
 
-    let room = []
+    let room = [];
+    let childrenAgesArray = [];
+    let OccupancyStrArray = [];
+
     qry.paxInfoArr.forEach((v, i) => {
       let paxObj = {
         Adult: v.adtVal,
         RoomIdentifier: parseInt(i + 1)
       }
+      let roomwiseAges = [];
 
       if (v.chdVal > 0) {
         let chdArr = [];
         v.chdAgesArr.forEach((val, indx) => {
           if (parseInt(val.chdAgeVal) > 0) {
             chdArr.push({
-                Identifier: parseInt(indx + 1),
-                Text: val.chdAgeVal
-            })
+              Identifier: parseInt(indx + 1),
+              Text: val.chdAgeVal
+            });
+            childrenAgesArray.push(val.chdAgeVal);
+            roomwiseAges.push(val.chdAgeVal)
           }
         })
         if (v.chdVal > 0) {
@@ -70,16 +92,31 @@ export default function HotelListing() {
           }
         }
       }
-      room.push(paxObj)
-    })
+      
+      let roomNameObj = 'Room-'+ (i+1) +':'+ v.adtVal+','+v.chdVal+'_'+roomwiseAges;
+      OccupancyStrArray.push(roomNameObj);
+      room.push(paxObj);
+    });
+
     htlSrchObj.SearchParameter.Rooms.Room = room;
+    htlSrchObj.SearchParameter.TassProInfo.ChildrenAges = childrenAgesArray?.toString();
+    htlSrchObj.SearchParameter.TassProInfo.OccupancyStr = OccupancyStrArray.map(item => item).join('*');
 
     if(qry.hotelName[0]?.hotelCode){
       htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode
     }
 
+    const responseLocalHtlResult = HotelService.doLocalHotel(htlSrchObj, qry.correlationId);
     const responseHtlResult = HotelService.doHotelSearch(htlSrchObj, qry.correlationId);
-    const resHtlResult = await responseHtlResult;
+    let resLocalHtlResult = await responseLocalHtlResult;
+    let resHtlResult = await responseHtlResult;
+    if(resLocalHtlResult && resHtlResult){
+      var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
+      var xmlB2BHotel = resHtlResult?.hotels?.b2BHotel;
+      var finalB2BHotel = [...localB2BHotel, ...xmlB2BHotel];
+      finalB2BHotel.sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice))
+      resHtlResult.hotels.b2BHotel = finalB2BHotel
+    }
     dispatch(doHotelSearchOnLoad(resHtlResult))
   }
 

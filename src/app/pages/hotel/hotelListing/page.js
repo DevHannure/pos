@@ -138,7 +138,7 @@ export default function HotelListing() {
           <>
           <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           {status ==='authenticated' &&
-          <CommonLoader Type="2" />
+          <CommonLoader Type="1" />
           }
           </>
           

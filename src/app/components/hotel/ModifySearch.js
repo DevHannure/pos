@@ -213,18 +213,8 @@ export default function ModifySearch(props) {
     else{
       setChkOut(end)
     }
-    // if(start && end){
-    //   debugger;
-    //   if(date1 === date2){
-    //     setNumNights(1)
-    //   }
-    //   else{
-    //     setNumNights(differenceInDays(end,start))
-    //   }
-    // }
   };
 
-  
   const PaxDropdown = () => {
     const calculatePasngr = (condition, rmCntIndx) =>{
       const items = [...rmCountArr];

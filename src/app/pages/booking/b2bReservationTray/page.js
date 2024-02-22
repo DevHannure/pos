@@ -442,9 +442,19 @@ export default function BBReservationTray() {
     }
     const responseDtls = ReservationtrayService.doGetServiceAmendmentHistory(reqAmndObj, userInfo?.correlationId);
     const resDtls = await responseDtls;
-    console.log("resDtls", resDtls)
     setAmndmentHistory(resDtls)
   }
+
+  const viewCCReceipt = (id) => {
+    let reqRptObj = {
+      "bookingNo": id,
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/booking/bookingCCReceipt?qry=${encData}`);
+  }
+  
 
   const ifMenuExist = (feature) => {
     let ifexist = false;
@@ -508,7 +518,6 @@ export default function BBReservationTray() {
     let bkgPosted = s.BkgPosted;
     let suppType = s.SupplierType
 
-    debugger;
     switch (key) {
       //LPO
       case 'lpo':
@@ -539,6 +548,19 @@ export default function BBReservationTray() {
           else {return false;}
         }
         else{return true;}
+        break;
+
+      //Cancel Service
+      case 'cs':
+        if(IfUserHasreadWriteAccess('ReservationEditCancellation')){
+          return true;
+        }
+        if((process.env.NEXT_PUBLIC_SHORTCODE=="ZAM" || serviceFlag == 1 || serviceFlag == 2 || serviceFlag == 3 || serviceFlag == 5 || serviceFlag == 6 || serviceFlag == 12 || serviceFlag == 14 || serviceFlag == 7) && !(serviceFlagNew == "h" && bServiceStatus == "on request")){
+          return false;
+        }
+        else{
+          return true;
+        }
         break;
 
       //Reprice
@@ -763,7 +785,7 @@ export default function BBReservationTray() {
                             }
 
                             {e.isCCBkg == "True" ?
-                            <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
+                            <div className='divCell'><button onClick={()=> viewCCReceipt(e.bookingNo)} type="button" className='sqBtn'><Image src='/images/icon8.png' alt='icon' width={14} height={14} /></button></div>
                             :
                             <div className='divCell'><button type="button" className='sqBtn disabledBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
                             }
@@ -870,17 +892,18 @@ export default function BBReservationTray() {
 
                                       <div className='divCell'>
                                         {s.ServiceCode === 17 ?
-                                        <div className="text-nowrap">
-                                        {s.IsLCC == false && s.H2H != 0 && s.H2H != 138 ?
-                                          <>{s.CancellationDate}</>
-                                          :
-                                          <>N/A</>
-                                        }
-                                        </div>
+                                          <div className="text-nowrap">
+                                            {s.IsLCC == false && s.H2H != 0 && s.H2H != 138 ?
+                                              <>{s.CancellationDate}</>
+                                              :
+                                              <>N/A</>
+                                            }
+                                          </div>
                                         :
                                         <>
                                         <div style={{width:115}}>
-                                          <div className='row gx-0'>
+                                          {s.DueDate}
+                                          {/* <div className='row gx-0'>
                                             <div className='col-9'>
                                               {s.DueDate && s.DueDate !=="01 Jan 1900" ?
                                               <><DatePicker className="border-end-0 rounded-end-0 form-control px-1 fn12" dateFormat="dd MMM yyyy" selected={new Date(s.DueDate)} monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 1))} /></>
@@ -889,7 +912,7 @@ export default function BBReservationTray() {
                                               }
                                             </div>
                                             <div className='col-3'><button className="rounded-start-0 btn btn-outline-secondary btn-sm"><FontAwesomeIcon icon={faFloppyDisk} /></button></div>
-                                          </div>
+                                          </div> */}
                                         </div>
                                         </>
                                         }
@@ -900,13 +923,23 @@ export default function BBReservationTray() {
                                         {s.ServiceCode === 17 ?
                                           <>{s.TripType}</>
                                           :
-                                          <>{systemCurrency} {(Number(s.NetAmount) + Number(s.VatOutputAmount)).toFixed(2)}</>
+                                          <>
+                                          {s.IsHidden ?
+                                            <>-</>
+                                            :
+                                            <>{systemCurrency} {(Number(s.NetAmount) + Number(s.VatOutputAmount)).toFixed(2)}</>
+                                          }
+                                          </>
                                         }
                                       </div>
                                       
                                       {/* //Total Selling Amount (Customer) */}
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        {s.CustNet?.split(" ")[0] + ' ' + ((Number(s.NetAmount) + Number(s.VatOutputAmount)) / Number(s.ExchangeRate)).toFixed(2)}
+                                        {s.IsHidden ?
+                                          <>-</>
+                                          :
+                                          <>{s.CustNet?.split(" ")[0] + ' ' + ((Number(s.NetAmount) + Number(s.VatOutputAmount)) / Number(s.ExchangeRate)).toFixed(2)}</>
+                                        }
                                       </div>
                                       
                                       <div className='divCell dropdown-toggle arrowNone' data-bs-toggle="dropdown" data-bs-auto-close="outside">
@@ -940,7 +973,9 @@ export default function BBReservationTray() {
                                         </div>
                                       </div>
 
-                                      <div className='divCell'><button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button></div>
+                                      <div className='divCell'>
+                                        <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button>
+                                      </div>
 
                                       {s.ServiceCode === 17 &&
                                         <>
@@ -975,7 +1010,11 @@ export default function BBReservationTray() {
                                         }
                                         <li><hr className="dropdown-divider my-1" /></li>
                                         <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faTrash} className='fn12' /> &nbsp;Cancel Service</button></li>
-                                        
+                                        {/* {DisablePopupMenu(s, 'cs') ?
+                                          <li><button type="button" className='dropdown-item'><FontAwesomeIcon icon={faTrash} className='fn12 blue' /> &nbsp;Cancel Service</button></li>
+                                          : 
+                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faTrash} className='fn12' /> &nbsp;Cancel Service</button></li>
+                                        } */}
                                       </ul>
                                     </div>
                                     ))}

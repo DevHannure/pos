@@ -89,7 +89,7 @@ export default function HotelBookingItinerary(props) {
                     <td>
                       {props.response?.RoomDtlNew?.map((d, ind) => (
                         <div key={ind} style={{marginBottom:'8px'}}>
-                          <strong>Room {ind+1}:</strong> {props.response.RoomTypeName} with {props.response.RateBasisName}
+                          <span style={{textTransform:'capitalize'}}><strong>Room {ind+1}:</strong> {props.response.RoomTypeName?.toLowerCase()} with {props.response.RateBasisName?.toLowerCase()}</span>
                           &nbsp;({d.NoOfUnits} Units) &nbsp;|&nbsp;&nbsp;
                           <span style={{textWrap:'nowrap'}}><strong>Pax:</strong> {d.AdultNoOfUnits} Adult(s){d.ChildNoOfUnits !=="0" && <span>, {d.ChildNoOfUnits} Child(ren)</span>}</span>
                         </div>
@@ -102,7 +102,7 @@ export default function HotelBookingItinerary(props) {
                       {props.response?.RoomDtlNew?.map((d, ind) => (
                         <div key={ind} style={{marginBottom:'8px'}}>
                           <div><strong>Room {ind+1}:</strong> 
-                            <div style={{textWrap:'nowrap'}}>{Number(parseFloat(d.Net+d.VATOutputAmount)/parseFloat(props.response.CustomerExchangeRate)).toFixed(2)} ({props.response.CustomerCurrencyCode})</div>
+                            <div style={{textWrap:'nowrap'}}>{Number(parseFloat(Number(d.Net)+Number(d.VATOutputAmount))/parseFloat(props.response.CustomerExchangeRate)).toFixed(2)} ({props.response.CustomerCurrencyCode})</div>
                           </div>
                         </div>
                       ))}

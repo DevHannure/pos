@@ -175,7 +175,7 @@ export default function HotelResult(props) {
         filterArr = firstroomarray.map(v => {
           return resHtlRoomDtl.hotel.rooms.b2BRoom.filter(o => o.roomTypeName === v.roomTypeName && o.groupCode === v.groupCode && o.marriageIdentifier === v.marriageIdentifier && o.rateType === v.rateType && o.isPackage === v.isPackage && o.isDynamic === v.isDynamic && o.roomBasisName === v.roomBasisName);
         });
-        //console.log("filterArr", filterArr)
+
         filterArr.map((v) => {
           if(qry.paxInfoArr.length === v.length){
             const numAscending = [...v].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
@@ -326,6 +326,7 @@ export default function HotelResult(props) {
   const [htlData, setHtlData] = useState(null);
   
   const fareBreakkup = async(roomVal, rc) => {
+    let rateKeyArray = rc.split('Seprator').slice(1);
     setRoomRow(roomVal)
     setFareBrkData(null);
     const hotelCode = htlCollapse.replace("#room", "");
@@ -340,7 +341,7 @@ export default function HotelResult(props) {
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
         "RateKeys": {
-          "RateKey": rc.split('Seprator').slice(1)
+          "RateKey": rateKeyArray
         },
         "TassProInfo": {
           "CustomerCode": qry.customerCode,
@@ -354,7 +355,7 @@ export default function HotelResult(props) {
           "RateBasisCode": roomVal.roomBasisCode,
           "SupplierCode": roomVal.supplierCodeFK,
           "OccupancyStr": occupancyStrVar,
-          "RateKey": rc.split('Seprator').slice(1)[0],
+          "RateKey": rateKeyArray.map(item => item).join('splitter'),
           "RoomType1": "",
           "RoomType2": "",
           "RoomType3": ""
@@ -390,6 +391,7 @@ export default function HotelResult(props) {
   }
 
   const cancelPolicy = async(roomVal, rc) => {
+    let rateKeyArray = rc.split('Seprator').slice(1);
     setRoomRow(roomVal)
     setCanPolData(null);
     const hotelCode = htlCollapse.replace("#room", "");
@@ -404,14 +406,14 @@ export default function HotelResult(props) {
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
         "RateKeys": {
-          "RateKey": rc.split('Seprator').slice(1)
+          "RateKey": rateKeyArray
         },
         "TassProInfo": {
           "CustomerCode": qry.customerCode,
           "RegionID": qry.regionCode?.toString(),
           "NoOfRooms": qry.num_rooms?.toString(),
           "ProductCode": hotelCode,
-          "RateKey": rc.split('Seprator').slice(1)[0]
+          "RateKey": rateKeyArray.map(item => item).join('splitter')
         }
       },
       "SessionId": supplierNameVar==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
@@ -481,12 +483,14 @@ export default function HotelResult(props) {
 
   
   const [repriceQry, setRepriceQry] = useState('');
+
   const bookNow = async(e,val) => {
     e.nativeEvent.target.disabled = true;
     e.nativeEvent.target.innerHTML = 'Processing...';
     //e.currentTarget.innerHTML = 'Processing...';
     dispatch(doHotelReprice(null));
     let rc = val.item.reduce((totalRc, rc) => totalRc + 'Seprator'+ rc.rateCode, 0);
+    let rateKeyArray = rc.split('Seprator').slice(1);
     let repriceObj = {
       "customerCode": qry.customerCode,
       "destination": qry.destination,
@@ -497,8 +501,7 @@ export default function HotelResult(props) {
       "correlationId": qry.correlationId,
       "hotelCode": val.hotelCode,
       "groupCode": val.item[0].groupCode,
-      "rateKey": rc.split('Seprator').slice(1),
-      "regionCode": qry.regionCode,
+      "rateKey": rateKeyArray,
       "paxInfoArr": qry.paxInfoArr,
       "regionID": qry.regionCode?.toString(),
       "childrenAges": childrenAgesVar,
@@ -509,6 +512,7 @@ export default function HotelResult(props) {
       "occupancyStr": occupancyStrVar,
       "supplierName": supplierNameVar,
       "systemId": systemIdVar,
+      "rateType": val.item[0].rateType,
       "sessionId": supplierNameVar==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
     }
 

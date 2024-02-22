@@ -57,9 +57,6 @@ export default function ReservationTray() {
   const [bkngDetails, setBkngDetails] = useState(null);
   const [bkngCombDetails, setBkngCombDetails] = useState(null);
 
-  console.log("bkngDetails",bkngDetails)
-  console.log("bkngCombDetails",bkngCombDetails)
-
   const doItineraryLoad = async() => {
     setBkngDetails(null);
     let bookingItineraryObj = {
@@ -129,7 +126,6 @@ export default function ReservationTray() {
   const [emailLoad, setEmailLoad] = useState(false);
   
   const emailChange = (value) => {
-    console.log(value)
     let error = ''
     if(value===''){
       error = 'Email is required.';
@@ -189,7 +185,6 @@ export default function ReservationTray() {
   const [deleteId, setDeleteId] = useState('');
   
   const handleDltId = (id) => {
-    console.log("idss", id)
     setDeleteId(id)
   }
 
@@ -199,7 +194,6 @@ export default function ReservationTray() {
     }
     const responseDltService = ReservationService.doDeleteCartService(deleteObj, qry.correlationId);
     const resDltService = await responseDltService;
-    console.log("resDltService", resDltService)
     if(resDltService==='Service Deleted'){
       toast.success("Service Deleted Successfully!",{theme: "colored"});
       doItineraryLoad();
@@ -245,7 +239,6 @@ export default function ReservationTray() {
         }
         const responseCustomerHasCredit = MasterService.doCheckIfCustomerHasCredit(customerHasCreditObj, qry.correlationId);
         const resCustomerCredit = await responseCustomerHasCredit;
-        console.log("resCustomerCredit", resCustomerCredit)
         //const resCustomerCredit = true;
         if(resCustomerCredit){
           convertCartToReservationBtn()
@@ -275,7 +268,6 @@ export default function ReservationTray() {
     }
     const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, qry.correlationId);
     const resCartToReservation = await responseCartToReservation;
-    console.log("resCartToReservation", resCartToReservation)
     
     if(resCartToReservation){
       let bookingItineraryObj = {
@@ -285,7 +277,6 @@ export default function ReservationTray() {
       const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, qry.correlationId);
       const resItineraryNew = await responseItineraryNew;
       
-      console.log("resItineraryNew", resItineraryNew)
       if(resItineraryNew?.ErrorInfo){
         toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
       }
@@ -318,7 +309,6 @@ export default function ReservationTray() {
       }
     }
   };
-  
 
   const hotelBookBtn = async(value, index) => {
     let roomArr = []
@@ -338,7 +328,7 @@ export default function ReservationTray() {
           "Age": p.Age
         }
         return guest
-      })
+      });
 
       let room = {
         "RateKey": rateKeyArray[i],
@@ -354,7 +344,7 @@ export default function ReservationTray() {
         }
       }
       return room
-    })
+    });
 
     let hotelReq = {
       "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
@@ -369,12 +359,25 @@ export default function ReservationTray() {
       "Rooms": {
         "Room": roomArr
       },
+      "TassProInfo": {
+        "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
+        "RegionID": bkngDetails?.ReservationDetail?.BookingDetail?.RegionCode,
+        "NoOfRooms": value.RoomDtlNew.length?.toString(),
+        "ProductCode": value.ProductCode,
+        "SupplierCode": value.SupplierCode,
+        "RateKey": value.XMLRateKey
+      },
       "SessionId": value.XMLSessionId,
     }
-    console.log("hotelReq", hotelReq)
-    const responseHotelBook = HotelService.doBook(hotelReq, qry.correlationId);
+
+    let responseHotelBook = null;
+    if(value.XMLSupplierCode==="138"){
+      responseHotelBook = HotelService.doLocalBook(hotelReq, qry.correlationId);
+    }
+    else{
+      responseHotelBook = HotelService.doBook(hotelReq, qry.correlationId);
+    }
     const resHotelBook = await responseHotelBook;
-    console.log("resHotelBook", resHotelBook)
     if(resHotelBook){
       if(payMode==='PL'){
         confirmReservationServiceAndEmailBtn(hotelReq,resHotelBook, index);
@@ -388,7 +391,7 @@ export default function ReservationTray() {
   const confirmReservationServiceAndEmailBtn = async(serviceReq,serviceRes, index) => {
     //let xmlServiceReqReq = JSONtoXML(serviceReq);
     //let xmlServiceRes = JSONtoXML(serviceRes);
-    let emailHtml = '<div>'+document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML+'</div>'
+    let emailHtml = document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML;
     let cRSAEobj = {
       "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
       "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
@@ -405,10 +408,8 @@ export default function ReservationTray() {
         "VoucherLink": ""
       }
     }
-    console.log("cRSAEobj", cRSAEobj);
     const responseConfirm = ReservationService.doConfirmReservationServiceAndEmail(cRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
-    console.log("resConfirm", resConfirm);
     //if(resConfirm != null){
     let bookItnery = {
       "bcode": serviceRes.customerRefNumber.split('-')[0],
@@ -443,10 +444,8 @@ export default function ReservationTray() {
         "VoucherLink": ""
       }
     }
-    console.log("rCRSAEobj", rCRSAEobj);
     const responseConfirm = ReservationService.doReConfirmReservationServiceAndEmail(rCRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
-    console.log("resConfirm", resConfirm);
     //if(resConfirm !=null){
     let bookItnery = {
       "bcode": serviceRes.customerRefNumber.split('-')[0],
@@ -459,8 +458,6 @@ export default function ReservationTray() {
     setMainLoader(false);
     router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
     //}
-    
-    
   }
 
   return (
@@ -535,7 +532,8 @@ export default function ReservationTray() {
                                             {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="13" && <span style={{color:'#ff3300'}}>Not Confirmed</span>}
                                              &nbsp; | &nbsp;
                                             <strong style={{color:'#01468a', marginBottom:'5px'}}>Total Price:</strong>&nbsp; 
-                                            {parseFloat(bkngDetails?.ReservationDetail?.Services?.reduce((totalAmnt, a) => totalAmnt + (a.VATOutputAmount/a.CustomerExchangeRate)+a.CustomerNetAmount, 0)).toFixed(2)} ({bkngDetails?.ReservationDetail?.Services[0].CustomerCurrencyCode})
+                                            {/* (Number(a.VATOutputAmount)/Number(a.CustomerExchangeRate)) */}
+                                            {parseFloat(bkngDetails?.ReservationDetail?.Services?.reduce((totalAmnt, a) => totalAmnt + Number(a.VATOutputAmount/a.CustomerExchangeRate) + Number(a.CustomerNetAmount), 0)).toFixed(2)} ({bkngDetails?.ReservationDetail?.Services[0].CustomerCurrencyCode})
                                           </p>
                                         </td>
                                       </tr>

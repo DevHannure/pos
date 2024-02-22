@@ -442,7 +442,6 @@ export default function ReservationTray() {
     }
     const responseDtls = ReservationtrayService.doGetServiceAmendmentHistory(reqAmndObj, userInfo?.correlationId);
     const resDtls = await responseDtls;
-    console.log("resDtls", resDtls)
     setAmndmentHistory(resDtls)
   }
 
@@ -508,7 +507,6 @@ export default function ReservationTray() {
     let bkgPosted = s.BkgPosted;
     let suppType = s.SupplierType
 
-    debugger;
     switch (key) {
       //LPO
       case 'lpo':

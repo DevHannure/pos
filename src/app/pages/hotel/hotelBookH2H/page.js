@@ -17,8 +17,6 @@ import {format, addDays, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import { doHotelReprice } from '@/app/store/hotelStore/hotel';
 
-function getUID() {return Date.now().toString(36);}
-
 export default function HotelItinerary() {
   const noRefundBtn = useRef(null);
   const soldOutBtn = useRef(null);
@@ -33,28 +31,12 @@ export default function HotelItinerary() {
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
 
-  console.log("qry", qry)
-
-  let uniqId = getUID();
   const [room1, setRoom1] = useState(null);
   const [room2, setRoom2] = useState(null);
   const [room3, setRoom3] = useState(null);
-  const [chdAllAges, setChdAllAges] = useState(null);
 
   useEffect(()=>{
     window.scrollTo(0, 0);
-    let chdAllAgesVar = []
-    qry?.paxInfoArr?.forEach((v) => {
-      if (v.chdVal > 0) {
-        v.chdAgesArr.forEach((val) => {
-          if (parseInt(val.chdAgeVal) > 0) {
-            chdAllAgesVar.push(val.chdAgeVal)
-          }
-        })
-      }
-    })
-    setChdAllAges(chdAllAgesVar)
-
     if(!resReprice) {
       doHtlRepriceLoad()
     }
@@ -101,10 +83,10 @@ export default function HotelItinerary() {
   },[resReprice, room1]);
 
   useEffect(()=> {
-    if(exchangeRate){
+    if(exchangeRate && userInfo){
       createRoomObj();
     }
-  },[exchangeRate]);
+  },[exchangeRate && userInfo]);
 
   const exchangerateBtn = async(code) => {
     let exchangeObj = {
@@ -167,21 +149,21 @@ export default function HotelItinerary() {
       soldOutBtn.current?.click();
     }
     else{
-      if(resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non-Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='Non Refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non-refundable' || resRepriceText?.hotel?.rooms?.room?.[0].rateType==='non refundable'){
+      if(qry.rateType==='Non-Refundable' || qry.rateType==='Non Refundable' || qry.rateType==='non-refundable' || qry.rateType==='non refundable'){
         noRefundBtn.current?.click();
       }
     }
   }
 
   const [roomObj, setRoomObj] = useState(null);
-
+  
   const createRoomObj = () => {
     let roomPax = []
     qry.paxInfoArr.map((r, i) => {
       let roomNet = resReprice.hotel?.rooms?.room[i]?.price.net;
       let roomSupplierNet = resReprice.hotel?.rooms?.room[i]?.price.supplierNet;
       let roomMarkUpAmount = resReprice.hotel?.rooms?.room[i]?.price.markUpValue;
-      let roomTax = resReprice.hotel?.rooms?.room[i]?.price.tax;
+      //let roomTax = resReprice.hotel?.rooms?.room[i]?.price.tax;
       let roomSingle = {
         "NoOfUnits": "1",
         "AdultNoOfUnits": r.adtVal.toString(),
@@ -193,15 +175,15 @@ export default function HotelItinerary() {
         //"Tax": Number(roomTax).toString(),
         "Tax": "0",
         "Net": Number(roomNet * userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-        "VATInputAmount": "0",
-        "VATOutputAmount": "0",
+        "VATInputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+        "VATOutputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
         "RoomTypeName": resReprice.hotel?.rooms?.room[i]?.roomName,
         "RateBasisName": resReprice.hotel?.rooms?.room[i]?.meal,
         "RateTypeCode": i===0 && room1[0]?.rateTypeCode || i===1 && room2[0]?.rateTypeCode || i===2 && room3[0]?.rateTypeCode,
         "RateTypeName": i===0 && room1[0]?.rateTypeName || i===1 && room2[0]?.rateTypeName || i===2 && room3[0]?.rateTypeName,
-        "RateCategoryCode": "0",
-        "DetailsString": "",
-        "CancelPolicyType": resReprice.hotel?.rooms?.room[i]?.rateType==='Refundable' || resReprice.hotel?.rooms?.room[i]?.rateType==='refundable' ? "R" : "N",
+        "RateCategoryCode": qry?.supplierName==="LOCAL" ? "1" : "0",
+        "DetailsString": resReprice.hotel?.rooms?.room[i]?.detailsString ? resReprice.hotel?.rooms?.room[i]?.detailsString : "",
+        "CancelPolicyType": qry.rateType==='Refundable' || qry.rateType==='refundable' ? "R" : "N",
         "PaxDetails": [],
         "CancellationPolicyDetails": []
       };
@@ -349,20 +331,25 @@ export default function HotelItinerary() {
           }
         })
       })
+
+      let dueDateFinal = '';
+      if(dueDateStart[0]){
+        dueDateFinal = format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + (dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00');
+      }
       
       let addServiceCartObj = {
         "BookingNo": "0",
         "IsNewBooking": true,
         //"UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.userEmail : userInfo?.user?.userId,
-        //"UserId": userInfo?.user?.userEmail,
-        "UserId": userInfo?.user?.userId,
+        "UserId": userInfo?.user?.userEmail,
+        //"UserId": userInfo?.user?.userId,
         "BookingDetail": {
           "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
           "BookingStatus": "-1",
           "BookingCurrencyCode": userInfo?.user?.currencyCode,
           "WalkinUserCode": "",
           "BranchCode": userInfo?.user?.branchCode,
-          "RegionCode": qry?.regionCode.toString(),
+          "RegionCode": qry?.regionID,
           "CustomerCode": userInfo?.user?.userCode,
           "CustomerConsultantCode": userInfo?.user?.customerConsultantCode,
           "CompanyConsultantCode": userInfo?.user?.companyConsultantCode,
@@ -375,12 +362,12 @@ export default function HotelItinerary() {
           "ServiceCode": "1",
           "ServiceType": "0",
           "ServiceStatus": "0",
-          "ProductCode": htlDetails?.hotelDetail?.hotelCode,
+          "ProductCode": qry?.hotelCode,
           "ProductName": htlDetails?.hotelDetail?.hotelName,
-          "PeriodCode": "",
-          "RoomTypeCode": "0",
+          "PeriodCode": resReprice.hotel?.rooms?.room[0]?.periodCode ? resReprice.hotel.rooms.room[0].periodCode : "",
+          "RoomTypeCode": resReprice.hotel?.rooms?.room[0]?.roomTypeCode ? resReprice.hotel?.rooms?.room[0]?.roomTypeCode : "0",
           "RoomTypeName": resReprice.hotel?.rooms?.room[0]?.roomName,
-          "RateBasisCode": "0",
+          "RateBasisCode": resReprice.hotel?.rooms?.room[0]?.rateBasisCode ? resReprice.hotel?.rooms?.room[0]?.rateBasisCode : "0",
           "RateBasisName": resReprice.hotel?.rooms?.room[0]?.meal,
           "BookedFrom": qry?.chkIn,
           "BookedTo": qry?.chkOut,
@@ -388,7 +375,7 @@ export default function HotelItinerary() {
           "PickupDetails": 'https://static.giinfotech.ae/medianew'+htlDetails?.hotelDetail?.imageUrl,
           "DropoffDetails": "",
           "ProductAddress": htlDetails?.hotelDetail?.address1+', '+htlDetails?.hotelDetail?.address2,
-          "ProductSystemId": htlDetails?.hotelDetail?.hotelCode,
+          "ProductSystemId": qry?.systemId,
           "ProductCityCode": htlDetails?.hotelDetail?.destinationCode,
           "ProductCityName": htlDetails?.hotelDetail?.cityName,
           "ProductCountryISOCode": htlDetails?.hotelDetail?.countryCode,
@@ -398,9 +385,9 @@ export default function HotelItinerary() {
           "ProductWebSite": htlDetails?.hotelDetail?.contactWebUrl,
           "ClassificationCode": htlDetails?.hotelDetail?.rating,
           "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
-          "SupplierCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCodeFK,
-          "ReservationCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
-          "SupplierConsultantCode": "111", //For ADS 111 & Local 138
+          "SupplierCode": qry.supplierCode,
+          "ReservationCode": qry?.supplierName==="LOCAL" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+          "SupplierConsultantCode": qry?.supplierName==="LOCAL" ? "138" : "111", //For ADS 111 & Local 138
           "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
           "SupplierRemarks": "",
           "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
@@ -413,25 +400,25 @@ export default function HotelItinerary() {
           "SellPrice": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
           "GSANet": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
           "VATInput": "0",
-          "VATInputAmount": "0",
+          "VATInputAmount": resReprice.hotel?.rooms?.vatInputAmount ? Number(resReprice.hotel?.rooms?.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
           "VATOutput": "0",
-          "VATOutputAmount": "0",
-          "DueDate": format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00' ,
-          "UniqueId": qry?.sessionId+'-'+uniqId,
+          "VATOutputAmount": resReprice.hotel?.rooms?.vatOutputAmount ? Number(resReprice.hotel?.rooms?.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+          "DueDate": dueDateFinal,
+          "UniqueId": qry.uniqueId,
           "CustomerCurrencyCode": userInfo?.user?.currencyCode,
           "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
           "CustomerNetAmount": Number(net).toFixed(2).toString(),
-          "XMLSupplierCode": resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
-          "XMLRateKey": resReprice?.hotel?.rooms?.room.reduce((totalRk, r, i) => totalRk + (i !==0 ? 'splitter':'') + r.rateKey, ''),
+          "XMLSupplierCode": qry?.supplierName==="LOCAL" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
+          "XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
           "XMLSessionId": qry?.sessionId,
           "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
           "NoOfAdults": Number(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
           "NoOfChildren": Number(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
           "NoOfInfants": "0",
-          "AgesOfChildren": chdAllAges.toString(),
+          "AgesOfChildren": qry.childrenAges,
           "VoucherLink": "",
-          "FairName": "",
-          "NRF": resReprice.hotel?.rooms?.room[0].rateType==='Refundable' || resReprice.hotel?.rooms?.room[0].rateType==='refundable' ? false : true,
+          "FairName": resReprice.hotel?.rooms?.room[0]?.fairName ? resReprice.hotel?.rooms?.room[0]?.fairName : "",
+          "NRF": qry.rateType==='Refundable' || qry.rateType==='refundable' ? false : true,
           "IsHidden": false,
           "ServiceDetails": roomObj,
         }
@@ -727,10 +714,10 @@ export default function HotelItinerary() {
                   <div key={i}>
                     <hr className='my-2' />
                     <div className='text-capitalize fn13'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} 
-                      {v.rateType==='Refundable' || v.rateType==='refundable' ?
+                      {qry.rateType==='Refundable' || qry.rateType==='refundable' ?
                       <span className="refund"> (Refundable)</span>:''
                       }
-                      {v.rateType==='Non-Refundable' || v.rateType==='Non Refundable' || v.rateType==='non-refundable' || v.rateType==='non refundable' ?
+                      {qry.rateType==='Non-Refundable' || qry.rateType==='Non Refundable' || qry.rateType==='non-refundable' || qry.rateType==='non refundable' ?
                       <span className="nonrefund"> (Non-Refundable)</span>:''
                       }
                     </div>
@@ -752,7 +739,7 @@ export default function HotelItinerary() {
                       {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                         <tr key={i}>
                           <td>Room {i+1}</td>
-                          <td className="text-end">{qry.currency} {Number(v.price.net).toFixed(2)}</td>
+                          <td className="text-end">{qry.currency} {Number(v.price.net+v.price.vatOutputAmount).toFixed(2)}</td>
                         </tr>
                       ))}
                       </tbody>
@@ -763,7 +750,7 @@ export default function HotelItinerary() {
                     <tbody>
                       <tr className="table-light">
                         <td><strong>Total Amount</strong><br/><small>(Including all taxes & fees)</small></td>
-                        <td className="text-end"><strong>{qry.currency} {Number(resReprice.hotel?.rooms?.room.reduce((totalAmt, price) => totalAmt + price.price.net, 0)).toFixed(2)}</strong></td>
+                        <td className="text-end"><strong>{qry.currency} {Number(resReprice.hotel?.rooms?.room.reduce((totalAmt, price) => totalAmt + price.price.net + price.price.vatOutputAmount, 0)).toFixed(2)}</strong></td>
                       </tr>
                     </tbody>
                   </table>

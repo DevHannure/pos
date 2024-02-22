@@ -144,7 +144,7 @@ const HotelService = {
             "SupplierCode": reqObj.supplierCode,
             "UniqueId": reqObj.uniqueId,
             "OccupancyStr": reqObj.occupancyStr,
-            "RateKey": reqObj.rateKey[0],
+            "RateKey": reqObj.rateKey.map(item => item).join('splitter'),
             "ActiveSuppliers": ""
           }
         },
@@ -181,6 +181,17 @@ const HotelService = {
   doBook: async function (reqObj, correlationId) {
     try {
       const response = await fetch(`${baseUrl}/hotel/Book`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doLocalBook: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/localhotel/Book`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}

@@ -24,15 +24,10 @@ export default function PaymentOrder() {
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
-  console.log("qry", qry)
-  
   const divRef = useRef(null);
-  console.log("divRef", divRef);
   const [resHtml, setResHtml] = useState(null);
-  console.log("resHtml", resHtml);
 
   useEffect(()=>{
-    //console.log("divRef123", divRef)
     //if(divRef.current === null){
       doBooking();
     //}
@@ -52,7 +47,6 @@ export default function PaymentOrder() {
       const responsePay = PaymentService.doPayment(payObj, qry.correlationId);
       const resPay = await responsePay;
       setResHtml(resPay)
-      console.log("resPay", resPay)
       if(resPay && resPay?.pgResponseType ===1){
         //setHtmlLoad(resPay.responseDetail)
         const fragment = document.createRange().createContextualFragment(resPay.responseDetail);

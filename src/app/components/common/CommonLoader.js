@@ -13,6 +13,12 @@ export default function CommonLoader(props) {
     </div>
   </div>
   }
+
+  {props.Type==="2" &&
+  <div>
+    
+  </div>
+  }
   </>
   )
 }

@@ -11,13 +11,15 @@ import HotelService from '@/app/services/hotel.service';
 import { doHotelSearchOnLoad } from '@/app/store/hotelStore/hotel';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
+import CommonLoader from '@/app/components/common/CommonLoader';
+import { useSession } from "next-auth/react";
 
 export default function HotelListing() {
+  const { status } = useSession();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
-  //console.log(JSON.parse(bytes))
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
@@ -29,8 +31,6 @@ export default function HotelListing() {
       }
     //}
   },[search]);
-
-  
 
   const doHtlResultOnLoad = async() => {
     let htlSrchObj = {
@@ -135,7 +135,13 @@ export default function HotelListing() {
             <HotelResult HtlReq={qry} />
           </div>
           :
+          <>
           <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+          {status ==='authenticated' &&
+          <CommonLoader Type="2" />
+          }
+          </>
+          
           }
         </div>  
       </div>

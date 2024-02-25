@@ -39,18 +39,18 @@ export default function HotelBookingItinerary(props) {
                 <tbody>
                   <tr>
                     <td>
-                      <strong><span style={{color:'#01468a'}}>Booking {props.response.ServiceMasterCode}: Supplier Ref. No: {props.response.SupplierReferenceNo} &nbsp; | &nbsp; Status:&nbsp; 
-                      {props.bookingDetail?.BookingStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
-                      {props.bookingDetail?.BookingStatus ==="0" && <span style={{color:'#ff3300'}}>Pending</span>}
-                      {props.bookingDetail?.BookingStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
-                      {props.bookingDetail?.BookingStatus ==="2" && <span style={{color:'#0daa44'}}>CONFIRMED</span>}
-                      {props.bookingDetail?.BookingStatus ==="3" && <span style={{color:'#339933'}}>RECONFIRMED</span>}
-                      {props.bookingDetail?.BookingStatus ==="4" && <span style={{color:'#0058af'}}>SO GENERATED</span>}
-                      {props.bookingDetail?.BookingStatus ==="5" && <span style={{color:'#fc5900'}}>UNAVAILABLE</span>}
-                      {props.bookingDetail?.BookingStatus ==="8" && <span style={{color:'#ee1c23'}}>ON CANCELLATION</span>}
-                      {props.bookingDetail?.BookingStatus ==="9" && <span style={{color:'#ff3300'}}>CANCELLED</span>}
-                      {props.bookingDetail?.BookingStatus ==="10" && <span style={{color:'#0daa44'}}>AVAILABLE</span>}
-                      {props.bookingDetail?.BookingStatus ==="13" && <span style={{color:'#ff3300'}}>Not Confirmed</span>}
+                      <strong><span style={{color:'#01468a'}}>Booking {props.response.ServiceMasterCode}  Supplier Ref. No: {props.response.SupplierReferenceNo} &nbsp; | &nbsp; Status:&nbsp; 
+                      {props.response?.ServiceStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
+                      {props.response?.ServiceStatus ==="0" && <span style={{color:'#ff3300'}}>Pending</span>}
+                      {props.response?.ServiceStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
+                      {props.response?.ServiceStatus ==="2" && <span style={{color:'#0daa44'}}>CONFIRMED</span>}
+                      {props.response?.ServiceStatus ==="3" && <span style={{color:'#339933'}}>RECONFIRMED</span>}
+                      {props.response?.ServiceStatus ==="4" && <span style={{color:'#0058af'}}>SO GENERATED</span>}
+                      {props.response?.ServiceStatus ==="5" && <span style={{color:'#fc5900'}}>UNAVAILABLE</span>}
+                      {props.response?.ServiceStatus ==="8" && <span style={{color:'#ee1c23'}}>ON CANCELLATION</span>}
+                      {props.response?.ServiceStatus ==="9" && <span style={{color:'#ff3300'}}>CANCELLED</span>}
+                      {props.response?.ServiceStatus ==="10" && <span style={{color:'#0daa44'}}>AVAILABLE</span>}
+                      {props.response?.ServiceStatus ==="13" && <span style={{color:'#ff3300'}}>Not Confirmed</span>}
                       </span></strong>
                     </td>
                   </tr>

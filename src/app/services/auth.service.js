@@ -70,6 +70,17 @@ const AuthService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doRegisterAgent: async function (reqObj) {
+    try {
+      const response = await fetch(`${baseUrl}/agent/RegisterAgent`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl}
+      });
+      return response.text();
+    } catch (error) {console.log("error", error)}
+  },
+
 }
 
 export default AuthService

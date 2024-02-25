@@ -47,9 +47,9 @@ const ReservationService = {
     } catch (error) {console.log("error", error)}
   },
 
-  doConfirmReservationServiceAndEmail: async function (reqObj, correlationId) {
+  doConfirmReservationService: async function (reqObj, correlationId) {
     try {
-      const response = await fetch(`${baseUrl}/reservation/ConfirmReservationServiceAndEmail`, {
+      const response = await fetch(`${baseUrl}/reservation/ConfirmReservationService`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
@@ -58,9 +58,21 @@ const ReservationService = {
     } catch (error) {console.log("error", error)}
   },
 
-  doReConfirmReservationServiceAndEmail: async function (reqObj, correlationId) {
+  doSendReservationConfirmedEmail: async function (reqObj, correlationId) {
     try {
-      const response = await fetch(`${baseUrl}/reservation/ReconfirmReservationServiceAndEmail`, {
+      const response = await fetch(`${baseUrl}/reservation/SendReservationConfirmedEmail`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("error", error)}
+  },
+
+
+  doReconfirmReservationService: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/ReconfirmReservationService`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}

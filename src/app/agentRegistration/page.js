@@ -18,7 +18,7 @@ export default async function AgentRegister() {
         <div className="cusnav navbar navbar-expand-lg navbar-light">
           <div className="container">
             <Link className="navbar-brand" href="/">
-              <Image
+              <Image className="mainlogo"
                 src={`/images/logo-login${process.env.NEXT_PUBLIC_SHORTCODE}.png`}
                 alt={process.env.NEXT_PUBLIC_SHORTCODE}
                 width={216}
@@ -54,8 +54,6 @@ export default async function AgentRegister() {
           </div>
         </div>
       </div>
-
-      
       <Footer />
     </LoginLayout>
   )

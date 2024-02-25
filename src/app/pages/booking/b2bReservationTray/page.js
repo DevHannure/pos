@@ -280,6 +280,45 @@ export default function BBReservationTray() {
     setCurrentPage("0");
   }
 
+  const getExcel = async() =>{
+    let excelObj = {
+      "Skip": (pageSize * currentPage)?.toString(),
+      "Take": pageSize,
+      "BookingStatus": bookingStatus?.toString(),
+      "BookingType": bookingType,
+      "BookingNo": bookingNo,
+      "FromDate": dateType==='0' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "ToDate": dateType==='0' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "CreatedBy": userCode?.value,
+      "BookingChannel": bookingChannel,
+      "CancellationStartDate": dateType==='6' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CancellationEndDate": dateType==='6' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "SupplierType": supplierCode?.value,
+      "CustomerCode": customerCode?.value,
+      "BookingName": "",
+      "CartId": "",
+      "RateType": rateType,
+      "TicketType": Number(ticketType),
+      "CheckinFrom": dateType==='3' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CheckinTo": dateType==='3' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "CheckoutFrom": dateType==='4' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CheckoutTo": dateType==='4' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "DuedateFrom": dateType==='5' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "DuedateTo": dateType==='5' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : ""
+    }
+    const responseExcel = ReservationtrayService.doExportReservationsToExcel(excelObj, userInfo.correlationId);
+    const resExcel = await responseExcel;
+    if(resExcel){
+      const urlVar = (new URL(process.env.NEXT_PUBLIC_ROOT_API).origin) + '/logs/'+process.env.NEXT_PUBLIC_SHORTCODE+'/Excel/'+resExcel;
+      if (typeof window !== "undefined"){
+        window.location.href = urlVar
+      }
+    }
+    else{
+      toast.error("Something went wrong! Please try after sometime.",{theme: "colored"});
+    }
+  }
+
   const dtlData = useSelector((state) => state.reservationListReducer?.subDtlsList);
 
   const [dtlCollapse, setDtlCollapse] = useState('');
@@ -651,7 +690,7 @@ export default function BBReservationTray() {
                   <div className='col-lg-4 mb-2 align-self-end'>
                     <button type='button' className='btn btn-sm btn-warning' onClick={() => getReservations()}>Filter Bookings</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-light' onClick={() => resetFilter()}>Reset</button> &nbsp;
-                    <button type='button' className='btn btn-sm btn-primary'>Export To Excel</button>
+                    <button type='button' className='btn btn-sm btn-primary' onClick={() => getExcel()}>Export To Excel</button>
                   </div>
                 </div>
 
@@ -974,7 +1013,7 @@ export default function BBReservationTray() {
                                       </div>
 
                                       <div className='divCell'>
-                                        <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button>
+                                        <button data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button>
                                       </div>
 
                                       {s.ServiceCode === 17 &&
@@ -1069,6 +1108,34 @@ export default function BBReservationTray() {
                         <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
                       </ul>
                       </nav>
+                    </div>
+
+                    <div className="modal fade" id="cancelServiceModal" data-bs-backdrop="static" data-bs-keyboard="false">
+                      <div className="modal-dialog modal-dialog-centered modal-lg">
+                        <div className="modal-content">
+                          <div className="modal-header">
+                            <h5 className="modal-title fs-6">Cancel Service  (Cancellation display amount will be in customer currency.)</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div className="modal-body">
+                            <div className='row gx-3'>
+                              <div className='col-md-4 mb-3'>
+                                <label>Cancellation Reasons</label>
+                                <select className="form-select form-select-sm">
+                                  <option value="0">-- Select Reason --</option><option value="1">Traveller Cancelled Trip</option><option value="2">Date Change</option><option value="3">Schedule Change</option><option value="4">Other Reason</option><option value="1002">Traveller booked another service</option><option value="1003">Book Out</option>
+                                </select>
+                              </div>
+                              <div className='col-md-4 mb-3'>
+                                <label>Cancellation Reasons</label>
+                                <input type="text" value="0" className="form-control form-control-sm" disabled />
+                              </div>
+                            </div>
+                          </div>
+                          <div className='modal-footer'>
+                            <button type="button" className='btn btn-primary' onClick={generateSOBtn} disabled={soLoad}> {soLoad ? 'Submitting...' : 'Cancel Service'} </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={soModalClose}>Close</button> 
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="modal fade" id="serOrderModal" data-bs-backdrop="static" data-bs-keyboard="false">

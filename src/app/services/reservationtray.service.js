@@ -14,6 +14,17 @@ const ReservationtrayService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doExportReservationsToExcel: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/ExportReservationsToExcel`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorExcel", error)}
+  },
+
   doGetReservations: async function (reqObj, correlationId) {
     try {
       const response = await fetch(`${baseUrl}/reservationtray/GetReservations`, {

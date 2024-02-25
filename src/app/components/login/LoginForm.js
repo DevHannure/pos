@@ -517,7 +517,7 @@ export default function BookingItinerary() {
 
       <div className="mb-1">
         <button type="button" className="btn btn-warning px-4 fw-semibold" onClick={resetPassSubmit} disabled={resetPassLoading}>{resetPassLoading ? 'Updating' : 'Update'}</button>
-        <button type="button" className="btn btn-light fw-semibold ms-2" onClick={()=> (resetPassForm(false), setLoginForm(true) )}>Cancel</button>
+        <button type="button" className="btn btn-light fw-semibold ms-2" onClick={()=> (setResetPassForm(false), setLoginForm(true) )}>Cancel</button>
       </div>
     </div>
     }

@@ -227,7 +227,7 @@ export default function HotelItinerary() {
           "LName": "",
           "PaxFullName": "",
           "Age": "35",
-          "Nationality": qry.nationality.split('-')[0]+','+qry.nationality.split('-')[0],
+          "Nationality": qry.nationality.split('-')[1]+','+qry.nationality.split('-')[1],
           "LeadPax": false,
           "PaxAssgRoomNo": (i+1).toString(),
           "AssociateId": ""
@@ -244,7 +244,7 @@ export default function HotelItinerary() {
           "LName": "",
           "PaxFullName": "",
           "Age": r.chdAgesArr[chdIndx].chdAgeVal,
-          "Nationality": qry.nationality.split('-')[0]+','+qry.nationality.split('-')[0],
+          "Nationality": qry.nationality.split('-')[1]+','+qry.nationality.split('-')[1],
           "LeadPax": false,
           "PaxAssgRoomNo": (i+1).toString(),
           "AssociateId": ""

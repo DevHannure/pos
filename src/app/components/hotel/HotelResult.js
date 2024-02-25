@@ -327,7 +327,7 @@ export default function HotelResult(props) {
   
   const fareBreakkup = async(roomVal, rc) => {
     let rateKeyArray = rc.split('Seprator').slice(1);
-    setRoomRow(roomVal)
+    setRoomRow(roomVal);
     setFareBrkData(null);
     const hotelCode = htlCollapse.replace("#room", "");
     let fareBrkupObj = {
@@ -375,7 +375,6 @@ export default function HotelResult(props) {
       else{
         responseFarebrkup = HotelService.doPriceBreakup(fareBrkupObj, qry.correlationId);
       }
-
       const resFarebrkup = await responseFarebrkup;
       setFareBrkData(resFarebrkup);
       fbRes = resFarebrkup;

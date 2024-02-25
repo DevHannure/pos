@@ -10,7 +10,7 @@ import AuthService from '@/app/services/auth.service';
 import MasterService from '@/app/services/master.service';
 import { useSelector, useDispatch } from "react-redux";
 import { doUserInfo, doCustCreditDtls, doAppFeatures } from '@/app/store/commonStore/common';
-import { doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import { doReserveListOnLoad, doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
@@ -101,6 +101,12 @@ export default function Header() {
     router.push('/pages/booking/b2bReservationTray');
     //router.push('/pages/booking/reservationTray');
   }
+  const cartBtn = () => {
+    dispatch(doCartReserveListOnLoad(null));
+    router.push('/pages/booking/tempBookings');
+  }
+
+  
 
   const appFeaturesBtn = async() => {
     const responseAppFeatures = MasterService.doGetFeatures(data?.correlationId);
@@ -129,9 +135,14 @@ export default function Header() {
               </div>
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
-                <li className="nav-item"><Link className="nav-link" href="/pages/booking/tempBookings">Cart</Link></li>
+                <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li>
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
                 <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li>
+                <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">More</Link>
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li><Link className="dropdown-item" href="/pages/user/b2bUserProfile">User List</Link></li>
+                  </ul>
+                </li> 
                 {/* <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li> */}
                 {/* <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dashboard</Link>

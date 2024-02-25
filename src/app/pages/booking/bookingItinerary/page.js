@@ -74,6 +74,12 @@ export default function ReservationTray() {
     }
   }
 
+  useEffect(()=>{
+    if(bkngDetails && qry?.emailSend){
+      sendReservationConfirmedEmailBtn()
+    }
+  },[bkngDetails]);
+
   const doServiceComb = (resItinerary) => {
     let serviceComb = []
     serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
@@ -136,6 +142,7 @@ export default function ReservationTray() {
     setErroremailText(error); 
     setEmailText(value);
   }
+
   const validateEmail = () => {
     let status = true;
     if(emailText===''){
@@ -305,6 +312,18 @@ export default function ReservationTray() {
               hotelBookBtn(value, index)
             }
           });
+
+          let bookItnery = {
+            "bcode": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
+            "btype": "",
+            "returnurl": null,
+            "emailSend": true,
+            "correlationId": qry.correlationId
+          }
+          let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+          let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+          setMainLoader(false);
+          router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
         }
       }
     }
@@ -349,7 +368,7 @@ export default function ReservationTray() {
     let hotelReq = {
       "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
       "DestinationCode": value.ProductCityCode,
-      "Nationality": value.ProductCountryISOCode,
+      "Nationality": value.RoomDtlNew[0]?.PaxNew[0].Nationality.split(',')?.[0],
       "HotelCode": value.ProductCode,
       "GroupCode": value.XMLSupplierCode,
       "CheckInDate": format(new Date(value.BookedFrom), 'yyyy-MM-dd'),
@@ -369,7 +388,6 @@ export default function ReservationTray() {
       },
       "SessionId": value.XMLSessionId,
     }
-
     let responseHotelBook = null;
     if(value.XMLSupplierCode==="138"){
       responseHotelBook = HotelService.doLocalBook(hotelReq, qry.correlationId);
@@ -380,24 +398,21 @@ export default function ReservationTray() {
     const resHotelBook = await responseHotelBook;
     if(resHotelBook){
       if(payMode==='PL'){
-        confirmReservationServiceAndEmailBtn(hotelReq,resHotelBook, index);
+        confirmReservationServiceBtn(hotelReq,resHotelBook, index);
       }
       if(payMode==='PN'){
-        reConfirmReservationServiceAndEmailBtn(hotelReq,resHotelBook, index);
+        reconfirmReservationServiceBtn(hotelReq,resHotelBook, index);
       }
     }
   };
 
-  const confirmReservationServiceAndEmailBtn = async(serviceReq,serviceRes, index) => {
-    //let xmlServiceReqReq = JSONtoXML(serviceReq);
-    //let xmlServiceRes = JSONtoXML(serviceRes);
-    let emailHtml = document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML;
+  const confirmReservationServiceBtn = async(serviceReq,serviceRes, index) => {
     let cRSAEobj = {
       "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
       "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "BookedFrom": serviceReq.CheckInDate,
-      "EmailHtml": emailHtml,
+      "EmailHtml": "",
       "Service": {
         "SupplierConfirmationNo": serviceRes.supplierConfirmationNumber,
         "XMLBookingNo": serviceRes.adsConfirmationNumber,
@@ -408,32 +423,45 @@ export default function ReservationTray() {
         "VoucherLink": ""
       }
     }
-    const responseConfirm = ReservationService.doConfirmReservationServiceAndEmail(cRSAEobj, qry.correlationId);
+    const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
-    //if(resConfirm != null){
-    let bookItnery = {
-      "bcode": serviceRes.customerRefNumber.split('-')[0],
-      "btype": "",
-      "returnurl": null,
-      "correlationId": qry.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    setMainLoader(false);
-    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    // let bookItnery = {
+    //   "BookingNo": serviceRes.customerRefNumber.split('-')[0],
+    //   "BookingType": ""
+    // }
+    // const responseItineraryFinal = ReservationtrayService.doBookingItineraryData(bookItnery, qry.correlationId);
+    // const resItineraryFinal = await responseItineraryFinal;
+    // if(resItineraryFinal?.ErrorInfo){
+    //   toast.error(resItineraryFinal.ErrorInfo,{theme: "colored"});
+    // }
+    //else {
+      // setBkngDetails(resItineraryFinal);
+      // doServiceComb(resItineraryFinal);
+
+      // let bookItnery = {
+      //   "bcode": serviceRes.customerRefNumber.split('-')[0],
+      //   "btype": "",
+      //   "returnurl": null,
+      //   "correlationId": qry.correlationId,
+      //   "emailSend": true,
+      //   "bookedFrom": serviceReq.CheckInDate,
+      // }
+      // let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+      // let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+      // setMainLoader(false);
+      // router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
     //}
-   
   }
 
-  const reConfirmReservationServiceAndEmailBtn = async(serviceReq,serviceRes, index) => {
-    let emailHtml = '<div>'+document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML+'</div>'
+  const reconfirmReservationServiceBtn = async(serviceReq,serviceRes, index) => {
+    //let emailHtml = '<div>'+document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+index).innerHTML+'</div>'
     let rCRSAEobj = {
       "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
       "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "CustomerReferenceNo": agentRefText,
       "BookedFrom": serviceReq.CheckInDate,
-      "EmailHtml": emailHtml,
+      "EmailHtml": "",
       "Service": {
         "SupplierConfirmationNo": serviceRes.supplierConfirmationNumber,
         "XMLBookingNo": serviceRes.adsConfirmationNumber,
@@ -444,20 +472,31 @@ export default function ReservationTray() {
         "VoucherLink": ""
       }
     }
-    const responseConfirm = ReservationService.doReConfirmReservationServiceAndEmail(rCRSAEobj, qry.correlationId);
+    const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, qry.correlationId);
     const resConfirm = await responseConfirm;
-    //if(resConfirm !=null){
-    let bookItnery = {
-      "bcode": serviceRes.customerRefNumber.split('-')[0],
-      "btype": "",
-      "returnurl": null,
-      "correlationId": qry.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    setMainLoader(false);
-    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
-    //}
+    // let bookItnery = {
+    //   "bcode": serviceRes.customerRefNumber.split('-')[0],
+    //   "btype": "",
+    //   "returnurl": null,
+    //   "correlationId": qry.correlationId
+    // }
+    // let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    // let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    // setMainLoader(false);
+    // router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+  }
+
+  const sendReservationConfirmedEmailBtn = async() => {
+    bkngDetails?.ReservationDetail?.Services?.map(async(s, i) => {
+      let emailHtml = document.getElementById("bookingDetails").innerHTML+document.getElementById("serviceDetails"+i).innerHTML;
+      let emailReq = {
+        "BookingNo": qry.bcode,
+        "BookedFrom": format(new Date(s.BookedFrom), 'yyyy-MM-dd'),
+        "EmailHtml": emailHtml
+      }
+      const responseEmailFinal = ReservationService.doSendReservationConfirmedEmail(emailReq, qry.correlationId);
+      const resEmailFinal = await responseEmailFinal;
+    })
   }
 
   return (
@@ -518,18 +557,21 @@ export default function ReservationTray() {
                                             {qry?.btype !=="O" &&
                                               <><strong style={{color:'#01468a',marginBottom:'5px'}}>Booking Number:</strong> {bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo} &nbsp; | &nbsp;</>
                                             }
-                                            <strong style={{color:'#01468a', arginBottom:'5px'}}>Booking Status:</strong>&nbsp; 
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="0" && <span style={{color:'#ff3300'}}>Pending</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="2" && <span style={{color:'#0daa44'}}>CONFIRMED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="3" && <span style={{color:'#339933'}}>RECONFIRMED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="4" && <span style={{color:'#0058af'}}>SO GENERATED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="5" && <span style={{color:'#fc5900'}}>UNAVAILABLE</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="8" && <span style={{color:'#ee1c23'}}>ON CANCELLATION</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="9" && <span style={{color:'#ff3300'}}>CANCELLED</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="10" && <span style={{color:'#0daa44'}}>AVAILABLE</span>}
-                                            {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="13" && <span style={{color:'#ff3300'}}>Not Confirmed</span>}
+                                            <span id="emailBookingNo"></span>
+                                            <strong style={{color:'#01468a', arginBottom:'5px'}}>Booking Status:</strong>&nbsp;
+                                            <span id="emailStatus">
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="0" && <span style={{color:'#ff3300'}}>Pending</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="2" && <span style={{color:'#0daa44'}}>CONFIRMED</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="3" && <span style={{color:'#339933'}}>RECONFIRMED</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="4" && <span style={{color:'#0058af'}}>SO GENERATED</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="5" && <span style={{color:'#fc5900'}}>UNAVAILABLE</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="8" && <span style={{color:'#ee1c23'}}>ON CANCELLATION</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="9" && <span style={{color:'#ff3300'}}>CANCELLED</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="10" && <span style={{color:'#0daa44'}}>AVAILABLE</span>}
+                                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus ==="13" && <span style={{color:'#ff3300'}}>Not Confirmed</span>}
+                                            </span> 
                                              &nbsp; | &nbsp;
                                             <strong style={{color:'#01468a', marginBottom:'5px'}}>Total Price:</strong>&nbsp; 
                                             {/* (Number(a.VATOutputAmount)/Number(a.CustomerExchangeRate)) */}

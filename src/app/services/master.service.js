@@ -118,6 +118,41 @@ const MasterService = {
       return response.json()
     } catch (error) {console.log("errorCustomerConsultants", error)}
   },
+
+  doGetConsultantDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/consultant/GetConsultantDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorConsultantDetails", error)}
+  },
+
+  doSaveConsultantDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/consultant/SaveConsultantDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorSaveConsultant", error)}
+  },
+
+  doDeleteConsultant: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/consultant/DeleteConsultant`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorConsultantDelete", error)}
+  },
+
+  
  
   
 

@@ -274,6 +274,9 @@ export default function HotelResult(props) {
         {row.item[0].availabilityStatus === '0' &&
         <div>On Request</div>
         }
+        {(row.item[0].availabilityStatus !== '0' || row.item[0].availabilityStatus !== '1') &&
+        <div>{row.item[0].availabilityStatus}</div>
+        }
         </div>
       ),
       sortable: true,

@@ -11,6 +11,7 @@ import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
 import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
 import MasterService from '@/app/services/master.service';
+import CommonLoader from '@/app/components/common/CommonLoader';
 
 export default function B2BUserProfile() {
   const _ = require("lodash");
@@ -33,6 +34,10 @@ export default function B2BUserProfile() {
     }
   }, [userInfo, resListRes]);
 
+  const modalClose = useRef(null);
+  const modalDeleteClose = useRef(null);
+  const editModalOpen = useRef(null);
+  
   const [takeNumberObj, setTakeNumberObj] = useState(false);
   const [pageSize, setPageSize] = useState(qry ? qry.Take : "10");
   const [currentPageObj, setCurrentPageObj] = useState(false);
@@ -95,6 +100,10 @@ export default function B2BUserProfile() {
   };
 
   const [userObj, setUserObj] = useState({
+    consultantCode: "0",
+    customerOrSupplier: "C",
+    customerCode: userInfo?.user?.userCode,
+    userId: userInfo?.user?.customerConsultantEmail,
     title: "",
     firstName: "",
     lastName: "",
@@ -111,11 +120,13 @@ export default function B2BUserProfile() {
     issueTicket : false,
     makeBooking : "0",
     viewBooking : "0",
+    amendBooking: "0",
     cancelBooking : "0",
     printVoucher : "0",
     viewOnlineInvoices : "0",
     viewOutstandingStatements : "0",
-    bookingHistory : "0"
+    bookingHistory : "0",
+    POSMarkup: "0",
   });
 
   const [errUserObj, setErrUserObj] = useState({
@@ -363,9 +374,160 @@ export default function B2BUserProfile() {
     } 
   }
 
-  const doSubmit = () => {
-    let validUser = usrValidation()
-    alert(validUser)
+  const clearFieldBtn = () => {
+    setUserObj({
+      consultantCode: "0",
+      customerOrSupplier: "C",
+      customerCode: userInfo?.user?.userCode,
+      userId: userInfo?.user?.customerConsultantEmail,
+      title: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      designation: "",
+      mobile: "",
+      telephone: "",
+      fax: "",
+      access : "0",
+      displayCreditDetails : "0",
+      allowCredit : true,
+      approver : false,
+      issueTicket : false,
+      makeBooking : "0",
+      viewBooking : "0",
+      amendBooking: "0",
+      cancelBooking : "0",
+      printVoucher : "0",
+      viewOnlineInvoices : "0",
+      viewOutstandingStatements : "0",
+      bookingHistory : "0",
+      POSMarkup: "0",
+    });
+  }
+
+  const [submitLoad, setSubmitLoad] = useState(false);
+
+  const doSubmit = async() => {
+    let validUser = usrValidation();
+    if(validUser){
+      setSubmitLoad(true);
+      let saveConsultantDetails = {
+        "CustomerCode": userObj.customerCode,
+        "ConsultantCode": userObj.consultantCode,
+        "WebUserName": "",
+        "Password": userObj.password,
+        "ConsultantName": userObj.title+'_'+userObj.firstName+'_'+userObj.lastName,
+        "ConsultantDesignation": userObj.designation,
+        "CustomerOrSupplier": userObj.customerOrSupplier,
+        "Mobile": userObj.mobile,
+        "Telephone": userObj.telephone,
+        "Email": userObj.email,
+        "Fax": userObj.fax,
+        "UserId": userObj.userId,
+        "AccessTo": userObj.access,
+        "CreditDisplay": userObj.displayCreditDetails,
+        "AllowCredit": userObj.allowCredit ? "1" : "0",
+        "MakeBooking": userObj.makeBooking,
+        "ViewBooking": userObj.viewBooking,
+        "AmendBooking": userObj.amendBooking,
+        "CancelBooking": userObj.cancelBooking,
+        "PrintVoucher": userObj.printVoucher,
+        "OnlineInvoices": userObj.viewOnlineInvoices,
+        "OutstandingStatements": userObj.viewOutstandingStatements,
+        "BookingHistory": userObj.bookingHistory,
+        "IsApprover": userObj.approver ? "1" : "0",
+        "IsAccessIssueTicket": userObj.issueTicket ? "1" : "0",
+        "POSMarkup": userObj.POSMarkup,
+      }
+      const responseSaveConsultant = MasterService.doSaveConsultantDetails(saveConsultantDetails, userInfo.correlationId);
+      const resSaveConsultant = await responseSaveConsultant;
+      if(resSaveConsultant==='Success'){
+        toast.success("User Successfully Added!",{theme: "colored"});
+        setSubmitLoad(false);
+        getCustomerConsultants();
+        modalClose.current?.click();
+      }
+      else{
+        toast.error(resSaveConsultant,{theme: "colored"});
+        setSubmitLoad(false);
+      }
+    }
+  }
+
+  const [deleteObj, setDeleteObj] = useState(null);
+  const [deleteLoad, setDeleteLoad] = useState(false);
+  const deleteBtn = async() =>{
+    setDeleteLoad(true);
+    let deleteReq = {
+      "CustomerCode": deleteObj?.CustSuppCode?.toString(),
+      "ConsultantCode": deleteObj?.ConsultantCode?.toString()
+    }
+    const responseConsultantDelete = MasterService.doDeleteConsultant(deleteReq, userInfo.correlationId);
+    const resConsultantDelete = await responseConsultantDelete;
+    if(resConsultantDelete==='Success'){
+      toast.success("User Deleted Successfully!",{theme: "colored"});
+      setDeleteLoad(false);
+      modalDeleteClose.current?.click();
+      getCustomerConsultants();
+    }
+    else{
+      toast.error(resConsultantDelete,{theme: "colored"});
+      setDeleteLoad(false);
+    }
+  }
+
+  const [commonLoad, setCommonLoad] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  
+  const editBtn = async (value) => {
+    setCommonLoad(true);
+    let consultantDetailsReq = {
+      "CustomerCode": value.CustSuppCode?.toString(),
+      "ConsultantCode": value.ConsultantCode?.toString()
+    }
+    const responseConsultantDetails = MasterService.doGetConsultantDetails(consultantDetailsReq, userInfo.correlationId);
+    const resConsultantDetails = await responseConsultantDetails;
+    
+    if(resConsultantDetails){
+      let consultantNameArray = resConsultantDetails[0]?.ConsultantName?.split('_');
+
+      setUserObj({
+        consultantCode: resConsultantDetails[0]?.ConsultantCode,
+        customerOrSupplier: resConsultantDetails[0]?.CustomerOrSupplier ? resConsultantDetails[0]?.CustomerOrSupplier : "C",
+        customerCode: resConsultantDetails[0]?.CustomerCode ? resConsultantDetails[0]?.CustomerCode : userInfo?.user?.userCode,
+        userId: resConsultantDetails[0]?.UserId ? resConsultantDetails[0]?.UserId : userInfo?.user?.customerConsultantEmail,
+        title: consultantNameArray[0] ? consultantNameArray[0] : "",
+        firstName: consultantNameArray[1] ? consultantNameArray[1] : "",
+        lastName: consultantNameArray[2] ? consultantNameArray[2] : "",
+        email: resConsultantDetails[0]?.Email,
+        password: resConsultantDetails[0]?.Password,
+        designation: resConsultantDetails[0]?.ConsultantDesignation,
+        mobile: resConsultantDetails[0]?.Mobile,
+        telephone: resConsultantDetails[0]?.Telephone,
+        fax: resConsultantDetails[0]?.Fax,
+        access : resConsultantDetails[0]?.AccessTo,
+        displayCreditDetails : resConsultantDetails[0]?.CreditDisplay==="True" ? "1" : "0",
+        allowCredit : resConsultantDetails[0]?.AllowCredit==="True" ? true : false,
+        approver : resConsultantDetails[0]?.IsApprover==="True" ? true : false,
+        issueTicket : resConsultantDetails[0]?.IsAccessIssueTicket==="True" ? true : false,
+        makeBooking : resConsultantDetails[0]?.MakeBooking ? resConsultantDetails[0]?.MakeBooking : "0",
+        viewBooking : resConsultantDetails[0]?.ViewBooking ? resConsultantDetails[0]?.ViewBooking : "0",
+        amendBooking: resConsultantDetails[0]?.AmendBooking ? resConsultantDetails[0]?.AmendBooking : "0",
+        cancelBooking : resConsultantDetails[0]?.CancelBooking ? resConsultantDetails[0]?.CancelBooking : "0",
+        printVoucher : resConsultantDetails[0]?.PrintVoucher ? resConsultantDetails[0]?.PrintVoucher : "0",
+        viewOnlineInvoices : resConsultantDetails[0]?.OnlineInvoices ? resConsultantDetails[0]?.OnlineInvoices : "0",
+        viewOutstandingStatements : resConsultantDetails[0]?.OutstandingStatements ? resConsultantDetails[0]?.OutstandingStatements : "0",
+        bookingHistory : resConsultantDetails[0]?.BookingHistory ? resConsultantDetails[0]?.BookingHistory: "0",
+        POSMarkup: resConsultantDetails[0]?.POSMarkup ? resConsultantDetails[0]?.POSMarkup : "0",
+      });
+      setCommonLoad(false);
+      editModalOpen.current?.click();
+    }
+    else{
+      toast.error("Something went wrong! Please try after sometime",{theme: "colored"});
+      setCommonLoad(false)
+    }
   }
   
   return (
@@ -379,7 +541,8 @@ export default function B2BUserProfile() {
                 <div className="row gx-1 justify-content-between align-items-center">
                   <div className='col-auto'>User List</div>
                   <div className='col-auto'>
-                  <button className='btn btn-warning btn-sm' data-bs-toggle="modal" data-bs-target="#addUserModal" type="button">&nbsp; Add New User &nbsp;</button>
+                  <button className='invisible' data-bs-toggle="modal" data-bs-target="#addUserModal" type="button" ref={editModalOpen} onClick={() => setEditModal(true)}></button>
+                  <button className='btn btn-warning btn-sm' data-bs-toggle="modal" data-bs-target="#addUserModal" type="button" onClick={() => setEditModal(false)}>&nbsp; Add New User &nbsp;</button>
                   </div>
                 </div>
                 
@@ -407,13 +570,13 @@ export default function B2BUserProfile() {
                         {resListRes?.map((v, i) => (
                           <tr key={i}>
                             <td>{i+1}</td>
-                            <td>{v.ConsultantName}</td>
+                            <td>{v.ConsultantName?.replace(/_/g, " ")}</td>
                             <td>{v.Mobile}</td>
                             <td>{v.Tel}</td>
                             <td>{v.Fax}</td>
                             <td>{v.Email}</td>
-                            <td className='text-center'><button className='btn btn-outline-primary btn-sm py-0'><FontAwesomeIcon icon={faPencil} /></button></td>
-                            <td className='text-center'><button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0'><FontAwesomeIcon icon={faTrash} /></button></td>
+                            <td className='text-center'><button className='btn btn-outline-primary btn-sm py-0' onClick={() => editBtn(v)}><FontAwesomeIcon icon={faPencil} /></button></td>
+                            <td className='text-center'><button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0' onClick={() => setDeleteObj(v)}><FontAwesomeIcon icon={faTrash} /></button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -442,6 +605,11 @@ export default function B2BUserProfile() {
                 </div>
                 }
 
+                {commonLoad &&
+                  <CommonLoader Type="1" />
+                }
+                
+
                 <div className="modal fade" id="deleteUserModal" data-bs-backdrop="static" data-bs-keyboard="false">
                   <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
@@ -451,7 +619,7 @@ export default function B2BUserProfile() {
                         </div>
                       </div>
                       <div className='modal-footer'>
-                        <button type="button" className='btn btn-sm btn-primary'> &nbsp; Yes &nbsp; </button> &nbsp; <button type="button" className='btn btn-sm btn-outline-secondary' data-bs-dismiss="modal"> &nbsp; No &nbsp; </button> 
+                        <button type="button" className='btn btn-sm btn-primary' onClick={deleteBtn} disabled={deleteLoad}> &nbsp; {submitLoad ? 'Submitting' : 'Yes'} &nbsp; </button> &nbsp; <button type="button" className='btn btn-sm btn-outline-secondary' data-bs-dismiss="modal" ref={modalDeleteClose} onClick={() => setDeleteObj(null)}> &nbsp; No &nbsp; </button> 
                       </div>
                     </div>
                   </div>
@@ -461,7 +629,7 @@ export default function B2BUserProfile() {
                   <div className="modal-dialog modal-dialog-centered modal-xl">
                     <div className="modal-content">
                       <div className="modal-header">
-                        <h5 className="modal-title">Add/Edit User</h5>
+                        <h5 className="modal-title">{editModal ? "Edit User" : "Add New User"}</h5>
                       </div>
                       <div className="modal-body">
 
@@ -471,10 +639,10 @@ export default function B2BUserProfile() {
                           <div className='col-md-4 mb-3'>
                             <div><label>Title<span className='text-danger'>*</span></label></div>
                             <div className="form-check form-check-inline">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="Ms" name="titleRadios" checked={userObj.title==='Ms'} onChange={(e) => titleChange(e.target.value)} /> Ms.</label>
+                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="Ms." name="titleRadios" checked={userObj.title==='Ms.'} onChange={(e) => titleChange(e.target.value)} /> Ms.</label>
                             </div>
                             <div className="form-check form-check-inline">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="Mr" name="titleRadios" checked={userObj.title==='Mr'} onChange={(e) => titleChange(e.target.value)} /> Mr.</label>
+                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="Mr." name="titleRadios" checked={userObj.title==='Mr.'} onChange={(e) => titleChange(e.target.value)} /> Mr.</label>
                             </div>
                             {errUserObj.title &&
                             <div className='text-danger fn12'>Title is required</div>
@@ -502,7 +670,12 @@ export default function B2BUserProfile() {
                         <div className='row gx-3'>
                           <div className='col-md-4 mb-3'>
                             <label>Email<span className='text-danger'>*</span></label>
-                            <input type="text" className='form-control form-control-sm' value={userObj.email} onChange={(e) => emailChange(e.target.value)} autoComplete="off" />
+                            {editModal ?
+                              <div className='form-control form-control-sm bg-body-secondary'>{userObj.email}</div>
+                              :
+                              <input type="text" className='form-control form-control-sm' value={userObj.email} onChange={(e) => emailChange(e.target.value)} autoComplete="off" />
+                            }
+                            
                             {errUserObj.email &&
                             <div className='text-danger fn12'>Email is required</div>
                             }
@@ -514,7 +687,11 @@ export default function B2BUserProfile() {
                           <div className='col-md-4 mb-3'>
                             <label>Password<span className='text-danger'>*</span></label>
                             <div className="input-group input-group-sm">
-                              <input type={showPassword ? "text" : "password"} className="form-control border-end-0" placeholder="Enter New Password" value={userObj.password} onChange={(e) => passwordChange(e.target.value)} autoComplete="new-password" />
+                              {editModal ?
+                                <div className='form-control form-control-sm bg-body-secondary'>XXXXXXXXXX</div>
+                                :
+                                <input type={showPassword ? "text" : "password"} className="form-control border-end-0" placeholder="Enter New Password" value={userObj.password} onChange={(e) => passwordChange(e.target.value)} autoComplete="new-password" />
+                              }
                               <span className="input-group-text bg-white curpointer" onClick={()=>setShowPassword(!showPassword)}>
                                 {showPassword ?
                                   <FontAwesomeIcon icon={faEyeSlash} />:<FontAwesomeIcon icon={faEye} /> 
@@ -613,7 +790,6 @@ export default function B2BUserProfile() {
                             </div>
                           </div>
                         </div>
-
 
                         <table className="table table-bordered">
                           <tbody>
@@ -760,7 +936,7 @@ export default function B2BUserProfile() {
                         </table>
                       </div>
                       <div className='modal-footer'>
-                        <button type="button" className='btn btn-warning' onClick={doSubmit}> &nbsp; Submit &nbsp; </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal"> &nbsp; Close &nbsp; </button> 
+                        <button type="button" className='btn btn-warning' onClick={doSubmit} disabled={submitLoad}> &nbsp; {submitLoad ? 'Submitting' : 'Submit'}  &nbsp; </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={modalClose} onClick={clearFieldBtn}> &nbsp; Close &nbsp; </button> 
                       </div>
                     </div>
                   </div>

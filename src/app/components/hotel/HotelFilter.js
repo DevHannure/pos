@@ -366,7 +366,7 @@ export default function HotelFilter(props) {
                 <div className="cusScroll leftHeightPanel">
                   {getOrgHtlResult?.searchAnalytics?.searchAnalytics?.map((v,i) => (
                     <div key={i} className="form-check">
-                      <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value={v.supplierName} onChange={e => supplierChange(e)} checked={supplierFil.includes(v.supplierName)} /> {v.supplierName} <span className="float-end text-black-50 fn12">({getOrgHtlResult?.hotels?.b2BHotel?.filter(element => element.supplierName === v.supplierName)?.length})</span></label>
+                      <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value={v.supplierName?.toLowerCase()} onChange={e => supplierChange(e)} checked={supplierFil.includes(v.supplierName?.toLowerCase())} /> {v.supplierName} <span className="float-end text-black-50 fn12">({getOrgHtlResult?.hotels?.b2BHotel?.filter(element => element.supplierName?.toLowerCase() === v.supplierName?.toLowerCase())?.length})</span></label>
                     </div>
                   ))
                   }

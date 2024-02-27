@@ -60,7 +60,7 @@ export const hotelResult = createSlice({
         const fltrResSupplier = fltrResTrip.filter((o) => {
           let status = []
           if (obj.htlFilters.supplierFil.length > 0) {
-              status.push(obj.htlFilters.supplierFil.includes(o.supplierName))
+              status.push(obj.htlFilters.supplierFil.includes(o.supplierName?.toLowerCase()))
             } 
           let statusVar = status.includes(false)
           return !statusVar

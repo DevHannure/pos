@@ -1012,7 +1012,8 @@ export default function BBReservationTray() {
                                       </div>
 
                                       <div className='divCell'>
-                                        <button data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button>
+                                      <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button>
+                                        {/* <button data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button> */}
                                       </div>
 
                                       {s.ServiceCode === 17 &&

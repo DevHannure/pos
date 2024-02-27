@@ -5,8 +5,95 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {faPencil, faTrash, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import {useRouter, useSearchParams} from 'next/navigation';
+import AES from 'crypto-js/aes';
+import { enc } from 'crypto-js';
+import { useSelector, useDispatch } from "react-redux";
+import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
+import MasterService from '@/app/services/master.service';
 
 export default function B2BUserProfile() {
+  const _ = require("lodash");
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const searchparams = useSearchParams();
+  const search = searchparams.get('qry');
+  let decData = search ? enc.Base64.parse(search).toString(enc.Utf8) : null;
+  let bytes = decData ? AES.decrypt(decData, 'ekey').toString(enc.Utf8): null;
+  const qry = bytes ? JSON.parse(bytes) : null;
+
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const resListRes = useSelector((state) => state.masterListReducer?.custConsultantObj);
+
+  useEffect(() => {
+    if(userInfo?.user){
+      if(!resListRes) {
+        doCustomerConsultantsOnLoad();
+      }
+    }
+  }, [userInfo, resListRes]);
+
+  const [takeNumberObj, setTakeNumberObj] = useState(false);
+  const [pageSize, setPageSize] = useState(qry ? qry.Take : "10");
+  const [currentPageObj, setCurrentPageObj] = useState(false);
+  const [currentPage, setCurrentPage] = useState(qry ? qry.Skip : "0");
+  const [activePage, setActivePage] = useState(qry ? qry.ActivePage : 0);
+  const [pagesCount, setPagesCount] = useState(0);
+
+  useEffect(() => {
+    if(currentPageObj){
+      getCustomerConsultants()
+    }
+  }, [currentPageObj]);
+
+  useEffect(() => {
+    if(takeNumberObj){
+      getCustomerConsultants()
+    }
+  }, [pageSize]);
+  
+  const changePageSize = (value) => {
+    setTakeNumberObj(true);
+    setPageSize(value);
+  };
+
+  const handleClick = (inde) => {
+    setCurrentPageObj(true);
+    setCurrentPage(inde.toString())
+  };
+
+  useEffect(()=>{
+    if(resListRes?.length){
+      setPagesCount(Math.ceil(resListRes.length / Number(pageSize)))
+    }
+  },[resListRes]);
+
+  const getCustomerConsultants = () => {
+    let qry = {
+      "Skip": (pageSize * currentPage)?.toString(),
+      "Take": pageSize,
+      "ActivePage": Number(currentPage),
+    }
+    let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    dispatch(doCustConsultantOnLoad(null));
+    router.push(`/pages/user/b2bUserProfile?qry=${encData}`);
+  }
+
+  const doCustomerConsultantsOnLoad = async() => {
+    let customerObj = {
+      "Skip": (pageSize * currentPage)?.toString(),
+      "Take": pageSize,
+      "CustomerCode": userInfo?.user?.userCode,
+    }
+    const responseConsultList = MasterService.doGetCustomerConsultants(customerObj, userInfo.correlationId);
+    const resConsultList = await responseConsultList;
+    setActivePage(Number(currentPage));
+    setCurrentPageObj(false);
+    setCurrentPage("0");
+    dispatch(doCustConsultantOnLoad(resConsultList));
+  };
+
   const [userObj, setUserObj] = useState({
     title: "",
     firstName: "",
@@ -298,55 +385,62 @@ export default function B2BUserProfile() {
                 
               </div>
               <div className='p-2'>
-                <div className="table-responsive">
-                  <table className='table table-sm table-bordered'>
-                    <thead>
-                      <tr className="table-light">
-                        <th>S.No</th>
-                        <th>CONSULTANT NAME</th>
-                        <th>MOBILE</th>
-                        <th>TELEPHONE</th>
-                        <th>FAX</th>
-                        <th>EMAIL</th>
-                        <th className='text-center'>EDIT</th>
-                        <th className='text-center'>DELETE</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>1</td>
-                        <td>Mr. Test User</td>
-                        <td>0501234567</td>
-                        <td>0501234567</td>
-                        <td>1234</td>
-                        <td>umair@giinfotech.ae</td>
-                        <td className='text-center'><button className='btn btn-outline-primary btn-sm py-0'><FontAwesomeIcon icon={faPencil} /></button></td>
-                        <td className='text-center'><button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0'><FontAwesomeIcon icon={faTrash} /></button></td>
-                      </tr>
-                      <tr>
-                        <td>2</td>
-                        <td>Mr. Test User</td>
-                        <td>0501234567</td>
-                        <td>0501234567</td>
-                        <td>1234</td>
-                        <td>umair@giinfotech.ae</td>
-                        <td className='text-center'><button className='btn btn-outline-primary btn-sm py-0'><FontAwesomeIcon icon={faPencil} /></button></td>
-                        <td className='text-center'><button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0'><FontAwesomeIcon icon={faTrash} /></button></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              {resListRes ?
+                <>
+                {resListRes?.length ?
+                <>
+                  <div className="table-responsive">
+                    <table className='table table-sm table-bordered'>
+                      <thead>
+                        <tr className="table-light">
+                          <th>S.No</th>
+                          <th>CONSULTANT NAME</th>
+                          <th>MOBILE</th>
+                          <th>TELEPHONE</th>
+                          <th>FAX</th>
+                          <th>EMAIL</th>
+                          <th className='text-center'>EDIT</th>
+                          <th className='text-center'>DELETE</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {resListRes?.map((v, i) => (
+                          <tr key={i}>
+                            <td>{i+1}</td>
+                            <td>{v.ConsultantName}</td>
+                            <td>{v.Mobile}</td>
+                            <td>{v.Tel}</td>
+                            <td>{v.Fax}</td>
+                            <td>{v.Email}</td>
+                            <td className='text-center'><button className='btn btn-outline-primary btn-sm py-0'><FontAwesomeIcon icon={faPencil} /></button></td>
+                            <td className='text-center'><button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0'><FontAwesomeIcon icon={faTrash} /></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <nav className='my-2'>
+                    <ul className="pagination pagination-sm justify-content-end m-0">
+                      <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
+                      <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
+                      {[...Array(pagesCount)].map((page, i) => 
+                      <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
+                      )}
 
-                <nav className='my-2'>
-                  <ul className="pagination pagination-sm justify-content-end m-0">
-                    <li className="page-item"><button type="button" disabled className="page-link">First</button></li>
-                    <li className="page-item"><button type="button" disabled className="page-link">Previous</button></li>
-                    <li className="page-item"><button type="button" className="page-link active">1</button></li>
-                    <li className="page-item"><button type="button" disabled className="page-link">Next</button></li>
-                    <li className="page-item"><button type="button" disabled className="page-link">Last</button></li>
-                  </ul>
-                </nav>
-                
+                      <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
+                      <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
+                    </ul>
+                  </nav>
+                </>
+                :
+                <div className='text-danger fs-5 p-2 text-center my-3'>No Data Available</div>
+                }
+                </>
+                :
+                <div className='text-center blue py-5'>
+                  <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
+                </div>
+                }
 
                 <div className="modal fade" id="deleteUserModal" data-bs-backdrop="static" data-bs-keyboard="false">
                   <div className="modal-dialog modal-dialog-centered">
@@ -408,7 +502,7 @@ export default function B2BUserProfile() {
                         <div className='row gx-3'>
                           <div className='col-md-4 mb-3'>
                             <label>Email<span className='text-danger'>*</span></label>
-                            <input type="text" className='form-control form-control-sm' value={userObj.email} onChange={(e) => emailChange(e.target.value)} />
+                            <input type="text" className='form-control form-control-sm' value={userObj.email} onChange={(e) => emailChange(e.target.value)} autoComplete="off" />
                             {errUserObj.email &&
                             <div className='text-danger fn12'>Email is required</div>
                             }
@@ -420,7 +514,7 @@ export default function B2BUserProfile() {
                           <div className='col-md-4 mb-3'>
                             <label>Password<span className='text-danger'>*</span></label>
                             <div className="input-group input-group-sm">
-                              <input type={showPassword ? "text" : "password"} className="form-control border-end-0" placeholder="Enter New Password" value={userObj.password} onChange={(e) => passwordChange(e.target.value)} />
+                              <input type={showPassword ? "text" : "password"} className="form-control border-end-0" placeholder="Enter New Password" value={userObj.password} onChange={(e) => passwordChange(e.target.value)} autoComplete="new-password" />
                               <span className="input-group-text bg-white curpointer" onClick={()=>setShowPassword(!showPassword)}>
                                 {showPassword ?
                                   <FontAwesomeIcon icon={faEyeSlash} />:<FontAwesomeIcon icon={faEye} /> 

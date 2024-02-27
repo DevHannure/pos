@@ -11,6 +11,7 @@ import MasterService from '@/app/services/master.service';
 import { useSelector, useDispatch } from "react-redux";
 import { doUserInfo, doCustCreditDtls, doAppFeatures } from '@/app/store/commonStore/common';
 import { doReserveListOnLoad, doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
@@ -67,7 +68,7 @@ export default function Header() {
       .catch(err => console.error(err));
     if(resLocation?.ip_address){
       let req = {
-        UserCode: userInfos?.user?.userEmail,
+        UserCode: userInfos?.user?.customerConsultantEmail,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         DeviceInfo:{
           Url: process.env.NEXT_PUBLIC_DOMAINNAME,
@@ -101,13 +102,17 @@ export default function Header() {
     router.push('/pages/booking/b2bReservationTray');
     //router.push('/pages/booking/reservationTray');
   }
+
   const cartBtn = () => {
     dispatch(doCartReserveListOnLoad(null));
     router.push('/pages/booking/tempBookings');
   }
 
+  const b2bUserProfileBtn = () => {
+    dispatch(doCustConsultantOnLoad(null));
+    router.push('/pages/user/b2bUserProfile');
+  }
   
-
   const appFeaturesBtn = async() => {
     const responseAppFeatures = MasterService.doGetFeatures(data?.correlationId);
     const resAppFeatures = await responseAppFeatures;
@@ -138,11 +143,17 @@ export default function Header() {
                 <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li>
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
                 <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li>
+               {userInfos?.user?.isSubUser ? 
+                null 
+                : 
                 <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">More</Link>
                   <ul className="dropdown-menu dropdown-menu-end">
-                    <li><Link className="dropdown-item" href="/pages/user/b2bUserProfile">User List</Link></li>
+                    <li><button type="button" className="nav-link" onClick={b2bUserProfileBtn}>User Profile List</button></li>
                   </ul>
                 </li> 
+               }
+                
+
                 {/* <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
                 <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li> */}
                 {/* <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dashboard</Link>

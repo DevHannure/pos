@@ -51,7 +51,9 @@ export default function HotelFilter(props) {
   const [maxPrice, setMaxPrice] = useState(getOrgHtlResult?.hotels?.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2)));
   const [startRating, setStartRating] = useState([]);
   const [triptRating, setTriptRating] = useState([]);
+  const [supplierFil, setSupplierFil] = useState([]);
   const [srchTxt, setSrchTxt] = useState('');
+
 
   const ratingCount = getOrgHtlResult.hotels?.b2BHotel.map(rec => {
     return rec.starRating
@@ -72,7 +74,7 @@ export default function HotelFilter(props) {
     setTimeout(() => {
       filterSort();
     }, 100)
-  }, [priceFilter, startRating, triptRating, srchTxt]);
+  }, [priceFilter, startRating, triptRating, supplierFil, srchTxt]);
 
   const starChange = (e)=>{
     if(e.target.checked === true){
@@ -94,11 +96,22 @@ export default function HotelFilter(props) {
     }
   };
 
+  const supplierChange = (e)=>{
+    if(e.target.checked === true){
+      setSupplierFil([...supplierFil, e.target.value]);
+    }
+    else if(e.target.checked === false){
+      let freshArray = supplierFil.filter(val => val !== e.target.value);
+      setSupplierFil([...freshArray]);
+    }
+  };
+
   const filterSort = () =>{
     let htlFilterReqs = {
       priceFilter: priceFilter,
       startRating: startRating,
       triptRating: triptRating,
+      supplierFil: supplierFil,
       srchTxt: srchTxt
     }
     let htlFilterSortsA = { srtVal: '0'}
@@ -112,11 +125,13 @@ export default function HotelFilter(props) {
     setMaxPrice(getOrgHtlResult?.hotels.b2BHotel?.length && Number(parseFloat(getOrgHtlResult.hotels.b2BHotel[getOrgHtlResult.hotels.b2BHotel.length - 1].minPrice+0.01).toFixed(2)));
     setStartRating([]);
     setTriptRating([]);
+    setSupplierFil([]);
     setSrchTxt('');
     let htlFilters = {
       priceFilter: [],
       startRating: [],
       triptRating: [],
+      supplierFil:[],
       srchTxt:''
     }
     let htlFilterSorts = {srtVal: '0'}
@@ -345,43 +360,19 @@ export default function HotelFilter(props) {
               </div>
             </div>
 
-            {/* <div className="border-bottom pb-2 mb-2 pe-2">
+            <div className="border-bottom pb-2 mb-2 pe-2">
               <button className="accordion-button bg-transparent p-0 shadow-none fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#suppliers">Suppliers</button>
               <div id="suppliers" className="collapse show mt-1">
                 <div className="cusScroll leftHeightPanel">
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> ACCOR (Parent) <span className="float-end text-black-50 fn12">(3)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> ADDRESS Hotels & Resorts <span className="float-end text-black-50 fn12">(11)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> ALL - Accor Live Limitless <span className="float-end text-black-50 fn12">(7)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Balcony/Terrace <span className="float-end text-black-50 fn12">(261)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Bar(s) <span className="float-end text-black-50 fn12">(347)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Bathroom <span className="float-end text-black-50 fn12">(623)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Bathtub <span className="float-end text-black-50 fn12">(467)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Bicycle Cellar <span className="float-end text-black-50 fn12">(65)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Bicycle Hire <span className="float-end text-black-50 fn12">(48)</span></label>
-                  </div>
-                  <div className="form-check">
-                    <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" /> Bidet <span className="float-end text-black-50 fn12">(149)</span></label>
-                  </div>
+                  {getOrgHtlResult?.searchAnalytics?.searchAnalytics?.map((v,i) => (
+                    <div key={i} className="form-check">
+                      <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value={v.supplierName} onChange={e => supplierChange(e)} checked={supplierFil.includes(v.supplierName)} /> {v.supplierName} <span className="float-end text-black-50 fn12">({getOrgHtlResult?.hotels?.b2BHotel?.filter(element => element.supplierName === v.supplierName)?.length})</span></label>
+                    </div>
+                  ))
+                  }
                 </div>
               </div>
-            </div> */}
+            </div>
 
           </div>
         </div> 

@@ -8,6 +8,7 @@ const initialState = {
     priceFilter: [],
     startRating: [],
     triptRating: [],
+    supplierFil: [],
     srchTxt:''
   },
   htlFilterSort : {
@@ -55,6 +56,15 @@ export const hotelResult = createSlice({
           let statusVar = status.includes(false)
           return !statusVar
         });
+
+        const fltrResSupplier = fltrResTrip.filter((o) => {
+          let status = []
+          if (obj.htlFilters.supplierFil.length > 0) {
+              status.push(obj.htlFilters.supplierFil.includes(o.supplierName))
+            } 
+          let statusVar = status.includes(false)
+          return !statusVar
+        });
   
         if(obj.htlFilterSort.srtVal !== '0'){
           switch (obj.htlFilterSort.srtVal) {
@@ -87,13 +97,13 @@ export const hotelResult = createSlice({
         }
   
         if (obj.htlFilters.srchTxt !== '') {
-          const srtTxtRes = fltrResTrip.filter((pdt) => {
+          const srtTxtRes = fltrResSupplier.filter((pdt) => {
             return pdt.productName.toLowerCase().includes(obj.htlFilters.srchTxt.toLowerCase())
           })
           htlResult.hotels.b2BHotel = srtTxtRes
         }
         else{
-          htlResult.hotels.b2BHotel = fltrResTrip
+          htlResult.hotels.b2BHotel = fltrResSupplier
         }
         state.htlFltr = obj.htlFilters
         state.htlFilterSort = obj.htlFilterSort

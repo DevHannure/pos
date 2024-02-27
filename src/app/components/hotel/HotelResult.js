@@ -261,7 +261,7 @@ export default function HotelResult(props) {
       name: 'Suppliers',
       selector: row => row.item[0].shortCodeName,
       sortable: true,
-      omit: process.env.NEXT_PUBLIC_APPCODE==='1',
+      //omit: process.env.NEXT_PUBLIC_APPCODE==='1',
     },
     {
       name: 'Status',
@@ -480,7 +480,6 @@ export default function HotelResult(props) {
     return images;
   };
 
-  
   const [repriceQry, setRepriceQry] = useState('');
 
   const bookNow = async(e,val) => {
@@ -604,7 +603,7 @@ export default function HotelResult(props) {
                     <div className="ms-3 fw-semibold fs-6">{v.city}</div>
                   </div>
                 </div>
-                <div className="col-md-2 col-10"><div className="blue fw-semibold fs-6">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div></div>
+                <div className="col-md-2 col-10"><div className='fn12 mt-n2 text-danger'>Cheapest with {v.supplierName}</div><div className="blue fw-semibold fs-6">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div></div>
                 <div className="col-md-1 col-2 text-center">
                   <button className="btn btn-success py-0 togglePlus" type="button"></button>
                 </div>

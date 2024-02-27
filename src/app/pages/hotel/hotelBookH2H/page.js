@@ -341,7 +341,7 @@ export default function HotelItinerary() {
         "BookingNo": "0",
         "IsNewBooking": true,
         //"UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.userEmail : userInfo?.user?.userId,
-        "UserId": userInfo?.user?.userEmail,
+        "UserId": userInfo?.user?.customerConsultantEmail,
         //"UserId": userInfo?.user?.userId,
         "BookingDetail": {
           "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",

@@ -111,11 +111,15 @@ export default function HotelListing() {
     let resLocalHtlResult = await responseLocalHtlResult;
     let resHtlResult = await responseHtlResult;
     if(resLocalHtlResult && resHtlResult){
-      var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
       var xmlB2BHotel = resHtlResult?.hotels?.b2BHotel;
-      var finalB2BHotel = [...localB2BHotel, ...xmlB2BHotel];
-      finalB2BHotel.sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice))
-      resHtlResult.hotels.b2BHotel = finalB2BHotel
+      var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
+      var finalB2BHotel = [...xmlB2BHotel, ...localB2BHotel];
+      finalB2BHotel.sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice));
+      var xmlB2BSearchAnalytics = resHtlResult?.searchAnalytics?.searchAnalytics ? resHtlResult.searchAnalytics.searchAnalytics : [];
+      var localB2BSearchAnalytics = resLocalHtlResult?.searchAnalytics?.searchAnalytics ? resLocalHtlResult.searchAnalytics.searchAnalytics:[];
+      var finalB2BSearchAnalytics = [...xmlB2BSearchAnalytics, ...localB2BSearchAnalytics];
+      resHtlResult.searchAnalytics.searchAnalytics = finalB2BSearchAnalytics
+      resHtlResult.hotels.b2BHotel = finalB2BHotel;
     }
     dispatch(doHotelSearchOnLoad(resHtlResult))
   }

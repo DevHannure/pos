@@ -168,7 +168,6 @@ export default function BBReservationTray() {
       getReservations()
     }
   }, [pageSize]);
-
   
   const changePageSize = (value) => {
     setTakeNumberObj(true);
@@ -252,8 +251,8 @@ export default function BBReservationTray() {
       "CheckoutTo": dateType==='4' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "DuedateFrom": dateType==='5' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
       "DuedateTo": dateType==='5' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
-      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.userEmail : userInfo?.user?.userId,
-      "SubUserType": "0"
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+      "SubUserType": userInfo?.user?.isSubUser ? "1" : "0"
     }
     const responseReservList = ReservationtrayService.doGetReservations(reservationObj, userInfo.correlationId);
     const resReservList = await responseReservList;

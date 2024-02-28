@@ -17,7 +17,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
 import {useSelector, useDispatch } from "react-redux";
-import {doReserveListQry} from '@/app/store/reservationTrayStore/reservationTray';
+import {doReserveListQry, doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 
 function getUID() {return Date.now().toString(36);}
 // function JSONtoXML(obj) {
@@ -79,6 +79,7 @@ export default function ReservationTray() {
   useEffect(() => {
     if(bkngDetails && typeof bkngDetails !=='undefined' && bkngDetails != null && qry?.emailSend){
       dispatch(doReserveListQry(null));
+      dispatch(doReserveListOnLoad(null));
       sendReservationConfirmedEmailBtn();
     }
   }, [bkngDetails])

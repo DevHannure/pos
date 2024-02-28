@@ -13,7 +13,7 @@ import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import MasterService from '@/app/services/master.service';
-import { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
+import { doReserveListOnLoad, doReserveListQry, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
 import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -219,6 +219,7 @@ export default function BBReservationTray() {
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       dispatch(doReserveListOnLoad(null));
+      dispatch(doReserveListQry(`/pages/booking/b2bReservationTray?qry=${encData}`));
       router.push(`/pages/booking/b2bReservationTray?qry=${encData}`);
     // }
     // else{

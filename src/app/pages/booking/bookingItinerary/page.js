@@ -16,7 +16,8 @@ import MasterService from '@/app/services/master.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
-import {useSelector } from "react-redux";
+import {useSelector, useDispatch } from "react-redux";
+import {doReserveListQry} from '@/app/store/reservationTrayStore/reservationTray';
 
 function getUID() {return Date.now().toString(36);}
 // function JSONtoXML(obj) {
@@ -48,6 +49,7 @@ export default function ReservationTray() {
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
+  const dispatch = useDispatch();
 
   useEffect(()=>{
     window.scrollTo(0, 0);
@@ -76,7 +78,8 @@ export default function ReservationTray() {
 
   useEffect(() => {
     if(bkngDetails && typeof bkngDetails !=='undefined' && bkngDetails != null && qry?.emailSend){
-      sendReservationConfirmedEmailBtn()
+      dispatch(doReserveListQry(null));
+      sendReservationConfirmedEmailBtn();
     }
   }, [bkngDetails])
 

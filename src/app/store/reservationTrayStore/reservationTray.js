@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   reserveListObj:null,
+  reserveQryObj: null,
   subDtlsList:{},
   allCustomersObj:null,
   allSuppliersObj: null,
@@ -15,6 +16,10 @@ export const reservationList = createSlice({
   reducers: {
     doReserveListOnLoad: (state, action) => {
       state.reserveListObj = action.payload
+    },
+
+    doReserveListQry: (state, action) => {
+      state.reserveQryObj = action.payload
     },
 
     doSubDtlsList: (state, action) => {
@@ -41,6 +46,6 @@ export const reservationList = createSlice({
 
 });
 
-export const { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList, doCartReserveListOnLoad} = reservationList.actions
+export const { doReserveListOnLoad, doReserveListQry, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList, doCartReserveListOnLoad} = reservationList.actions
 
 export default reservationList.reducer;

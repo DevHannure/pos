@@ -3,16 +3,27 @@ const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
 const MasterService = {
 
-  doGetCountries: async function (correlationId) {
+  doGetCountries: async function () {
     try {
       const response = await fetch(`${baseUrl}/country/GetCountries`, {
         method: 'GET',
-        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl}
       });
       return response.json()
-    } catch (error) {console.log("error", error)}
+    } catch (error) {console.log("errorCountry", error)}
   },
 
+  doGetCitiesByCountryCode: async function (reqObj) {
+    try {
+      const response = await fetch(`${baseUrl}/city/GetCitiesByCountryCode`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl}
+      });
+      return response.json()
+    } catch (error) {console.log("errorCity", error)}
+  },
+  
   doGetRegionBasedOnCustomerNationality: async function (reqObj, correlationId) {
     try {
       const response = await fetch(`${baseUrl}/region/GetRegionBasedOnCustomerNationality`, {

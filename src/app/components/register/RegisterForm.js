@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AuthService from '@/app/services/auth.service';
 import Link from 'next/link';
+import MasterService from '@/app/services/master.service';
 
 export default function RegisterForm() {
   const [deviceName, setDeviceName] = useState('');
@@ -22,7 +23,16 @@ export default function RegisterForm() {
       .then(response => response.json())
       .then(data => (setIpAddress(data.ip_address), setIpLocation(data.city + ', ' + data.country)))
       .catch(err => console.error(err));
+      countryReq();
   }, []);
+
+  const [resCoutry, setResCoutry] = useState(null);
+  const [resCity, setResCity] = useState(null);
+ 
+  const countryReq = async()=> {
+    const responseCoutry = await MasterService.doGetCountries();
+    setResCoutry(responseCoutry);
+  }
 
   const toTitleCase = str => {
     let titleCase = str.toLowerCase().split(' ')
@@ -177,18 +187,24 @@ export default function RegisterForm() {
     setErrRegObj(errRegObjItems)   
   }
 
-  const countryChange = (value) => {
+  const countryChange = async(value) => {
+    setResCity(null);
     const regItems = {...regObj}
     const errRegObjItems = {...errRegObj}
     regItems.country = value
-
+    setRegObj(regItems)
     if(regItems.country === ""){
-      errRegObjItems.country = true
+      errRegObjItems.country = true;
     }
     else{
-      errRegObjItems.country = false
+      errRegObjItems.country = false;
+      let cityObj = {
+        "CountryCode": value
+      }
+      const responseCity = await MasterService.doGetCitiesByCountryCode(cityObj);
+      setResCity(responseCity);
     }
-    setRegObj(regItems)
+    
     setErrRegObj(errRegObjItems)   
   }
 
@@ -555,7 +571,9 @@ export default function RegisterForm() {
             <label>Country<span className='text-danger'>*</span></label>
             <select className="form-select form-select-sm" value={regObj.country} onChange={(e)=> countryChange(e.target.value)}>
               <option value="">Select</option>
-              <option value="1">Option 1</option>
+              {resCoutry?.map((n, index) => ( 
+                <option key={index} value={n.countryCode}>{n.nationality}</option>
+              ))}
             </select>
             {errRegObj.country &&
             <div className='text-danger m-1 fn12'>Country is required</div>
@@ -566,7 +584,9 @@ export default function RegisterForm() {
             <label>City<span className='text-danger'>*</span></label>
             <select className="form-select form-select-sm" value={regObj.city} onChange={(e)=> cityChange(e.target.value)}>
               <option value="">Select</option>
-              <option value="1">Option 1</option>
+              {resCity?.map((c, index) => ( 
+                <option key={index} value={c.cityCode}>{c.cityName}</option>
+              ))}
             </select>
             {errRegObj.city &&
             <div className='text-danger m-1 fn12'>City is required</div>

@@ -10,7 +10,7 @@ import AuthService from '@/app/services/auth.service';
 import MasterService from '@/app/services/master.service';
 import { useSelector, useDispatch } from "react-redux";
 import { doUserInfo, doCustCreditDtls, doAppFeatures } from '@/app/store/commonStore/common';
-import { doReserveListOnLoad, doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import { doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
 import { useRouter } from 'next/navigation';
 
@@ -21,6 +21,8 @@ export default function Header() {
   const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
   const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
+  const reservationLink = useSelector((state) => state.reservationListReducer?.reserveQryObj);
+  
   //console.log("session666", data)
   // console.log("session", status)
 
@@ -97,11 +99,11 @@ export default function Header() {
     dispatch(doCustCreditDtls(resCustCreditDtls));
   }
 
-  const reservationBtn = () => {
-    dispatch(doReserveListOnLoad(null));
-    router.push('/pages/booking/b2bReservationTray');
-    //router.push('/pages/booking/reservationTray');
-  }
+  // const reservationBtn = () => {
+  //   dispatch(doReserveListOnLoad(null));
+  //   router.push('/pages/booking/b2bReservationTray');
+  //   //router.push('/pages/booking/reservationTray');
+  // }
 
   const cartBtn = () => {
     dispatch(doCartReserveListOnLoad(null));
@@ -134,9 +136,7 @@ export default function Header() {
             <div className="ms-auto mt-2">
               <div className="text-end">
                 <ul className="deviderList">
-                  {customersCreditInfo &&
-                    <li className="text-capitalize">Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; <span className="text-success">Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; <span className="text-danger">Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  {userInfos?.user?.customerConsultantName?.toLowerCase()}, {userInfos?.user?.branchName?.toLowerCase()}</li>
-                  }
+                  <li className="text-capitalize">Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; <span className="text-success">Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; <span className="text-danger">Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  {userInfos?.user?.customerConsultantName?.toLowerCase()}, {userInfos?.user?.branchName?.toLowerCase()}</li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
               </div>
@@ -144,7 +144,8 @@ export default function Header() {
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
                 <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li>
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
-                <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li>
+                {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li> */}
+                <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/b2bReservationTray' }>My Bookings</Link></li>
                {userInfos?.user?.isSubUser ? 
                 null 
                 : 

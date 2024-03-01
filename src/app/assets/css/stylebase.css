@@ -251,7 +251,7 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:21px;display:none;}
 .active svg.stepTick{display:inline-block;}
 .loadingImg{background:#72bbfd;}
-.loadImg{animation:fa-spin 6s infinite linear;}
+.wonderImg{animation:fa-spin 6s infinite linear;}
 
 @keyframes fa-spin {
 0% {

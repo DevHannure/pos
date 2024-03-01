@@ -2,6 +2,7 @@
     --bs-body-font-size:0.9rem;
     --bs-danger-rgb:241, 8, 8;
     --bs-success-rgb:13,170, 68;
+    --bs-warning-rgb: 1, 70, 137;
 }
 hr{border-top-style: dashed;}
 label{margin-bottom:0.3rem;}
@@ -28,7 +29,22 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .disabledBtn{cursor:not-allowed !important; opacity: 0.65; pointer-events: auto !important;}
 .btn-light{--bs-btn-bg:#f2f2f2;}
 .btn-primary{--bs-btn-bg:#01468a; --bs-btn-border-color:#01468a; --bs-btn-disabled-bg:#01468a;--bs-btn-disabled-border-color:#01468a;}
-.btn-warning{--bs-btn-color:#FFF;--bs-btn-bg:#f19b0f; --bs-btn-border-color:#f19b0f;}
+/* .btn-warning{--bs-btn-color:#FFF;--bs-btn-bg:#f19b0f; --bs-btn-border-color:#f19b0f;} */
+.btn-warning{
+--bs-btn-color: #FFF;
+--bs-btn-bg: #014689;
+--bs-btn-border-color: #014689;
+--bs-btn-hover-color: #FFF;
+--bs-btn-hover-bg: #062f57;
+--bs-btn-hover-border-color: #062f57;
+--bs-btn-active-color: #FFF;
+--bs-btn-active-bg: #062f57;
+--bs-btn-active-border-color: #062f57;
+--bs-btn-disabled-color: #FFF;
+--bs-btn-disabled-bg: #014689;
+--bs-btn-disabled-border-color: #014689;
+}
+.pagination{--bs-pagination-active-bg:#014689;}
 .btn-success{--bs-btn-bg:#4cae4c}
 .sqBtn{border:1px solid #d9d9d9; border-radius:3px;  display:inline-block; height:24px; text-align:center; width:24px; font-size:13px; color: #648cc0; background: #FFF; padding:0px; text-align:center;}
 .form-control::placeholder {opacity:0.75; font-size:0.9rem;}
@@ -239,7 +255,6 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 
 .slow-spin {-webkit-animation:fa-spin 1s infinite linear; animation:fa-spin 1s infinite linear;}
 
-
 .printBg{background-color:#eef5f6; padding-bottom:20px;}
 .stepNav{background:#f8f9fa; margin:0 0 15px;border-bottom:none;}
 .stepNav .nav-link{padding:.8rem;color:#FFF; position:relative; text-align:center; font-weight:500; font-size:16px;border:none;flex-basis:0;flex-grow:1;display:flex;}
@@ -252,6 +267,8 @@ svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:2
 .active svg.stepTick{display:inline-block;}
 .loadingImg{background:#72bbfd;}
 .wonderImg{animation:fa-spin 6s infinite linear;}
+[data-column-id="priceCell"].rdt_TableCell {background-color:#edf4fb; font-size:1rem; font-weight:600;}
+[data-column-id="buttonCell"].rdt_TableCell {padding-top:0px; padding-bottom:0px;}
 
 @keyframes fa-spin {
 0% {

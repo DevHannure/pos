@@ -1,9 +1,8 @@
-:root{
+/* :root{
     --bs-warning-rgb: 1, 70, 137;
-  
-}
+} */
 .xys{color:red;}
-[data-column-id="priceCell"].rdt_TableCell {background-color:#edf4fb; font-size:1rem; font-weight:600;}
+/* [data-column-id="priceCell"].rdt_TableCell {background-color:#edf4fb; font-size:1rem; font-weight:600;}
 [data-column-id="buttonCell"].rdt_TableCell {padding-top:0px; padding-bottom:0px;}
 .btn-warning{
     --bs-btn-color: #FFF;
@@ -19,4 +18,4 @@
     --bs-btn-disabled-bg: #014689;
     --bs-btn-disabled-border-color: #014689;
 }
-.pagination{--bs-pagination-active-bg:#014689;}
+.pagination{--bs-pagination-active-bg:#014689;} */

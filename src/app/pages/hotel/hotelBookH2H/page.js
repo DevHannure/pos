@@ -997,7 +997,6 @@ export default function HotelItinerary() {
                     <div className="fn13"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren): {qry.childrenAges} yrs]</span>:null}</div>
                   </div>
                   ))}
-                  
                 </div>
 
                 <div className="bg-white rounded shadow-sm border">

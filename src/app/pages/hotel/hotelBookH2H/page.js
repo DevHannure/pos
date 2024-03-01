@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
 import {format, addDays, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
-import { doHotelReprice } from '@/app/store/hotelStore/hotel';
+import {doHotelReprice, doHotelDtl} from '@/app/store/hotelStore/hotel';
 import BookingItinerarySub from '@/app/components/booking/bookingItinerarySub/BookingItinerarySub'
 
 export default function HotelItinerary() {
@@ -32,6 +32,7 @@ export default function HotelItinerary() {
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
+  const htlDetails = useSelector((state) => state.hotelResultReducer?.htlDtls);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
 
   const [room1, setRoom1] = useState(null);
@@ -67,7 +68,6 @@ export default function HotelItinerary() {
   useEffect(()=> {
     if(resReprice && resReprice.hotel && room1){
       exchangerateBtn(resReprice?.hotel?.rooms?.room[0]?.price?.supplierCurrency);
-      htlDetail(qry.systemId);
       setSupplierNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierNet, 0)).toFixed(2));
       setNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.net, 0)).toFixed(2));
       setMarkUpAmount(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.markUpValue, 0)).toFixed(2));
@@ -133,21 +133,20 @@ export default function HotelItinerary() {
     setRoom3(resHtlRatetype3)
   }
 
-  const [htlDetails, setHtlDetails] = useState(null);
-  const htlDetail = async(htlCode) => {
-    let htlObj = {
-      "systemId": htlCode
-    }
-    const responseHtlDtl = HotelService.doHotelDetail(htlObj, qry.correlationId);
-    const resHtlDtl = await responseHtlDtl;
-    setHtlDetails(resHtlDtl);
-  }
-
   const doHtlRepriceLoad = async() =>{
     dispatch(doHotelReprice(null));
+    dispatch(doHotelDtl(null));
+    let htlObj = {
+      "systemId": qry.systemId
+    };
     const responseReprice = HotelService.doReprice(qry);
+    const responseHtlDtl = HotelService.doHotelDetail(htlObj, qry.correlationId);
     const resRepriceText = await responseReprice;
+    const resHtlDtl = await responseHtlDtl;
+
     dispatch(doHotelReprice(resRepriceText));
+    dispatch(doHotelDtl(resHtlDtl));
+
     if(!resRepriceText?.isBookable){
       soldOutBtn.current?.click();
     }

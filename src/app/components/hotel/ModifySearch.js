@@ -94,6 +94,24 @@ const multiValueContainer = ({ selectProps, data }) => {
 };
 
 export default function ModifySearch(props) {
+  // const users = [
+  //   { id:1, name: 'Nicole', age: 33 },
+  //   { id:2, name: 'Chris', age: 31 },
+  //   { id:3, name: 'Yaatree', age: 32 },
+  //   { id:1, name: 'Sanne', age: 31 },
+  // ];
+
+  // const arr = users.reduce((result,obj)=> {
+  // let row = result.find(x=>x.id===obj.id)
+  // if(!row){ 
+  //   result.push({...obj})
+  // }  
+  // else if(row.age > obj.age){
+  //   Object.assign(row,obj)
+  // }    
+  // return result
+  // },[]);
+  // console.log(arr)
 
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const router = useRouter();

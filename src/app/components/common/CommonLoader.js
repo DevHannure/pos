@@ -1,3 +1,4 @@
+import Image from 'next/image';
 export default function CommonLoader(props) {
   return (
   <>
@@ -15,9 +16,7 @@ export default function CommonLoader(props) {
   }
 
   {props.Type==="2" &&
-  <div>
-    
-  </div>
+  <div></div>
   }
   </>
   )

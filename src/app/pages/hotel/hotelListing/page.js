@@ -13,6 +13,8 @@ import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import CommonLoader from '@/app/components/common/CommonLoader';
 import { useSession } from "next-auth/react";
+import {format} from 'date-fns';
+import Image from 'next/image';
 
 export default function HotelListing() {
   const { status } = useSession();
@@ -114,6 +116,17 @@ export default function HotelListing() {
       var xmlB2BHotel = resHtlResult?.hotels?.b2BHotel;
       var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
       var finalB2BHotel = [...xmlB2BHotel, ...localB2BHotel];
+      // const arr = finalB2BHotel.reduce((result,obj)=> {
+      // let row = result.find(x=>x.systemId===obj.systemId)
+      // if(!row){ 
+      //   result.push({...obj})
+      // }  
+      // else if(row.minPrice > obj.minPrice){
+      //   Object.assign(row,obj)
+      // }    
+      // return result
+      // },[]);
+      // console.log(arr)
       finalB2BHotel.sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice));
       var xmlB2BSearchAnalytics = resHtlResult?.searchAnalytics?.searchAnalytics ? resHtlResult.searchAnalytics.searchAnalytics : [];
       var localB2BSearchAnalytics = resLocalHtlResult?.searchAnalytics?.searchAnalytics ? resLocalHtlResult.searchAnalytics.searchAnalytics:[];
@@ -143,14 +156,12 @@ export default function HotelListing() {
           <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           {status ==='authenticated' &&
             <div className="mainloader1">
-              {/* <p className="d-block fs-5 text-white">Waiting Time 30:00</p> */}
-              <div className="loader1">
-                <p>Loading&nbsp;</p>
-                <div className="dumwave align-middle">
-                  <div className="anim anim1" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
-                  <div className="anim anim2" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
-                  <div className="anim anim3" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+              <div className="loadingImg text-center rounded">
+              <div className='bg-black bg-opacity-50 text-white p-2 rounded-top'>{qry?.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(qry?.chkIn), 'dd MMM yyyy')} to {format(new Date(qry?.chkOut), 'dd MMM yyyy')}</div>
+                <div className='py-3'>
+                  <Image src='/images/loadImg.png' alt="loading" width={290} height={290} priority={true} className='loadImg' />
                 </div>
+                
               </div>
             </div>
           }

@@ -238,16 +238,7 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .mainlogo{width:auto; height:auto; }
 
 .slow-spin {-webkit-animation:fa-spin 1s infinite linear; animation:fa-spin 1s infinite linear;}
-@keyframes fa-spin {
-0% {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
-}
-100% {
-    -webkit-transform: rotate(359deg);
-    transform: rotate(359deg);
-}
-}
+
 
 .printBg{background-color:#eef5f6; padding-bottom:20px;}
 .stepNav{background:#f8f9fa; margin:0 0 15px;border-bottom:none;}
@@ -259,6 +250,19 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 .stepNav .nav-link .stepTxt{position:relative; z-index:11;margin:0 auto; align-self:center;}
 svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:21px;display:none;}
 .active svg.stepTick{display:inline-block;}
+.loadingImg{background:#72bbfd;}
+.loadImg{animation:fa-spin 6s infinite linear;}
+
+@keyframes fa-spin {
+0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+}
+100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+}
+}
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

@@ -8,7 +8,7 @@ import 'react-image-gallery/styles/css/image-gallery.css';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import DataTable from 'react-data-table-component';
 import { useSelector, useDispatch } from "react-redux";
-import { doFilterSort, doRoomDtls, doHotelReprice } from '@/app/store/hotelStore/hotel';
+import { doFilterSort, doRoomDtls, doHotelReprice, doHotelDtl } from '@/app/store/hotelStore/hotel';
 import HotelService from '@/app/services/hotel.service';
 import {format, addDays} from 'date-fns';
 import AES from 'crypto-js/aes';
@@ -212,27 +212,6 @@ export default function HotelResult(props) {
       name: 'Room Types',
       selector: row => row.item[0].roomTypeName,
       cell: (row) => (
-        // <div>
-        //   {row.map((r, i) =>
-        //   <React.Fragment key={i}>
-        //   {row.length===1 ?
-        //     <div className='text-capitalize'>{r.roomTypeName.toLowerCase()}</div>
-        //     :
-        //     <div className='text-capitalize mt-1'><span className='fw-semibold'>Room {r.roomIdentifier}</span>: {r.roomTypeName.toLowerCase()}</div>
-        //   }
-        //   <div>
-        //     {/* {row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0)} */}
-
-        //     {r.isPriceBreakupAvailable &&
-        //     <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(r, row.reduce((totalRc, rc) => totalRc + ','+ rc.rateCode, 0))}>Fare Breakup</a> 
-        //     }
-        //     {r.isCancellationPolicyAvailable &&
-        //     <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(r)}>Cancellation Policy</a></>
-        //     }
-        //   </div>
-        //   </React.Fragment>
-        //   )}
-        // </div>
         <div>
           <div className='text-capitalize fw-semibold'>{row.item[0].roomTypeName.toLowerCase()}</div>
           {row.item[0].isPriceBreakupAvailable &&
@@ -493,6 +472,7 @@ export default function HotelResult(props) {
     e.nativeEvent.target.innerHTML = 'Processing...';
     //e.currentTarget.innerHTML = 'Processing...';
     dispatch(doHotelReprice(null));
+    dispatch(doHotelDtl(null));
     let rc = val.item.reduce((totalRc, rc) => totalRc + 'Seprator'+ rc.rateCode, 0);
     let rateKeyArray = rc.split('Seprator').slice(1);
     let repriceObj = {
@@ -518,11 +498,18 @@ export default function HotelResult(props) {
       "systemId": systemIdVar,
       "rateType": val.item[0].rateType,
       "sessionId": supplierNameVar==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
-    }
+    };
+
+    let htlObj = {
+      "systemId": systemIdVar
+    };
 
     const responseReprice = HotelService.doReprice(repriceObj);
+    const responseHtlDtl = HotelService.doHotelDetail(htlObj, qry.correlationId);
     const resReprice = await responseReprice;
+    const resHtlDtl = await responseHtlDtl;
     dispatch(doHotelReprice(resReprice));
+    dispatch(doHotelDtl(resHtlDtl));
     let encJson = AES.encrypt(JSON.stringify(repriceObj), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     setRepriceQry(encData)
@@ -544,7 +531,7 @@ export default function HotelResult(props) {
   }
 
   const nonRfndContinue = () => {
-    router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`, {scroll:false});
+    router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`);
   }
   
   return (
@@ -644,7 +631,7 @@ export default function HotelResult(props) {
                     {roomData?.[v.productCode] ?
                     <>
                     {roomData?.[v.productCode]?.length ?
-                    <div className="mt-n1"><DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll'  /></div>
+                    <div className="mt-n1"><DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  /></div>
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>
                     }

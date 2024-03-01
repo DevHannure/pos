@@ -109,20 +109,46 @@ export default function DummyHotelResult(props) {
         </div>
 
         {Array.apply(null, { length: 50 }).map((e, i) => (
-        <div key={i} className='htlboxcol rounded p-2 mb-3 shadow-sm'>
-          <div className='row gx-2 collapsed'>
-            <div className="col-md-5 placeholder-glow"><span className="placeholder col-7"></span></div>
-            <div className='col-md-4'>
-              <div className="d-flex">
-                <div>
-                  <FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" />
+        // <div key={i} className='htlboxcol rounded p-2 mb-3 shadow-sm'>
+        //   <div className='row gx-2 collapsed'>
+        //     <div className="col-md-5 placeholder-glow"><span className="placeholder col-7"></span></div>
+        //     <div className='col-md-4'>
+        //       <div className="d-flex">
+        //         <div>
+        //           <FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" />
+        //         </div>
+        //         <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} priority={true} /></div>
+        //         <div className="ms-3 fw-semibold fs-6">{qry?.destination[0]?.cityName}</div>
+        //       </div>
+        //     </div>
+        //     <div className='col-md-2 col-10 placeholder-glow'><span className="placeholder col-7"></span></div>
+        //     <div className='col-md-1 col-2 text-center'><button className="btn btn-success py-0 togglePlus" type="button"></button></div>
+        //   </div>
+        // </div>
+        <div key={i} className="htlboxcol rounded mb-3 shadow-sm">
+          <div className="row gx-2 collapsed">
+            <div className="col-lg-7">
+              <div className="d-flex flex-row">
+                <div className="hotelImg rounded-start bg-light"></div>
+                <div className="ps-3 pt-2 placeholder-glow">
+                  <span className="placeholder col-5"></span>
+                  <span className='placeholder col-5'></span>
                 </div>
-                <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} priority={true} /></div>
-                <div className="ms-3 fw-semibold fs-6">{qry?.destination[0]?.cityName}</div>
               </div>
             </div>
-            <div className='col-md-2 col-10 placeholder-glow'><span className="placeholder col-7"></span></div>
-            <div className='col-md-1 col-2 text-center'><button className="btn btn-success py-0 togglePlus" type="button"></button></div>
+            <div className="col-lg-3 align-self-center">
+              <div className="d-flex px-lg-0 px-1">
+                <div><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /></div>
+                <div className="ms-1"><Image src="https://tripadvisor.com/img/cdsi/img2/ratings/traveler/0.0-13387-4.png" alt="rating" width={100} height={17} priority={true} /></div>
+              </div>
+              <div className="mt-1 px-lg-0 px-1 bg-light">&nbsp;</div>
+            </div>
+            <div className="col-lg-2 align-self-center">
+              <div className='d-flex d-lg-block justify-content-between text-center px-lg-0 px-1 placeholder-glow'>
+                <span className="placeholder col-6"></span>
+                <span className="placeholder col-4"></span>
+              </div>
+            </div>
           </div>
         </div>
         ))

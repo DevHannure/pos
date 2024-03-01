@@ -1,7 +1,7 @@
 "use client"
 import React, {useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleXmark, faStar, faFilter, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faCircleXmark, faStar, faFilter, faMagnifyingGlass, faLocationDot} from "@fortawesome/free-solid-svg-icons";
 import { faCalendarDays, faTimesCircle, faMap} from "@fortawesome/free-regular-svg-icons";
 import { ToastContainer, toast } from 'react-toastify';
 import DatePicker from "react-datepicker";
@@ -183,7 +183,18 @@ export default function ModifySearch(props) {
   const [optionsHtl, setOptionsHtl] = useState(props.HtlReq ? props.HtlReq.hotelName : []);
   const [selectedHotel, setSelectedHotel] = useState(optionsHtl);
   const typeaheadHtlRef = useRef(null);
- 
+
+  const [nationOptions, setNationOptions] =  useState([]);
+  useEffect(() => {
+    if(nationalityOptions){
+      let itemNation = []
+      nationalityOptions?.map(n =>{
+        itemNation.push({label: n.nationality, value: n.countryCode+'-'+n.isoCode});
+      });
+      setNationOptions(itemNation);
+    }
+  }, [nationalityOptions]);
+  
   const handleSearch = async (query) => {
     setIsLoading(true);
     setOptions([]);
@@ -347,17 +358,17 @@ export default function ModifySearch(props) {
                   <div className="col-6 mb-2">
                       <label>&nbsp;Adults</label>
                       <div className="btn-group btn-group-sm w-100">
-                        <button type="button" className="btn btn-primary fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('adtMinus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].adtVal===1}>-</button>
+                        <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('adtMinus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].adtVal===1}>-</button>
                         <button type="button" className="btn btn-outline-primary fw-semibold fs-6 py-0 text-dark" disabled>{rmCountArr[rmCntIndx].adtVal}</button>
-                        <button type="button" className="btn btn-primary fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('adtPlus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].adtVal===9}>+</button>
+                        <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('adtPlus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].adtVal===9}>+</button>
                       </div>
                   </div>
                   <div className="col-6 mb-2">
                       <label>&nbsp;Children</label>
                       <div className="btn-group btn-group-sm w-100">
-                        <button type="button" className="btn btn-primary fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('chdMinus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].chdVal===0}>-</button>
+                        <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('chdMinus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].chdVal===0}>-</button>
                         <button type="button" className="btn btn-outline-primary fw-semibold fs-6 py-0 text-dark" disabled>{rmCountArr[rmCntIndx].chdVal}</button>
-                        <button type="button" className="btn btn-primary fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('chdPlus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].chdVal===4}>+</button>
+                        <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('chdPlus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].chdVal===4}>+</button>
                       </div>
                   </div>
                   {!rmCntVal.chdAgesArr[0].disabled &&
@@ -609,7 +620,7 @@ export default function ModifySearch(props) {
           <div className="row gx-3">
             <div className="col-lg-4 tFourInput bor-b">
               <div className="mb-3">
-                <label>Destination</label>
+                <label><FontAwesomeIcon icon={faLocationDot} className="fn12" /> Destination</label>
                 <AsyncTypeahead 
                   //defaultSelected={selectedDestination}
                   filterBy={() => true}
@@ -624,9 +635,8 @@ export default function ModifySearch(props) {
                   //selected={selectedDestination}
                   highlightOnlyResult={true}
                   defaultSelected={options.slice(0, 1)}
-                  //onChange={setSelectedDestination}
                   onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
-                  clearButton={true}
+                  //clearButton={true}
                 />
                
               </div>
@@ -635,13 +645,13 @@ export default function ModifySearch(props) {
               <div className="mb-3">
                 <div className="row gx-3">
                   <div className="col">
-                    <label>Check In - Check Out Date</label>
-                    <div className="calendarIconMain">
-                      <DatePicker className="form-control" calendarClassName="yearwiseCal"  dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
+                    <label><FontAwesomeIcon icon={faCalendarDays} className="fn12" /> Check In - Check Out Date</label>
+                    <div>
+                      <DatePicker className="form-control" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
                       startDate={chkIn} endDate={chkOut}
                       onChange={dateChange} 
-                      showMonthDropdown showYearDropdown withPortal />
-                      <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" />
+                      showMonthDropdown showYearDropdown />
+                      {/* <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" /> */}
                     </div>
                   </div>
                   <div className="col-auto nightCol">
@@ -668,11 +678,22 @@ export default function ModifySearch(props) {
             <div className="col-lg-3 tFourInput">
               <div className="mb-3">
                 <label>Nationality</label>
-                <select className="form-select" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
+                {nationOptions?.length > 0 &&
+                <Select
+                  id="nationality"
+                  instanceId="nationality"
+                  closeMenuOnSelect={true}
+                  onChange={(e) => setCusNationality(e.value)}
+                  options={nationOptions} 
+                  defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                  //defaultValue={{ label: "Select Dept", value: '91-IN' }}
+                  classNamePrefix="tFourMulti" />
+                }
+                {/* <select className="form-select" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
                   {nationalityOptions?.map((n, index) => ( 
                     <option key={index} value={n.countryCode+'-'+n.isoCode}>{n.nationality}</option>
                   ))}
-                </select>
+                </select> */}
               </div>
             </div>
             <div className="col-lg-3 tFourInput bor-s">
@@ -710,7 +731,7 @@ export default function ModifySearch(props) {
                   highlightOnlyResult={true}
                   defaultSelected={optionsHtl.slice(0, 1)}
                   onChange={setSelectedHotel}
-                  clearButton={true}
+                  //clearButton={true}
                   ref={typeaheadHtlRef}
                   useCache={false}
                 />
@@ -757,7 +778,7 @@ export default function ModifySearch(props) {
         : 
         <>
           <div className="fn15 d-lg-flex justify-content-between align-items-center d-none">
-            <div className="py-1">{props.HtlReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.HtlReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.HtlReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.HtlReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.HtlReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-warning btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}>Modify Search</button></div>
+            <div className="py-1">{props.HtlReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.HtlReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.HtlReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.HtlReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.HtlReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-light btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6 blue" /> Modify Search</button></div>
             <div className="py-2">
               <button type="button" className="btn btn-light btn-sm"><FontAwesomeIcon icon={faMap} className="fs-6 blue" /> Map View</button>
             </div>
@@ -792,7 +813,7 @@ export default function ModifySearch(props) {
                     highlightOnlyResult={true}
                     defaultSelected={options.slice(0, 1)}
                     onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
-                    clearButton={true}
+                    //clearButton={true}
                     inputProps={{className: 'border-0 fn14'}}
                   />
                 </div>
@@ -802,12 +823,11 @@ export default function ModifySearch(props) {
                   <div className="row gx-3">
                     <div className="col">
                       <label>Check In - Check Out Date</label>
-                      <div className="calendarIconMain">
-                        <DatePicker className="form-control border-0 fn14" calendarClassName="yearwiseCal"  dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
+                      <div>
+                        <DatePicker className="form-control border-0 fn14" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
                         startDate={chkIn} endDate={chkOut}
                         onChange={dateChange} 
-                        showMonthDropdown showYearDropdown withPortal />
-                        <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" />
+                        showMonthDropdown showYearDropdown />
                       </div>
                     </div>
                     <div className="col-auto nightCol">
@@ -834,11 +854,22 @@ export default function ModifySearch(props) {
               <div className="col-lg-3">
                 <div className="mb-3">
                   <label>Nationality</label>
-                  <select className="form-select border-0 fn14" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
+                  {nationOptions?.length > 0 &&
+                    <Select
+                      id="nationality"
+                      instanceId="nationality"
+                      closeMenuOnSelect={true}
+                      onChange={(e) => setCusNationality(e.value)}
+                      options={nationOptions} 
+                      defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                      //defaultValue={{ label: "Select Dept", value: '91-IN' }}
+                      classNamePrefix="tFourMulti" />
+                  }
+                  {/* <select className="form-select border-0 fn14" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
                     {nationalityOptions?.map((n, index) => ( 
                       <option key={index} value={n.countryCode+'-'+n.isoCode}>{n.nationality}</option>
                     ))}
-                  </select>
+                  </select> */}
                 </div>
               </div>
               <div className="col-lg-3">
@@ -876,7 +907,7 @@ export default function ModifySearch(props) {
                     highlightOnlyResult={true}
                     defaultSelected={optionsHtl.slice(0, 1)}
                     onChange={setSelectedHotel}
-                    clearButton={true}
+                    //clearButton={true}
                     ref={typeaheadHtlRef}
                     useCache={false}
                     inputProps={{className: 'border-0 fn14'}}
@@ -892,7 +923,7 @@ export default function ModifySearch(props) {
             <div className="row gx-3">
               <div className="col text-end">
                 <div className="mb-3 mt-lg-0 mt-3">
-                  <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" onClick={srchHtl}>Search</button>
+                  <button type="button" className="btn btn-light px-4 py-2 fw-semibold" onClick={srchHtl}>Search</button>
                 </div>
               </div>
             </div>

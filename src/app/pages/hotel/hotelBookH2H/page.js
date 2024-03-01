@@ -4,6 +4,8 @@ import React, {useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
+import {faCheckCircle} from "@fortawesome/free-regular-svg-icons";
+
 import { useSearchParams  } from 'next/navigation';
 import HotelService from '@/app/services/hotel.service';
 import ReservationService from '@/app/services/reservation.service';
@@ -16,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import {format, addDays, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import { doHotelReprice } from '@/app/store/hotelStore/hotel';
+import BookingItinerarySub from '@/app/components/booking/bookingItinerarySub/BookingItinerarySub'
 
 export default function HotelItinerary() {
   const noRefundBtn = useRef(null);
@@ -444,7 +447,156 @@ export default function HotelItinerary() {
     }
   }
 
-  const [otherInfo, setOtherInfo] = useState(false);
+  
+  const [bookItneryReq, setBookItneryReq] = useState(null);
+
+  const [activeItem, setActiveItem] = useState('paxColumn');
+  const setActive = async(menuItem) => {
+    if(isActive('paymentColumn')){
+      return false
+    }
+    else if(menuItem==="reviewColumn"){
+      let allowMe = validate();
+      if(allowMe){
+        setActiveItem(menuItem);
+        window.scrollTo(0, 0);
+      }
+      else{
+        return false
+      }
+    }
+    else if(menuItem==="paymentColumn"){
+      let allowMe = validate();
+      if(allowMe){
+        setBookBtnLoad(true);
+        let leadPaxName = ''
+        roomObj.forEach((v) => {
+          v.PaxDetails.forEach((val) => {
+            if (val.LeadPax) {
+              leadPaxName = val.PaxTitle +'. '+ val.PaxFullName
+            }
+          })
+        })
+
+        let dueDateFinal = '';
+        if(dueDateStart[0]){
+          dueDateFinal = format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + (dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00');
+        }
+        
+        let addServiceCartObj = {
+          "BookingNo": "0",
+          "IsNewBooking": true,
+          "UserId": userInfo?.user?.customerConsultantEmail,
+          "BookingDetail": {
+            "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
+            "BookingStatus": "-1",
+            "BookingCurrencyCode": userInfo?.user?.currencyCode,
+            "WalkinUserCode": "",
+            "BranchCode": userInfo?.user?.branchCode,
+            "RegionCode": qry?.regionID,
+            "CustomerCode": userInfo?.user?.userCode,
+            "CustomerConsultantCode": userInfo?.user?.customerConsultantCode,
+            "CompanyConsultantCode": userInfo?.user?.companyConsultantCode,
+            "CustomerRemarks": custRemarks,
+            "LeadPassengerName": leadPaxName,
+            "IsPackage": "",
+            "IsFromNewSystem": true
+          },
+          "Service": {
+            "ServiceCode": "1",
+            "ServiceType": "0",
+            "ServiceStatus": "0",
+            "ProductCode": qry?.hotelCode,
+            "ProductName": htlDetails?.hotelDetail?.hotelName,
+            "PeriodCode": resReprice.hotel?.rooms?.room[0]?.periodCode ? resReprice.hotel.rooms.room[0].periodCode : "",
+            "RoomTypeCode": resReprice.hotel?.rooms?.room[0]?.roomTypeCode ? resReprice.hotel?.rooms?.room[0]?.roomTypeCode : "0",
+            "RoomTypeName": resReprice.hotel?.rooms?.room[0]?.roomName,
+            "RateBasisCode": resReprice.hotel?.rooms?.room[0]?.rateBasisCode ? resReprice.hotel?.rooms?.room[0]?.rateBasisCode : "0",
+            "RateBasisName": resReprice.hotel?.rooms?.room[0]?.meal,
+            "BookedFrom": qry?.chkIn,
+            "BookedTo": qry?.chkOut,
+            "BookedNights": differenceInDays(new Date(qry?.chkOut),new Date(qry?.chkIn)).toString(),
+            "PickupDetails": 'https://static.giinfotech.ae/medianew'+htlDetails?.hotelDetail?.imageUrl,
+            "DropoffDetails": "",
+            "ProductAddress": htlDetails?.hotelDetail?.address1+', '+htlDetails?.hotelDetail?.address2,
+            "ProductSystemId": qry?.systemId,
+            "ProductCityCode": htlDetails?.hotelDetail?.destinationCode,
+            "ProductCityName": htlDetails?.hotelDetail?.cityName,
+            "ProductCountryISOCode": htlDetails?.hotelDetail?.countryCode,
+            "ProductCountryName": htlDetails?.hotelDetail?.countryName,
+            "ProductContactNo": htlDetails?.hotelDetail?.contactTelephone,
+            "ProductFaxNo": htlDetails?.hotelDetail?.contactFax,
+            "ProductWebSite": htlDetails?.hotelDetail?.contactWebUrl,
+            "ClassificationCode": htlDetails?.hotelDetail?.rating,
+            "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
+            "SupplierCode": qry.supplierCode,
+            "ReservationCode": qry?.supplierName==="LOCAL" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+            "SupplierConsultantCode": qry?.supplierName==="LOCAL" ? "138" : "111", //For ADS 111 & Local 138
+            "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
+            "SupplierRemarks": "",
+            "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
+            "SupplierExchangeRate":exchangeRate.toString(),
+            "SupplierPayableAmount": Number(supplierNet).toFixed(2).toString(),
+            "Rate":  Number(supplierNet * exchangeRate).toFixed(2).toString(),
+            "PayableAmount": Number(supplierNet * exchangeRate).toFixed(2).toString(),
+            "MarkupAmount": Number(markUpAmount*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "NetAmount": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "SellPrice": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "GSANet": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "VATInput": "0",
+            "VATInputAmount": resReprice.hotel?.rooms?.vatInputAmount ? Number(resReprice.hotel?.rooms?.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+            "VATOutput": "0",
+            "VATOutputAmount": resReprice.hotel?.rooms?.vatOutputAmount ? Number(resReprice.hotel?.rooms?.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+            "DueDate": dueDateFinal,
+            "UniqueId": qry.uniqueId,
+            "CustomerCurrencyCode": userInfo?.user?.currencyCode,
+            "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "CustomerNetAmount": Number(net).toFixed(2).toString(),
+            "XMLSupplierCode": qry?.supplierName==="LOCAL" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
+            "XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
+            "XMLSessionId": qry?.sessionId,
+            "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
+            "NoOfAdults": Number(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
+            "NoOfChildren": Number(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
+            "NoOfInfants": "0",
+            "AgesOfChildren": qry.childrenAges,
+            "VoucherLink": "",
+            "FairName": resReprice.hotel?.rooms?.room[0]?.fairName ? resReprice.hotel?.rooms?.room[0]?.fairName : "",
+            "NRF": qry.rateType==='Refundable' || qry.rateType==='refundable' ? false : true,
+            "IsHidden": false,
+            "ServiceDetails": roomObj,
+          }
+        }
+        const responseAddCart = ReservationService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
+        const resAddCart = await responseAddCart;
+        if(resAddCart > 0){
+          setBookItneryReq({
+            "bcode": resAddCart.toString(),
+            "correlationId": qry.correlationId
+          })
+          setBookBtnLoad(false);
+          setActiveItem(menuItem);
+        }
+        else{
+          toast.error("Something Wrong !!",{theme: "colored"});
+          setBookBtnLoad(false);
+        }
+      }
+      else{
+        return false
+      }
+    }
+    else{
+      setActiveItem(menuItem);
+      window.scrollTo(0, 0);
+    }
+  }
+
+  const isActive = (menuItem) => {
+    return activeItem === menuItem
+  }
+
+  const [otherInfo, setOtherInfo] = useState(true);
 
   return (
     <MainLayout>
@@ -457,90 +609,243 @@ export default function HotelItinerary() {
             <>
             <div className="row">
               <div className="mb-2 col-lg-8 order-lg-1 order-2">
-                <div className="bg-white rounded shadow-sm p-2">
-                  <div className='mb-3'>
-                    <div className='bg-warning bg-opacity-10 px-2 py-1 fs-5 mb-2'><strong>Guest Details</strong></div>
-  
-                    {roomObj?.map((r, roomIndex) => (
-                      <div key={roomIndex}>
-                        <div className='fs-6 blue'><strong>Room {roomIndex+1}</strong></div>
-                        <hr className='my-1' />
-                        <div className='row gx-3 py-2 mb-1'>
-                          <div className='col-10'><strong>Pax Details</strong></div>
-                          <div className='col-2'><strong>Select Lead Guest</strong></div>
-                        </div>
-
-                        {r.PaxDetails.map((p, paxIndex) => ( 
-                          <div key={paxIndex} className='row gx-3 mb-1'>
-                            <div className='col-10'>
-                              <div className='row gx-3'>
-                                <div className='col-md-2 mb-3'>
-                                  {p.PaxType==='A' ?
-                                  <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
-                                    <option value="Mr">Mr</option>
-                                    <option value="Mrs">Mrs</option>
-                                    <option value="Miss">Ms</option>
-                                  </select>
-                                  :
-                                  <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
-                                    <option value="Master">Master</option>
-                                    <option value="Miss">Miss</option>
-                                  </select>
-                                  }
-                                </div>
-                                
-                                <div className='col-md-5 mb-3'>
-                                  <input type='text' className='form-control form-control-sm' placeholder='First Name' value={r.PaxDetails[paxIndex].FName} onChange={(e) => firstNameChange(roomIndex, paxIndex, e.target.value)} id={'firstName'+roomIndex+paxIndex} />
-                                </div>
-                                <div className='col-md-5 mb-3'>
-                                  <input type='text' className='form-control form-control-sm' placeholder='Last Name' value={r.PaxDetails[paxIndex].LName} onChange={(e) => lastNameChange(roomIndex, paxIndex, e.target.value)} id={'lastName'+roomIndex+paxIndex} />
-                                </div>
-                              </div>
-                              
-                            </div>
-                            <div className='col-2 mt-2 text-center'>
-                              {p.PaxType==='A' ?
-                                <input type="radio" checked={r.PaxDetails[paxIndex].LeadPax} onChange={(e) => leadPaxChange(roomIndex, paxIndex)} />
-                                :
-                                ''
-                              }
-                            </div>
-                          </div>
-                        ))}
-                        
-                      </div>
-                    ))}
+                <div className="bg-white rounded shadow-sm p-2 pb-3">
+                  <h2 className="fs-4 text-warning mb-4">Book in 3 Simple Steps</h2>
+                  <div className="nav nav-tabs nav-justified stepNav">
+                    <button onClick={() => setActive('paxColumn')} className={"btn btn-link nav-link " + (isActive('reviewColumn') || isActive('paymentColumn') ? 'active' : '')}>
+                      <span className="stepTxt">
+                        <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
+                        &nbsp;Pax Information
+                      </span>
+                    </button>
+                    <button onClick={() => setActive('reviewColumn')} className={"btn btn-link nav-link " + (!isActive('reviewColumn') && !isActive('paymentColumn') ? 'disabled' : '' || isActive('paymentColumn') ? 'active':'')}>
+                      <span className="stepTxt">
+                        <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
+                        &nbsp;Review Booking
+                      </span>
+                    </button>
+                    <button onClick={() => setActive('paymentColumn')} className={"btn btn-link nav-link " + (!isActive('paymentColumn') ? 'disabled' : '')}>
+                      <span className="stepTxt">
+                        <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
+                        &nbsp;Payment
+                      </span>
+                    </button>
                   </div>
 
-                  <div className='mb-5'>
+                  {isActive('paxColumn') &&
+                    <div>
+                      {/* <div className='bg-warning bg-opacity-10 px-2 py-1 fs-5 mb-2'><strong>Guest Details</strong></div> */}
+                      <div className='mb-3'>
+                        {roomObj?.map((r, roomIndex) => (
+                          <div key={roomIndex}>
+                            <div className='fs-6 blue'><strong>Room {roomIndex+1}</strong></div>
+                            <hr className='my-1' />
+                            <div className='row gx-3 py-2 mb-1'>
+                              <div className='col-10'><strong>Pax Details</strong></div>
+                              <div className='col-2'><strong>Select Lead Guest</strong></div>
+                            </div>
 
-                    <div className={"bg-warning bg-opacity-10 px-2 py-1 fs-5 mb-2 d-flex justify-content-between curpointer "+ (otherInfo ? '':'collapsed')} aria-expanded={otherInfo} onClick={()=> setOtherInfo(!otherInfo)}>
-                      <strong>Cancellation Policy</strong>
-                      <button className="btn btn-success py-0 togglePlus" type="button"></button>    
+                            {r.PaxDetails.map((p, paxIndex) => ( 
+                              <div key={paxIndex} className='row gx-3 mb-1'>
+                                <div className='col-10'>
+                                  <div className='row gx-3'>
+                                    <div className='col-md-2 mb-3'>
+                                      {p.PaxType==='A' ?
+                                      <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
+                                        <option value="Mr">Mr</option>
+                                        <option value="Mrs">Mrs</option>
+                                        <option value="Miss">Ms</option>
+                                      </select>
+                                      :
+                                      <select className='form-select form-select-sm' value={r.PaxDetails[paxIndex].PaxTitle} onChange={event => titleChange(roomIndex, paxIndex, event.target.value)}>
+                                        <option value="Master">Master</option>
+                                        <option value="Miss">Miss</option>
+                                      </select>
+                                      }
+                                    </div>
+                                    
+                                    <div className='col-md-5 mb-3'>
+                                      <input type='text' className='form-control form-control-sm' placeholder='First Name' value={r.PaxDetails[paxIndex].FName} onChange={(e) => firstNameChange(roomIndex, paxIndex, e.target.value)} id={'firstName'+roomIndex+paxIndex} />
+                                    </div>
+                                    <div className='col-md-5 mb-3'>
+                                      <input type='text' className='form-control form-control-sm' placeholder='Last Name' value={r.PaxDetails[paxIndex].LName} onChange={(e) => lastNameChange(roomIndex, paxIndex, e.target.value)} id={'lastName'+roomIndex+paxIndex} />
+                                    </div>
+                                  </div>
+                                  
+                                </div>
+                                <div className='col-2 mt-2 text-center'>
+                                  {p.PaxType==='A' ?
+                                    <input type="radio" checked={r.PaxDetails[paxIndex].LeadPax} onChange={(e) => leadPaxChange(roomIndex, paxIndex)} />
+                                    :
+                                    ''
+                                  }
+                                </div>
+                              </div>
+                            ))}
+                            
+                          </div>
+                        ))}
+                      </div>
+                    
+                      <div className='mb-4'>     
+                        <div className='fs-6 mt-2'><strong>Rate Remark</strong></div>
+                        <hr className='my-1' />
+                        <div>
+                          <label>Special Requests (optional)</label>
+                          <textarea className="form-control form-control-sm" rows="3" value={custRemarks} onChange={(e) => setCustRemarks(e.target.value)}></textarea>
+                        </div>
+                      </div>   
+
+                      <div className='d-flex justify-content-between'>
+                        <button className='btn btn-light px-4 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button>
+                        <button className='btn btn-warning px-4 py-2' onClick={() => setActive('reviewColumn')}>Next <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button>
+                      </div>
                     </div>
-                    {otherInfo &&
-                      <>
-                      <div className='fs-6'><strong>Hotel Remarks</strong></div>
-                      <hr className='my-1' />
-                      <div className='fn12'>
-                        {resReprice.hotel?.rooms?.room &&
-                          <>
+                  }
+
+                  {isActive('reviewColumn') &&
+                    <div>
+                      <div className='mb-3'>
+                        {roomObj?.map((r, roomIndex) => (
+                          <div key={roomIndex}>
+                            <div className='fs-6 blue'><strong>Room {roomIndex+1}</strong></div>
+                            <hr className='my-1' />
+                            <div className='row gx-3 py-2 mb-1'>
+                              <div className='col-10'><strong>Pax Details</strong></div>
+                              <div className='col-2'><strong>Select Lead Guest</strong></div>
+                            </div>
+
+                            {r.PaxDetails.map((p, paxIndex) => ( 
+                              <div key={paxIndex} className='row gx-3 mb-1'>
+                                <div className='col-10'>
+                                  <div className='row gx-3'>
+                                    <div className='col-md-2 mb-3'>
+                                      {p.PaxType==='A' ?
+                                      <div className='form-select form-select-sm bg-body-secondary'>{r.PaxDetails[paxIndex].PaxTitle}</div>
+                                      :
+                                      <div className='form-select form-select-sm bg-body-secondary'>{r.PaxDetails[paxIndex].PaxTitle}</div>
+                                      }
+                                    </div>
+                                    
+                                    <div className='col-md-5 mb-3'>
+                                      <div className='form-control form-control-sm bg-body-secondary'>{r.PaxDetails[paxIndex].FName}</div>
+                                    </div>
+                                    <div className='col-md-5 mb-3'>
+                                      <div className='form-control form-control-sm bg-body-secondary'>{r.PaxDetails[paxIndex].LName}</div>
+                                    </div>
+                                  </div>
+                                  
+                                </div>
+                                <div className='col-2 mt-2 text-center'>
+                                  {p.PaxType==='A' ?
+                                    <input type="radio" checked={r.PaxDetails[paxIndex].LeadPax} disabled />
+                                    :
+                                    ''
+                                  }
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    
+                      <div className='mb-4'>    
+                        {custRemarks ? 
                           <div>
-                            {resReprice.hotel.rooms.room.map((v, i) => ( 
-                            <div key={i}>
-                              {v.policies?.policy?.map((k, i) => (
-                              <React.Fragment key={i}>
-                                {k?.type ==='CAN' &&
+                            <label>Special Requests (optional)</label>
+                            <div className="form-control form-control-sm bg-body-secondary">{custRemarks}</div>
+                          </div>
+                          : null
+                        }
+                      </div> 
+                      <div className='d-flex justify-content-between'>
+                        <button className='btn btn-light px-4 py-2' onClick={() => setActive('paxColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button>
+                        <button className='btn btn-warning px-4 py-2' onClick={() => setActive('paymentColumn')} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Next'} <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button>
+                      </div>  
+                    </div>
+                  }
+                  
+                  {isActive('paymentColumn') &&
+                    <div>
+                    <BookingItinerarySub qry={bookItneryReq} />
+                    </div>
+                  }
+
+                  <div>
+
+                  </div>
+
+                </div>
+                   
+                {/* <button className='btn btn-warning' onClick={bookBtn} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Continue'} <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button> */}
+
+                <div className='bg-white rounded shadow-sm p-2 mt-4'>
+
+                  <div className={"bg-warning bg-opacity-75 text-white rounded px-3 py-1 fs-5 mb-2 d-flex justify-content-between curpointer "+ (otherInfo ? '':'collapsed')} aria-expanded={otherInfo} onClick={()=> setOtherInfo(!otherInfo)}>
+                    <strong>Cancellation Policy</strong>
+                    <button className="btn btn-outline-light py-0 togglePlus" type="button"></button>    
+                  </div>
+                  {otherInfo &&
+                    <>
+                    <div className='fs-6'><strong>Hotel Remarks</strong></div>
+                    <hr className='my-1' />
+                    <div className='fn12'>
+                      {resReprice.hotel?.rooms?.room &&
+                        <>
+                        <div>
+                          {resReprice.hotel.rooms.room.map((v, i) => ( 
+                          <div key={i}>
+                            {v.policies?.policy?.map((k, i) => (
+                            <React.Fragment key={i}>
+                              {k?.type ==='CAN' &&
+                              <>
+                              <div className="blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                              {/* {k?.condition?.map((m, i) => (
+                                <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                                &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                                &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' }</div>
+                              ))} */}
+                              <table className="table table-sm table-bordered fn12 fw-semibold">
+                                <thead>
+                                  <tr className="table-light blue">
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th className="text-center">Percentage(%)</th>
+                                    <th className="text-center">Nights</th>
+                                    <th>Fixed</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <>
+                                  {k?.condition?.map((m, i) => (
+                                  <tr key={i}>
+                                    <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                    <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                    <td className="text-center">{m.percentage}</td>
+                                    <td className="text-center">{m.nights}</td>
+                                    <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                  </tr>
+                                  ))}
+                                  </>
+                                </tbody>
+                              </table>
+                              <div className="fn12 mb-2"><strong>Supplier Information:</strong> {k?.textCondition}</div>
+                              </>
+                              }
+
+                              {k?.type ==='MOD' && 
+                              <>
+                                {k?.condition &&
                                 <>
-                                <div className="blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                <div className="blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
                                 {/* {k?.condition?.map((m, i) => (
                                   <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                                   &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' }</div>
+                                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
                                 ))} */}
-                                <table className="table table-sm table-bordered fn12 mb-1">
+                                <table className="table table-sm table-bordered fn12 fw-semibold">
                                   <thead>
-                                    <tr className="table-light">
+                                    <tr className="table-light blue">
                                       <th>From</th>
                                       <th>To</th>
                                       <th className="text-center">Percentage(%)</th>
@@ -562,121 +867,71 @@ export default function HotelItinerary() {
                                     </>
                                   </tbody>
                                 </table>
-                                <div className="fn12 mb-2"><strong>Supplier Information:</strong> {k?.textCondition}</div>
                                 </>
                                 }
-            
-                                {k?.type ==='MOD' && 
-                                <>
-                                  {k?.condition &&
-                                  <>
-                                  <div className="blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                  {/* {k?.condition?.map((m, i) => (
-                                    <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                                    &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                                    &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
-                                  ))} */}
-                                  <table className="table table-sm table-bordered fn12 mb-1">
-                                    <thead>
-                                      <tr className="table-light">
-                                        <th>From</th>
-                                        <th>To</th>
-                                        <th className="text-center">Percentage(%)</th>
-                                        <th className="text-center">Nights</th>
-                                        <th>Fixed</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <>
-                                      {k?.condition?.map((m, i) => (
-                                      <tr key={i}>
-                                        <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                                        <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
-                                        <td className="text-center">{m.percentage}</td>
-                                        <td className="text-center">{m.nights}</td>
-                                        <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
-                                      </tr>
-                                      ))}
-                                      </>
-                                    </tbody>
-                                  </table>
-                                  </>
-                                  }
-                                </>
-                                }
-            
-                                {k?.type ==='NOS' && 
-                                <>
-                                  {k?.condition &&
-                                  <>
-                                  <div className="blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                  {/* {k?.condition?.map((m, i) => (
-                                    <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                                    &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                                    &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
-                                  ))} */}
-                                  <table className="table table-sm table-bordered fn12 mb-1">
-                                    <thead>
-                                      <tr className="table-light">
-                                        <th>From</th>
-                                        <th>To</th>
-                                        <th className="text-center">Percentage(%)</th>
-                                        <th className="text-center">Nights</th>
-                                        <th>Fixed</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <>
-                                      {k?.condition?.map((m, i) => (
-                                      <tr key={i}>
-                                        <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                                        <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
-                                        <td className="text-center">{m.percentage}</td>
-                                        <td className="text-center">{m.nights}</td>
-                                        <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
-                                      </tr>
-                                      ))}
-                                      </>
-                                    </tbody>
-                                  </table>
-                                  </>
-                                  }
-                                </>
-                                }
-                              </React.Fragment> 
-                              ))}
+                              </>
+                              }
 
-                              <div className='fn12'>
-                              {v.remarks?.remark?.map((p, i) => ( 
-                                <div key={i} className="mt-1">
-                                  <div className='fw-semibold text-capitalize'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
-                                  <div className='pre-line' dangerouslySetInnerHTML={{ __html:p?.text}}></div>
-                                </div>
-                              ))}
-                              </div>
-                              <hr />
-                            </div>
+                              {k?.type ==='NOS' && 
+                              <>
+                                {k?.condition &&
+                                <>
+                                <div className="blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                                {/* {k?.condition?.map((m, i) => (
+                                  <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
+                                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
+                                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
+                                ))} */}
+                                <table className="table table-sm table-bordered fn12 fw-semibold">
+                                  <thead>
+                                    <tr className="table-light blue">
+                                      <th>From</th>
+                                      <th>To</th>
+                                      <th className="text-center">Percentage(%)</th>
+                                      <th className="text-center">Nights</th>
+                                      <th>Fixed</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <>
+                                    {k?.condition?.map((m, i) => (
+                                    <tr key={i}>
+                                      <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                      <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                      <td className="text-center">{m.percentage}</td>
+                                      <td className="text-center">{m.nights}</td>
+                                      <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                    </tr>
+                                    ))}
+                                    </>
+                                  </tbody>
+                                </table>
+                                </>
+                                }
+                              </>
+                              }
+                            </React.Fragment> 
                             ))}
+
+                            <div className='fn12'>
+                            {v.remarks?.remark?.map((p, i) => ( 
+                              <div key={i} className="mt-1">
+                                <div className='fw-semibold text-capitalize'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
+                                <div className='pre-line' dangerouslySetInnerHTML={{ __html:p?.text}}></div>
+                              </div>
+                            ))}
+                            </div>
+                            <hr />
                           </div>
-                          </>
-                        }
-                      </div>
-                      </>
-                    }
-
-                    <div className='fs-6 mt-2'><strong>Rate Remark</strong></div>
-                    <hr className='my-1' />
-                    <div>
-                      <label>Special Requests (optional)</label>
-                      <textarea className="form-control form-control-sm" rows="3" value={custRemarks} onChange={(e) => setCustRemarks(e.target.value)}></textarea>
+                          ))}
+                        </div>
+                        </>
+                      }
                     </div>
+                    </>
+                  }
                   </div>
 
-                  <div className='d-flex justify-content-between'>
-                    <button className='btn btn-light' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn12' /> Back</button>
-                    <button className='btn btn-warning' onClick={bookBtn} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Continue'} <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button>
-                  </div>
-                </div>
               </div>
               
               <div className="mb-2 col-lg-4 order-lg-2 order-1">
@@ -706,14 +961,32 @@ export default function HotelItinerary() {
                     </div>
                   </div>  
                   <hr className='my-2' />
-                  <div><strong className='blue'>No. of Rooms:</strong> {qry.paxInfoArr.length}</div>
+                  
+                  <table className="table table-sm table-bordered fw-semibold">
+                    <thead>
+                      <tr className="table-light">
+                        <th><strong className='blue'>No. of Rooms:</strong></th>
+                        <th><strong className='blue'>Check-in:</strong></th>
+                        <th><strong className='blue'>Check-out:</strong></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>{qry.paxInfoArr.length}</td>
+                        <td>{format(new Date(qry.chkIn), 'eee, dd MMM yyyy')}</td>
+                        <td>{format(new Date(qry.chkOut), 'eee, dd MMM yyyy')}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  {/* <div><strong className='blue'>No. of Rooms:</strong> {qry.paxInfoArr.length}</div>
                   <div><strong className='blue'>Check-in:</strong> {format(new Date(qry.chkIn), 'eee, dd MMM yyyy')}</div>
-                  <div><strong className='blue'>Check-out:</strong> {format(new Date(qry.chkOut), 'eee, dd MMM yyyy')}</div>
+                  <div><strong className='blue'>Check-out:</strong> {format(new Date(qry.chkOut), 'eee, dd MMM yyyy')}</div> */}
                   
                   {resReprice.hotel?.rooms?.room.map((v, i) => ( 
-                  <div key={i}>
+                  <div key={i} className='fw-semibold'>
                     <hr className='my-2' />
-                    <div className='text-capitalize fn13'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} 
+                    <div className='text-capitalize fn13 mb-1'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} with {v.meal?.toLowerCase()}
                       {qry.rateType==='Refundable' || qry.rateType==='refundable' ?
                       <span className="refund"> (Refundable)</span>:''
                       }
@@ -722,10 +995,10 @@ export default function HotelItinerary() {
                       }
                     </div>
                     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
-                    <div className='fn12'><strong >Supplier:</strong> {v.shortCode}</div>
+                    <div className='fn12 mb-1'><strong >Supplier:</strong> {v.shortCode}</div>
                     }
                     
-                    <div className="fn12"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren)</span>:null}</div>
+                    <div className="fn13"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren): {qry.childrenAges} yrs]</span>:null}</div>
                   </div>
                   ))}
                   

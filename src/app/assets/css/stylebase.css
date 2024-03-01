@@ -105,25 +105,34 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .calendarIconMain{position: relative;}
 .calendarIcon{position:absolute; top:50%; transform:translateY(-50%); right:10px;}
 
+.react-datepicker{box-shadow:0 50px 100px rgba(50,50,93,.1), 0 15px 35px rgba(50,50,93,.15), 0 5px 15px rgba(0,0,0,.1);}
+
 .react-datepicker-wrapper{width:100%;}
 .react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle::after{border-bottom-color:#FFF !important;}
-.react-datepicker__navigation{background-color:#f19b0f !important;}
+.react-datepicker__navigation{background-color:#014689 !important;}
 .react-datepicker__navigation-icon::before{border-color:#FFF !important;top:40% !important;}
 .react-datepicker__navigation-icon--previous::before{right:-3px !important;}
 .react-datepicker__navigation-icon--next::before{left:-3px !important;} 
 .react-datepicker__day--outside-month {visibility:hidden !important; color:transparent !important; pointer-events:none; background-color:transparent !important;}
 .react-datepicker__header{background-color: #FFF !important; padding:12px 0 !important;}
 .react-datepicker__day--keyboard-selected, .react-datepicker__month-text--keyboard-selected, .react-datepicker__quarter-text--keyboard-selected, .react-datepicker__year-text--keyboard-selected{background-color:transparent !important;}
-.react-datepicker__day--selected, .react-datepicker__day--in-selecting-range, .react-datepicker__day--in-range, .react-datepicker__month-text--selected, .react-datepicker__month-text--in-selecting-range, .react-datepicker__month-text--in-range, .react-datepicker__quarter-text--selected, .react-datepicker__quarter-text--in-selecting-range, .react-datepicker__quarter-text--in-range, .react-datepicker__year-text--selected, .react-datepicker__year-text--in-selecting-range, .react-datepicker__year-text--in-range{background-color:#ffd14e !important; color:#000 !important;}
+.react-datepicker__day--selected, .react-datepicker__day--in-selecting-range, .react-datepicker__day--in-range, .react-datepicker__month-text--selected, .react-datepicker__month-text--in-selecting-range, .react-datepicker__month-text--in-range, .react-datepicker__quarter-text--selected, .react-datepicker__quarter-text--in-selecting-range, .react-datepicker__quarter-text--in-range, .react-datepicker__year-text--selected, .react-datepicker__year-text--in-selecting-range, .react-datepicker__year-text--in-range{background-color:#014689 !important; color:#FFF !important;}
 .react-datepicker__day--in-range, .react-datepicker__day--in-selecting-range{border-radius:0px !important;}
 .react-datepicker__day--range-start, .react-datepicker__day--selecting-range-start{border-top-left-radius:6px !important; border-bottom-left-radius:6px !important;}
 .react-datepicker__day--range-end, .react-datepicker__day--selecting-range-end{border-top-right-radius:6px !important; border-bottom-right-radius:6px !important;}
 .react-datepicker{font-size:0.72rem !important;}
 .react-datepicker__day-name, .react-datepicker__day, .react-datepicker__time-name{margin:0.095rem !important;}
 .react-datepicker-popper{z-index:11 !important;}
+.react-datepicker__year-dropdown, .react-datepicker__month-dropdown, .react-datepicker__month-year-dropdown{background-color:#FFF !important;}
+.react-datepicker__month-dropdown{width:80% !important;left:0px !important;}
+.react-datepicker__year-dropdown{width:65% !important;left:inherit !important; right:0px !important;}
 
 .yearwiseCal .react-datepicker__month-container{padding-top:30px;}
-.yearwiseCal .react-datepicker__header__dropdown{position: absolute; top:-15px; left:0px; right:0px;}
+.yearwiseCal .react-datepicker__header__dropdown{position: absolute; top:-18px; right:-20%; transform:translateX(20%); z-index:1;}
+.react-datepicker__month-dropdown-container--scroll, .react-datepicker__year-dropdown-container--scroll{margin:0 5px !important;}
+.react-datepicker__year-read-view, .react-datepicker__month-read-view, .react-datepicker__month-year-read-view{border:1px solid #ccc !important;padding:2px 20px 2px 10px!important;border-radius:4px!important; visibility:inherit !important;}
+.react-datepicker__month-read-view--down-arrow, .react-datepicker__year-read-view--down-arrow{right:4px !important; top:5px !important; border-width:2px 2px 0 0 !important;width:7px !important; height:7px !important;}
+.react-datepicker__current-month, .react-datepicker-time__header, .react-datepicker-year-header{font-size:1.2rem !important;}
 
 .paxMainBtn{display:flex;}
 .paxMainBtn:after{margin-left: auto; margin-top:11px;}
@@ -153,7 +162,7 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 
 .rightResult {padding-left:1rem; padding-top:1rem; width:100%;}
 .htlboxcol{border:1px solid #f0f3f5; border-radius:6px;}
-.hotelImg{position: relative; width:140px; height:95px; overflow: hidden;}
+.hotelImg{position: relative; min-width:140px; height:90px; overflow: hidden;}
 .hotelImg img{height:auto;}
 .collapsed .togglePlus:before{content:'+'; font-weight:bold;}
 div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
@@ -241,6 +250,15 @@ div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 }
 
 .printBg{background-color:#eef5f6; padding-bottom:20px;}
+.stepNav{background:#f8f9fa; margin:0 0 15px;border-bottom:none;}
+.stepNav .nav-link{padding:.8rem;color:#FFF; position:relative; text-align:center; font-weight:500; font-size:16px;border:none;flex-basis:0;flex-grow:1;display:flex;}
+.stepNav .nav-link.disabled:after,.stepNav .nav-link.active:after{background:#f8f9fa;box-shadow:none;}
+.stepNav .nav-link:after{content:'';position:absolute; left:0px; right:0px; top:0px; bottom:0px; background:#014689;box-shadow:0 8px 26px -10px rgba(255, 193, 7, 0.56), 0 4px 25px 0px rgba(0, 0, 0, 0.12), 0 4px 10px -5px rgba(255, 193, 7, 0.2);}
+.stepNav .nav-link.disabled{background:inherit;color:#000;}
+.stepNav .nav-link.active{color:#32a953;}
+.stepNav .nav-link .stepTxt{position:relative; z-index:11;margin:0 auto; align-self:center;}
+svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:21px;display:none;}
+.active svg.stepTick{display:inline-block;}
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

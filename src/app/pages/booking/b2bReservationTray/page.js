@@ -690,7 +690,7 @@ export default function BBReservationTray() {
                   <div className='col-lg-4 mb-2 align-self-end'>
                     <button type='button' className='btn btn-sm btn-warning' onClick={() => getReservations()}>Filter Bookings</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-light' onClick={() => resetFilter()}>Reset</button> &nbsp;
-                    <button type='button' className='btn btn-sm btn-primary' onClick={() => getExcel()}>Export To Excel</button>
+                    <button type='button' className='btn btn-sm btn-outline-primary' onClick={() => getExcel()}>Export To Excel</button>
                   </div>
                 </div>
 
@@ -762,8 +762,9 @@ export default function BBReservationTray() {
                         {resListRes?.bookings?.map((e, i) => (
                         <React.Fragment key={i}>
                         <div className='divRow'>
-                          {/* <div className='divCell collapsed' data-bs-toggle="collapse" data-bs-target={`#detailsub${i}`}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div> */}
+
                           <div className={"divCell curpointer " + (dtlCollapse==='#detailsub'+e.bookingNo ? 'colOpen':'collapsed')} aria-expanded={dtlCollapse==='#detailsub'+e.bookingNo} onClick={() => detailsBtn(`#detailsub${e.bookingNo}`,e.bookingNo)}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
+                          
                           <div className='divCell'>{e.bookingNo}</div>
                           <div className='divCell'>{e.bookingDate}</div>
                           <div className='divCell'>{e.passengerName}</div>

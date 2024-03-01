@@ -234,7 +234,7 @@ export default function HotelResult(props) {
         //   )}
         // </div>
         <div>
-          <div className='text-capitalize'>{row.item[0].roomTypeName.toLowerCase()}</div>
+          <div className='text-capitalize fw-semibold'>{row.item[0].roomTypeName.toLowerCase()}</div>
           {row.item[0].isPriceBreakupAvailable &&
           <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(row.item[0], row.item.reduce((totalRc, rc) => totalRc + 'Seprator'+ rc.rateCode, 0))}>Fare Breakup</a> 
           }
@@ -251,7 +251,7 @@ export default function HotelResult(props) {
       selector: row => row.item[0].roomBasisName,
       cell: (row) => (
         <div>
-          <div className='text-capitalize'>{row.item[0].roomBasisName.toLowerCase()}</div>
+          <div className='text-capitalize fw-semibold'>{row.item[0].roomBasisName.toLowerCase()}</div>
           <div className='fn10 text-success text-capitalize'>{row.item[0].promotions?.[0]?.text?.toLowerCase()}</div>
         </div>
       ),
@@ -261,21 +261,23 @@ export default function HotelResult(props) {
       name: 'Suppliers',
       selector: row => row.item[0].shortCodeName,
       sortable: true,
+      cell:(row)=>(
+        <div className="fw-semibold">{row.item[0].shortCodeName}</div>
+      )
       //omit: process.env.NEXT_PUBLIC_APPCODE==='1',
     },
     {
       name: 'Status',
       selector: row => row.item[0].availabilityStatus,
       cell: (row) => (
-        <div>
-        {row.item[0].availabilityStatus === '1' &&
-        <div>Available</div>
-        }
-        {row.item[0].availabilityStatus === '0' &&
-        <div>On Request</div>
-        }
-        {(row.item[0].availabilityStatus !== '0' || row.item[0].availabilityStatus !== '1') &&
-        <div>{row.item[0].availabilityStatus}</div>
+        <div className="fw-semibold">
+        {row.item[0].availabilityStatus === '1' ?
+          <div className="text-success">Available</div>
+        :
+        row.item[0].availabilityStatus === '0' ?
+          <div>On Request</div>
+        :
+          <div>{row.item[0].availabilityStatus}</div>
         }
         </div>
       ),
@@ -283,11 +285,11 @@ export default function HotelResult(props) {
     },
     {
       name: "Price "+`(${qry.currency})`,
+      id: "priceCell",
       selector: row => row.item[0].amount,
       cell: (row) => (
-        
-        <div>
-          {parseFloat(row.item.reduce((totalAmt, price) => totalAmt + price.amount, 0)).toFixed(2)}
+        <div className="text-nowrap">
+          {qry.currency} {parseFloat(row.item.reduce((totalAmt, price) => totalAmt + price.amount, 0)).toFixed(2)}
 
           {row.item[0].rateType==='Refundable' || row.item[0].rateType==='refundable' ?
           <span className="circleicon refund ms-1" title="Refundable" data-bs-toggle="tooltip">R</span>
@@ -311,9 +313,10 @@ export default function HotelResult(props) {
     },
     {
       button: true,
+      id: "buttonCell",
       cell: (row) => (
         // <div><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></div>
-        <div><button type="button" className="btn btn-warning py-1 text-nowrap" onClick={(e) => bookNow(e,row)}>Book</button></div>
+        <button type="button" className="btn btn-warning text-nowrap w-100 h-100 rounded-0" onClick={(e) => bookNow(e,row)}> Book Now </button>
       )
     }
   ];
@@ -524,7 +527,7 @@ export default function HotelResult(props) {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     setRepriceQry(encData)
     e.nativeEvent.target.disabled = false;
-    e.nativeEvent.target.innerHTML = 'Book';
+    e.nativeEvent.target.innerHTML = ' Book Now ';
     if(!resReprice?.isBookable){
       e.nativeEvent.target.disabled = true;
       soldOutBtn.current?.click();
@@ -583,13 +586,27 @@ export default function HotelResult(props) {
         <div>
           {getHtlRes?.hotels?.b2BHotel.slice(currentPage * pageSize,(currentPage + 1) * pageSize).map((v) => {
           return (
-            <div key={v.productCode} className="htlboxcol rounded p-2 mb-3 shadow-sm">
-              <div className={"row gx-2 curpointer " + (htlCollapse==='#room'+v.productCode ? 'colOpen':'collapsed')} aria-expanded={htlCollapse==='#room'+v.productCode} onClick={() => roomDetail(`#room${v.productCode}`,v.productCode, v.systemId, v.supplierName)}>
-                <div className="col-md-5">
-                  <div className="blue fw-semibold fs-6 text-capitalize">{v.productName?.toLowerCase()}</div>
+            <div key={v.productCode} className="htlboxcol rounded mb-3 shadow-sm">
+              <div className={"row gx-2 " + (htlCollapse==='#room'+v.productCode ? 'colOpen':'collapsed')} aria-expanded={htlCollapse==='#room'+v.productCode}>
+                <div className="col-lg-7">
+                  <div className="d-flex flex-row">
+                    <div className="hotelImg rounded-start bg-light">
+                      <a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold" onClick={()=> htlDetail(v.systemId)}>
+                        {v.thumbnailImage ?
+                        <Image src={`https://static.giinfotech.ae/medianew/${v.thumbnailImage}`} alt={v.productName} width={140} height={90} priority={true} />
+                        :
+                        <Image src='/images/noHotelThumbnail.jpg' alt={v.productName} width={140} height={90} priority={true} />
+                        }
+                      </a>
+                    </div>
+                    <div className="ps-3 pt-2">
+                      <div className="blue fw-semibold fs-6 text-capitalize">{v.productName?.toLowerCase()}</div>
+                      <div className='fn13'><strong>Address:</strong> {v.address}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="col-md-4">
-                  <div className="d-flex">
+                <div className="col-lg-3 align-self-center">
+                  <div className="d-flex px-lg-0 px-1">
                     <div>
                       {Array.apply(null, { length:5}).map((e, i) => (
                       <span key={i}>
@@ -603,40 +620,31 @@ export default function HotelResult(props) {
                       }
                     </div>
                     <div className="ms-1"><Image src={`https://tripadvisor.com/img/cdsi/img2/ratings/traveler/${Number(v.tripAdvisorRating).toFixed(1)}-13387-4.png`} alt="rating" width={100} height={17} priority={true} /></div>
-                    <div className="ms-3 fw-semibold fs-6">{v.city}</div>
                   </div>
+                  <div className="mt-1 px-lg-0 px-1"><a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold" onClick={()=> htlDetail(v.systemId)}><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> More Details</a></div>
                 </div>
-                <div className="col-md-2 col-10"><div className='fn12 mt-n2 text-danger'>Cheapest with {v.supplierName}</div><div className="blue fw-semibold fs-6">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div></div>
-                <div className="col-md-1 col-2 text-center">
-                  <button className="btn btn-success py-0 togglePlus" type="button"></button>
+                <div className="col-lg-2 align-self-center">
+                  <div className='d-flex d-lg-block justify-content-between text-center px-lg-0 px-1'>
+                    <div>
+                      <div className='fn12 text-danger'>Cheapest with {v.supplierName}</div>
+                      <div className="blue fw-semibold fs-6 mt-n1">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => roomDetail(`#room${v.productCode}`,v.productCode, v.systemId, v.supplierName)}>&nbsp;Select</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               
               <div className={"collapse "+(htlCollapse==='#room'+v.productCode ? 'show':'')}>
-                <div className="mt-1">
-                  <div className="d-flex flex-row">
-                    <div className="hotelImg rounded">
-                      {v.thumbnailImage ?
-                      <Image src={`https://static.giinfotech.ae/medianew/${v.thumbnailImage}`} alt={v.productName} width={140} height={95} priority={true} />
-                      :
-                      <Image src='/images/noHotelThumbnail.jpg' alt={v.productName} width={140} height={95} priority={true} />
-                      }
-                    </div>
-                    <div className="ps-3 pt-2">
-                      <div className='fn13'><strong>Address:</strong> <span className="fs-6 text-capitalize">{v.productName?.toLowerCase()},</span><br /> {v.address}</div>
-                      <div className="mt-1"><a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold" onClick={()=> htlDetail(v.systemId)}><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> More Details</a> 
-                      {/* &nbsp; <a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> Photos</a> &nbsp; <a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold"><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> Details</a> */}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="fn12 roomColumn">
-                    <div className="fs-6 fw-semibold mt-1">Room Rates: {qry.paxInfoArr.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
+                <div>
+                  <div className="fn13 roomColumn">
+                    <div className="fs-6 fw-semibold mx-2 mt-1">Room Rates: {qry.paxInfoArr.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
                     {roomData?.[v.productCode] ?
                     <>
                     {roomData?.[v.productCode]?.length ?
-                    <DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="300px" className='dataScroll'  />
+                    <div className="mt-n1"><DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll'  /></div>
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>
                     }
@@ -652,7 +660,6 @@ export default function HotelResult(props) {
                     </div>
                     }
                   </div>
-                  
                 </div>
               </div>
     

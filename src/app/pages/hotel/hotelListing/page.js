@@ -142,11 +142,33 @@ export default function HotelListing() {
           <>
           <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           {status ==='authenticated' &&
-          <CommonLoader Type="1" />
+            <div className="mainloader1">
+              {/* <p className="d-block fs-5 text-white">Waiting Time 30:00</p> */}
+              <div className="loader1">
+                <p>Loading&nbsp;</p>
+                <div className="dumwave align-middle">
+                  <div className="anim anim1" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+                  <div className="anim anim2" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+                  <div className="anim anim3" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+                </div>
+              </div>
+            </div>
           }
           </>
           
           }
+
+            {/* <div className="mainloader1">
+              <p className="d-block fs-5 text-white">Waiting Time 30:00</p>
+              <div className="loader1">
+                <p>Loading&nbsp;</p>
+                <div className="dumwave align-middle">
+                  <div className="anim anim1" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+                  <div className="anim anim2" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+                  <div className="anim anim3" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
+                </div>
+              </div>
+            </div> */}
         </div>  
       </div>
     </MainLayout>

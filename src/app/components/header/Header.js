@@ -142,7 +142,7 @@ export default function Header() {
               </div>
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
-                <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li>
+                {/* <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li> */}
                 <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/b2bReservationTray' }>My Bookings</Link></li>

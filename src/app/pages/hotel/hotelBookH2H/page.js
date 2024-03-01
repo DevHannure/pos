@@ -977,11 +977,9 @@ export default function HotelItinerary() {
                       </tr>
                     </tbody>
                   </table>
-
                   {/* <div><strong className='blue'>No. of Rooms:</strong> {qry.paxInfoArr.length}</div>
                   <div><strong className='blue'>Check-in:</strong> {format(new Date(qry.chkIn), 'eee, dd MMM yyyy')}</div>
                   <div><strong className='blue'>Check-out:</strong> {format(new Date(qry.chkOut), 'eee, dd MMM yyyy')}</div> */}
-                  
                   {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                   <div key={i} className='fw-semibold'>
                     <hr className='my-2' />
@@ -996,7 +994,6 @@ export default function HotelItinerary() {
                     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <div className='fn12 mb-1'><strong >Supplier:</strong> {v.shortCode}</div>
                     }
-                    
                     <div className="fn13"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren): {qry.childrenAges} yrs]</span>:null}</div>
                   </div>
                   ))}

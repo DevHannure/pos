@@ -159,7 +159,7 @@ export default function HotelListing() {
               <div className="loadingImg text-center rounded">
               <div className='bg-black bg-opacity-50 text-white p-2 rounded-top'>{qry?.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(qry?.chkIn), 'dd MMM yyyy')} to {format(new Date(qry?.chkOut), 'dd MMM yyyy')}</div>
                 <div className='py-3'>
-                  <Image src='/images/wonder.png' alt="wonder" width={290} height={290} priority={true} className='wonderImg' />
+                  <Image src='/images/wonder.png' alt="loadin" width={290} height={290} priority={true} className='wonderImg' />
                 </div>
               </div>
             </div>

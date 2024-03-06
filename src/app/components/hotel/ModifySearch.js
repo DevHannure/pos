@@ -425,7 +425,7 @@ export default function ModifySearch(props) {
                 </div>
               </div>
               <div className="col-1">
-                <label className="d-none d-sm-block mb-2">&nbsp;</label>
+                <label className="d-block mb-1">&nbsp;</label>
                 {rmCountArr[rmCntIndx].idDelBtn !=='delRoom0' ?
                   <button className="btn btn-link text-danger p-0" onClick={()=>delRoom(rmCntIndx)}><FontAwesomeIcon icon={faCircleXmark} className="fs-5" /></button>
                 : null }

@@ -964,7 +964,7 @@ export default function HotelItinerary() {
                   <table className="table table-sm table-bordered fw-semibold">
                     <thead>
                       <tr className="table-light">
-                        <th><strong className='blue'>No. of Rooms:</strong></th>
+                        <th><strong className='blue'>Rooms:</strong></th>
                         <th><strong className='blue'>Check-in:</strong></th>
                         <th><strong className='blue'>Check-out:</strong></th>
                       </tr>

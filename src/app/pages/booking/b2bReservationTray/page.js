@@ -394,6 +394,20 @@ export default function BBReservationTray() {
     router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
   }
 
+  const viewDetails = (id) => {
+    let bookItnery = {
+      "bcode": id,
+      "btype": "",
+      "returnurl": '/pages/booking/b2bReservationTray',
+      "correlationId": userInfo.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    router.push(`/pages/booking/bookingDetails?qry=${encData}`);
+  }
+
+  
+
   const viewSalesReport = (id) => {
     let reqRptObj = {
       "bookingNo": id,
@@ -723,14 +737,16 @@ export default function BBReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                                <div className='divCell text-nowrap'>View</div>
+                              <>
+                              <div className='divCell text-nowrap'>Details</div>
+                              {/* <div className='divCell text-nowrap'>View</div> */}
+                              </>
+                                
                               }
                             </>
                           }
-                          {process.env.NEXT_PUBLIC_APPCODE!=='0' &&
+                          {/* {process.env.NEXT_PUBLIC_APPCODE!=='0' &&
                           <>
-                            
-                            
                             {ifMenuExist('ViewItineraryReport') &&
                               <>
                                 {IfUserHasreadWriteAccess('ViewItineraryReport') &&
@@ -755,7 +771,7 @@ export default function BBReservationTray() {
 
                             <div className='divCell text-nowrap'>PR</div>
                           </>
-                          } 
+                          }  */}
                           
                         </div>
 
@@ -775,12 +791,15 @@ export default function BBReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                                <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                                <>
+                                <div className='divCell'><button onClick={()=> viewDetails(e.bookingNo)} type="button" className='sqBtn' title="Details" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                                {/* <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div> */}
+                                </>
                               }
                             </>
                           }
                           
-                          {process.env.NEXT_PUBLIC_APPCODE!=='0' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
+                          {/* {process.env.NEXT_PUBLIC_APPCODE!=='0' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
                           <>
                             {ifMenuExist('ViewItineraryReport') &&
                               <>
@@ -831,7 +850,7 @@ export default function BBReservationTray() {
                             }
                           </>
                           : null
-                          }
+                          } */}
                         </div>
 
                         <div className='divRow'>
@@ -1037,8 +1056,8 @@ export default function BBReservationTray() {
                                       <div className='divCell'> </div> :null
                                       }
 
-                                      <ul className="dropdown-menu fn14">
-                                        {DisablePopupMenu(s, 'sv') ?
+                                      <ul className="dropdown-menu fn14 p-0">
+                                        {/* {DisablePopupMenu(s, 'sv') ?
                                           <li><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='dropdown-item'><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Service Voucher</button></li>
                                           : 
                                           <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;Service Voucher</button></li>
@@ -1050,12 +1069,7 @@ export default function BBReservationTray() {
                                           <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;Invoice Report</button></li>
                                         }
                                         <li><hr className="dropdown-divider my-1" /></li>
-                                        <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faTrash} className='fn12' /> &nbsp;Cancel Service</button></li>
-                                        {/* {DisablePopupMenu(s, 'cs') ?
-                                          <li><button type="button" className='dropdown-item'><FontAwesomeIcon icon={faTrash} className='fn12 blue' /> &nbsp;Cancel Service</button></li>
-                                          : 
-                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faTrash} className='fn12' /> &nbsp;Cancel Service</button></li>
-                                        } */}
+                                        <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faTrash} className='fn12' /> &nbsp;Cancel Service</button></li> */}
                                       </ul>
                                     </div>
                                     ))}

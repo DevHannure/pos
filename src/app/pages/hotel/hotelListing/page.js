@@ -26,6 +26,11 @@ export default function HotelListing() {
   const dispatch = useDispatch();
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
 
+  const [countDown, setCountDown] = useState(0);
+  const [runTimer, setRunTimer] = useState(false);
+  const [counter, setCounter] = useState(0);
+  const [running, setRunning] = useState(false);
+
   useEffect(()=>{
     //if(qry){
       if(!getHtlRes){
@@ -107,11 +112,15 @@ export default function HotelListing() {
     if(qry.hotelName[0]?.hotelCode){
       htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode
     }
-
+    setRunTimer(true);
+    setRunning(true);
     const responseLocalHtlResult = HotelService.doLocalHotel(htlSrchObj, qry.correlationId);
     const responseHtlResult = HotelService.doHotelSearch(htlSrchObj, qry.correlationId);
     let resLocalHtlResult = await responseLocalHtlResult;
     let resHtlResult = await responseHtlResult;
+    setRunTimer(false);
+    setCountDown(0);
+    setRunning(false);
     if(resLocalHtlResult && resHtlResult){
       var xmlB2BHotel = resHtlResult?.hotels?.b2BHotel;
       var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
@@ -141,11 +150,54 @@ export default function HotelListing() {
   const chooseFilter = (val) => {
       setFilterChoose(val)
   };
+
+  
+  
+  useEffect(() => {
+    let timerId;
+    if (runTimer) {
+      setCountDown(60 * 0.75);
+      timerId = setInterval(() => {
+        setCountDown((countDown) => countDown - 1);
+      }, 1000);
+    } else {
+      clearInterval(timerId);
+    }
+    return () => (
+      clearInterval(timerId)
+    );
+  }, [runTimer]);
+
+  useEffect(() => {
+    if (countDown < 0 && runTimer) {
+      setRunTimer(false);
+      setCountDown(0);
+    }
+  }, [countDown, runTimer]);
+
+  const seconds = String(countDown % 60).padStart(2, 0);
+  const minutes = String(Math.floor(countDown / 60)).padStart(2, 0);
+
+  
+  useEffect(() => {
+    let interval;
+    if (!running) {
+      return () => {};
+    }
+    interval = setInterval(() => {
+      setCounter((counter) => counter + 1);
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [running]);
+
   return (
     <MainLayout>
       <div className="middle">
         <ModifySearch Type={'result'} HtlReq={qry} filterOpen={(val) => chooseFilter(val)} />
         <div className="container-fluid">
+          <div className='text-end'>Time: {counter}</div>
           {getHtlRes ?
           <div className="d-lg-table w-100">
             <HotelFilter HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
@@ -156,17 +208,18 @@ export default function HotelListing() {
           <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           {status ==='authenticated' &&
             <div className="mainloader1">
-              <div className="loadingImg text-center rounded">
-              <div className='bg-black bg-opacity-50 text-white p-2 rounded-top'>{qry?.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(qry?.chkIn), 'dd MMM yyyy')} to {format(new Date(qry?.chkOut), 'dd MMM yyyy')}</div>
+              <div className="loadingImg text-center rounded m-2">
+                <div className='bg-black bg-opacity-50 text-white p-2 rounded-top'>{qry?.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(qry?.chkIn), 'dd MMM yyyy')} to {format(new Date(qry?.chkOut), 'dd MMM yyyy')}</div>
                 <div className='py-3'>
                   <div className='wonderImg'><Image src='/images/wonder.png' alt='loadin' width={290} height={290} priority={true} /></div>
                 </div>
+                <div className='text-end p-2 pt-0'>Waiting Time {minutes}:{seconds}</div>
               </div>
             </div>
           }
           </>
-          
           }
+          
 
             {/* <div className="mainloader1">
               <p className="d-block fs-5 text-white">Waiting Time 30:00</p>

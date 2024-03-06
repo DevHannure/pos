@@ -112,6 +112,7 @@ export default function HotelListing() {
     if(qry.hotelName[0]?.hotelCode){
       htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode
     }
+    setCounter(0);
     setRunTimer(true);
     setRunning(true);
     const responseLocalHtlResult = HotelService.doLocalHotel(htlSrchObj, qry.correlationId);
@@ -180,7 +181,6 @@ export default function HotelListing() {
 
   
   useEffect(() => {
-    setCounter(0);
     let interval;
     if (!running) {
       return () => {};

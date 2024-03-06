@@ -121,7 +121,6 @@ export default function HotelListing() {
     setRunTimer(false);
     setCountDown(0);
     setRunning(false);
-    setCounter(0);
     if(resLocalHtlResult && resHtlResult){
       var xmlB2BHotel = resHtlResult?.hotels?.b2BHotel;
       var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
@@ -181,6 +180,7 @@ export default function HotelListing() {
 
   
   useEffect(() => {
+    setCounter(0);
     let interval;
     if (!running) {
       return () => {};

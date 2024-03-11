@@ -17,10 +17,11 @@ import { useRouter } from 'next/navigation';
 import Select from 'react-select';
 
 const roomOptions = [
-  { value: '5', label: (<>Refundable</>)},
-  { value: '4', label: (<>Non-Refundable</>)},
-  { value: '3', label: (<>Status Unknown</>)},
-  { value: '2', label: (<>Preferred</>)}
+  { value: '', label: (<>Sort</>)},
+  { value: 'Refundable', label: (<>Refundable</>)},
+  { value: 'NonRefundable', label: (<>Non-Refundable</>)},
+  { value: 'Unknown', label: (<>Status Unknown</>)},
+  { value: 'Preferred', label: (<>Preferred</>)}
 ];
 
 export default function HotelResult(props) {
@@ -347,6 +348,9 @@ export default function HotelResult(props) {
           {row.item[0].isDynamic &&
           <span className="circleicon ms-1" title="Dynamic" data-bs-toggle="tooltip">D</span>
           } 
+          {row.item[0].local &&
+          <span className="circleicon ms-1 border-warning text-warning" title="Local" data-bs-toggle="tooltip">L</span>
+          }
           &nbsp;
         </div>
       ),
@@ -596,7 +600,65 @@ export default function HotelResult(props) {
   const nonRfndContinue = () => {
     router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`);
   }
-  
+
+  const RoomSection = (prop) => {
+    const roomDataFilter = prop.roomData;
+    const [fltrRoomTxt, setFltrRoomTxt] = useState('');
+    const [selRoomStatus, setSelRoomStatus] = useState('');
+    const filteredItems = roomDataFilter.filter(
+      v => {
+        let kk = v.item[0]?.roomTypeName.toLowerCase().includes(fltrRoomTxt.toLowerCase());
+        return kk
+      },
+    );
+
+    const fltrResSupplier = filteredItems.filter((v) => {
+      let status = [];
+      let roomOpt = [selRoomStatus?.value]
+      // selRoomStatus?.forEach((v) => {
+      //   roomOpt.push(v.value)
+      // });
+      if(roomOpt.includes("Refundable")){
+        status.push(v.item[0]?.rateType==='Refundable' || v.item[0]?.rateType==='refundable'); 
+      }
+      else if(roomOpt.includes("NonRefundable")){
+        status.push(v.item[0]?.rateType==='Non-Refundable' || v.item[0]?.rateType==='Non Refundable' || v.item[0]?.rateType==='non-refundable' || v.item[0]?.rateType==='non refundable'); 
+      }
+      else if(roomOpt.includes("Unknown")){
+        status.push(v.item[0]?.rateType===''); 
+      }
+      else if(roomOpt.includes("Preferred")){
+        status.push(v.item[0]?.local); 
+      }
+      else{
+        status.push(v); 
+      }
+      let statusVar = status.includes(false)
+      return !statusVar
+    });
+
+    return (
+      <>
+      <div className="px-2">
+        <div className="row gx-2 justify-content-end">
+          <div className="col-md-3 col-6">
+            <Select
+              name="selectFltr"
+              options={roomOptions}
+              classNamePrefix="selectSm"
+              onChange={setSelRoomStatus}
+              value={selRoomStatus}
+            />
+          </div>
+          <div className="col-md-3 col-6">
+            <input type="text" className="form-control form-control-sm fn13" placeholder="Search by Room Name" value={fltrRoomTxt} onChange={(e) => setFltrRoomTxt(e.target.value)} />
+          </div>
+        </div>
+      </div>
+      <DataTable columns={columns} data={fltrResSupplier} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  />
+      </>
+    )
+  }
   return (
     <>
     {getHtlRes?.hotels.b2BHotel.length ?  
@@ -695,6 +757,7 @@ export default function HotelResult(props) {
                     <>
                     {roomData?.[v.systemId]?.length ?
                     <div className="mt-n1">
+                      <RoomSection roomData={roomData?.[v.systemId]} />
                       {/* <div className="px-2">
                         <div className="row gx-2 justify-content-end">
                           <div className="col-md-3">
@@ -706,11 +769,12 @@ export default function HotelResult(props) {
                             />
                           </div>
                           <div className="col-md-3">
-                            <input type="text" className="form-control form-control-sm fn13" placeholder="Search by Room Name" value={fltrRoomTxt} onChange={(e) => (setFltrRoomTxt(e.target.value))}  />
+                            <input type="text" className="form-control form-control-sm fn13" placeholder="Search by Room Name" value={fltrRoomTxt} onChange={(e) => fltrRoomTxtBtn(e.target.value, v.systemId)} />
                           </div>
                         </div>
-                      </div> */}
-                      <DataTable columns={columns} data={roomData?.[v.systemId]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  />
+                      </div>
+                      <DataTable columns={columns} data={roomData?.[v.systemId]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  /> */}
+
                     </div>
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>

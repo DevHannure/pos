@@ -1,8 +1,5 @@
 "use client"
-import React, {useEffect, useState, useRef } from 'react';
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faEnvelope, faPrint, faStar, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
-import {faShareFromSquare, faTrashCan} from "@fortawesome/free-regular-svg-icons";
+import React, {useEffect, useState } from 'react';
 import {format} from 'date-fns';
 import { useRouter} from 'next/navigation';
 import AES from 'crypto-js/aes';
@@ -335,7 +332,7 @@ export default function BookingItinerarySub(props) {
     <div className='pt-3'>
       <ToastContainer />
       {mainLoader &&
-        <CommonLoader Type="1" />
+        <CommonLoader Type="2" />
       }
       {bkngDetails ?
         <>

@@ -139,7 +139,7 @@ const HotelService = {
             "ChildrenAges": reqObj.childrenAges,
             "NoOfRooms": reqObj.noOfRooms,
             "ClassificationCode": reqObj.classificationCode,
-            "ProductCode": reqObj.hotelCode,
+            "ProductCode": reqObj.productCode,
             "ProductName": "",
             "SupplierCode": reqObj.supplierCode,
             "UniqueId": reqObj.uniqueId,
@@ -152,7 +152,7 @@ const HotelService = {
       }
 
       let urlApis = ''
-      if(reqObj.supplierName==="LOCAL"){
+      if(reqObj.supplierName?.toLowerCase()==="local"){
         urlApis = baseUrl+'/localhotel/Reprice'
       }
       else{

@@ -11,10 +11,11 @@ import HotelService from '@/app/services/hotel.service';
 import { doHotelSearchOnLoad } from '@/app/store/hotelStore/hotel';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
-import CommonLoader from '@/app/components/common/CommonLoader';
 import { useSession } from "next-auth/react";
 import {format} from 'date-fns';
 import Image from 'next/image';
+
+function getUID() {return Date.now().toString(36);}
 
 export default function HotelListing() {
   const { status } = useSession();
@@ -40,6 +41,7 @@ export default function HotelListing() {
   },[search]);
 
   const doHtlResultOnLoad = async() => {
+    let uniqId = getUID();
     let htlSrchObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
@@ -62,7 +64,7 @@ export default function HotelListing() {
           "ClassificationCode": qry.starRating?.toString(),
           "ProductCode": qry.hotelName[0]?.hotelCode,
           "ProductName": qry.hotelName[0]?.hotelName,
-          "UniqueId": qry.uniqId,
+          "UniqueId": uniqId,
           "OccupancyStr": "",
           "ActiveSuppliers": qry.activeSuppliers
         }
@@ -112,6 +114,7 @@ export default function HotelListing() {
     if(qry.hotelName[0]?.hotelCode){
       htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode
     }
+    setCountDown(0);
     setCounter(0);
     setRunTimer(true);
     setRunning(true);
@@ -120,28 +123,64 @@ export default function HotelListing() {
     let resLocalHtlResult = await responseLocalHtlResult;
     let resHtlResult = await responseHtlResult;
     setRunTimer(false);
-    setCountDown(0);
     setRunning(false);
     if(resLocalHtlResult && resHtlResult){
       var xmlB2BHotel = resHtlResult?.hotels?.b2BHotel;
       var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
-      var finalB2BHotel = [...xmlB2BHotel, ...localB2BHotel];
-      // const arr = finalB2BHotel.reduce((result,obj)=> {
-      // let row = result.find(x=>x.systemId===obj.systemId)
+      var mixB2BHotel = [...xmlB2BHotel, ...localB2BHotel];
+      let maxValHotel = mixB2BHotel.sort((a, b) => parseFloat(b.minPrice) - parseFloat(a.minPrice));
+      
+      // const arr = maxValHotel.reduce((result,obj)=> {
+      // let row = result.find(x=>x.systemId===obj.systemId);
       // if(!row){ 
+      //   obj.matchBoth = false;
       //   result.push({...obj})
       // }  
-      // else if(row.minPrice > obj.minPrice){
+      // else if(parseFloat(row.minPrice) > parseFloat(obj.minPrice)){
+      //   obj.matchBoth = true
       //   Object.assign(row,obj)
-      // }    
+      // } 
       // return result
       // },[]);
-      // console.log(arr)
+
+      const arr = maxValHotel.reduce((result,obj)=> {
+      let row = result.find(x=>x.systemId===obj.systemId);
+      if(row){
+        if(row.supplierName?.toLowerCase()==='local'){
+          row.localProductCode = row.productCode;
+          row.adsProductCode = obj.productCode;
+        }
+        else{
+          row.localProductCode = obj.productCode;
+          row.adsProductCode = row.productCode;
+        }
+        if(parseFloat(row.minPrice) > parseFloat(obj.minPrice)){
+          obj.matchBoth = true
+          Object.assign(row,obj)
+        }
+      }
+      else{ 
+        if(obj.supplierName?.toLowerCase()==='local'){
+          obj.localProductCode = obj.productCode;
+          obj.adsProductCode = "";
+        }
+        else{
+          obj.localProductCode = "";
+          obj.adsProductCode = obj.productCode;
+        }
+        obj.matchBoth = false;
+        result.push({...obj})
+      }  
+      return result
+      },[]);
+
+      var finalB2BHotel = arr
       finalB2BHotel.sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice));
       var xmlB2BSearchAnalytics = resHtlResult?.searchAnalytics?.searchAnalytics ? resHtlResult.searchAnalytics.searchAnalytics : [];
       var localB2BSearchAnalytics = resLocalHtlResult?.searchAnalytics?.searchAnalytics ? resLocalHtlResult.searchAnalytics.searchAnalytics:[];
       var finalB2BSearchAnalytics = [...xmlB2BSearchAnalytics, ...localB2BSearchAnalytics];
-      resHtlResult.searchAnalytics.searchAnalytics = finalB2BSearchAnalytics
+      resHtlResult.searchAnalytics.searchAnalytics = finalB2BSearchAnalytics;
+      resHtlResult.generalInfo.localSessionId = resLocalHtlResult?.generalInfo?.sessionId;
       resHtlResult.hotels.b2BHotel = finalB2BHotel;
     }
     dispatch(doHotelSearchOnLoad(resHtlResult))
@@ -151,8 +190,6 @@ export default function HotelListing() {
   const chooseFilter = (val) => {
       setFilterChoose(val)
   };
-
-  
   
   useEffect(() => {
     let timerId;
@@ -220,19 +257,6 @@ export default function HotelListing() {
           }
           </>
           }
-          
-
-            {/* <div className="mainloader1">
-              <p className="d-block fs-5 text-white">Waiting Time 30:00</p>
-              <div className="loader1">
-                <p>Loading&nbsp;</p>
-                <div className="dumwave align-middle">
-                  <div className="anim anim1" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
-                  <div className="anim anim2" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
-                  <div className="anim anim3" style={{backgroundColor:"#FFF",marginLeft:"3px"}}></div>
-                </div>
-              </div>
-            </div> */}
         </div>  
       </div>
     </MainLayout>

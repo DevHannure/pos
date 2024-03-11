@@ -22,7 +22,7 @@ import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode } from '@/app/sto
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 
-function getUID() {return Date.now().toString(36);}
+//function getUID() {return Date.now().toString(36);}
 const starOptions = [
   { value: '5', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
   { value: '4', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
@@ -96,22 +96,31 @@ const multiValueContainer = ({ selectProps, data }) => {
 export default function ModifySearch(props) {
   // const users = [
   //   { id:1, name: 'Nicole', age: 33 },
+  //   { id:1, name: 'Sanne', age: 35 },
+  //   { id:4, name: 'riy', age: 35 },
   //   { id:2, name: 'Chris', age: 31 },
   //   { id:3, name: 'Yaatree', age: 32 },
-  //   { id:1, name: 'Sanne', age: 31 },
+  //   { id:4, name: 'sam', age: 32 },
   // ];
 
-  // const arr = users.reduce((result,obj)=> {
-  // let row = result.find(x=>x.id===obj.id)
+  // let fil = users.sort((a, b) => parseFloat(b.age) - parseFloat(a.age));
+
+  // const arr = fil.reduce((result,obj)=> {
+  // let row = result.find(x=>x.id===obj.id);  
   // if(!row){ 
+  //   obj.local = false;
   //   result.push({...obj})
   // }  
   // else if(row.age > obj.age){
+  //   obj.local = true;
   //   Object.assign(row,obj)
-  // }    
+  // }
+  
   // return result
   // },[]);
-  // console.log(arr)
+  // console.log("arr", arr)
+
+
 
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const router = useRouter();
@@ -232,15 +241,17 @@ export default function ModifySearch(props) {
   };
   
   const dateChange = (dates) => {
-    const [start, end] = dates;
-    setChkIn(start)
-    const date1 = format(start, 'yyyy-MM-dd')
-    const date2 = format(end ? end : new Date(), 'yyyy-MM-dd')
-    if(date1 === date2){
-      setChkOut(new Date(new Date(chkIn).setDate(new Date(chkIn).getDate() + 1)))
-    }
-    else{
-      setChkOut(end)
+    if(dates[0]){
+      const [start, end] = dates;
+      setChkIn(start)
+      const date1 = format(start, 'yyyy-MM-dd')
+      const date2 = format(end ? end : new Date(), 'yyyy-MM-dd')
+      if(date1 === date2){
+        setChkOut(new Date(new Date(chkIn).setDate(new Date(chkIn).getDate() + 1)))
+      }
+      else{
+        setChkOut(end)
+      }
     }
   };
 
@@ -589,7 +600,7 @@ export default function ModifySearch(props) {
   }
 
   const [searchLoading, setSearchLoading] = useState(false)
-  let uniqId = getUID();
+  //let uniqId = getUID();
   const srchHtl = () => {
     let allowMe = validate();
     if(allowMe){
@@ -614,7 +625,7 @@ export default function ModifySearch(props) {
         "starRating": starOpt,
         "hotelName": selectedHotel,
         "num_rooms": parseInt(rmCountArr.length),
-        "uniqId": uniqId,
+        //"uniqId": uniqId,
         "paxInfoArr": rmCountArr
       }
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString()

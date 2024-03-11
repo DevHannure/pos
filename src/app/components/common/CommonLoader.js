@@ -1,4 +1,5 @@
-import Image from 'next/image';
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faSpinner} from "@fortawesome/free-solid-svg-icons";
 export default function CommonLoader(props) {
   return (
   <>
@@ -16,7 +17,12 @@ export default function CommonLoader(props) {
   }
 
   {props.Type==="2" &&
-  <div></div>
+  <div className="mainloader1">
+    <div className="loader1 d-block text-center">
+      <div><FontAwesomeIcon icon={faSpinner} className="slow-spin fs-1 mb-1" /></div>
+      <p className="fs-5">Payment and booking is under process.<br /> Please do not refresh the page.</p>
+    </div>
+  </div>
   }
   </>
   )

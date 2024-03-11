@@ -183,7 +183,7 @@ export default function HotelItinerary() {
         "RateBasisName": resReprice.hotel?.rooms?.room[i]?.meal,
         "RateTypeCode": i===0 && room1[0]?.rateTypeCode || i===1 && room2[0]?.rateTypeCode || i===2 && room3[0]?.rateTypeCode,
         "RateTypeName": i===0 && room1[0]?.rateTypeName || i===1 && room2[0]?.rateTypeName || i===2 && room3[0]?.rateTypeName,
-        "RateCategoryCode": qry?.supplierName==="LOCAL" ? "1" : "0",
+        "RateCategoryCode": qry?.supplierName?.toLowerCase()==="local" ? "1" : "0",
         "DetailsString": resReprice.hotel?.rooms?.room[i]?.detailsString ? resReprice.hotel?.rooms?.room[i]?.detailsString : "",
         "CancelPolicyType": qry.rateType==='Refundable' || qry.rateType==='refundable' ? "R" : "N",
         "PaxDetails": [],
@@ -388,8 +388,8 @@ export default function HotelItinerary() {
           "ClassificationCode": htlDetails?.hotelDetail?.rating,
           "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
           "SupplierCode": qry.supplierCode,
-          "ReservationCode": qry?.supplierName==="LOCAL" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
-          "SupplierConsultantCode": qry?.supplierName==="LOCAL" ? "138" : "111", //For ADS 111 & Local 138
+          "ReservationCode": qry?.supplierName?.toLowerCase()==="local" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+          "SupplierConsultantCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : "111", //For ADS 111 & Local 138
           "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
           "SupplierRemarks": "",
           "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
@@ -410,7 +410,7 @@ export default function HotelItinerary() {
           "CustomerCurrencyCode": userInfo?.user?.currencyCode,
           "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
           "CustomerNetAmount": Number(net).toFixed(2).toString(),
-          "XMLSupplierCode": qry?.supplierName==="LOCAL" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
+          "XMLSupplierCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
           "XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
           "XMLSessionId": qry?.sessionId,
           "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
@@ -529,8 +529,8 @@ export default function HotelItinerary() {
             "ClassificationCode": htlDetails?.hotelDetail?.rating,
             "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
             "SupplierCode": qry.supplierCode,
-            "ReservationCode": qry?.supplierName==="LOCAL" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
-            "SupplierConsultantCode": qry?.supplierName==="LOCAL" ? "138" : "111", //For ADS 111 & Local 138
+            "ReservationCode": qry?.supplierName?.toLowerCase()==="local" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
+            "SupplierConsultantCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : "111", //For ADS 111 & Local 138
             "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
             "SupplierRemarks": "",
             "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
@@ -551,7 +551,7 @@ export default function HotelItinerary() {
             "CustomerCurrencyCode": userInfo?.user?.currencyCode,
             "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
             "CustomerNetAmount": Number(net).toFixed(2).toString(),
-            "XMLSupplierCode": qry?.supplierName==="LOCAL" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
+            "XMLSupplierCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
             "XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
             "XMLSessionId": qry?.sessionId,
             "CancellationPolicy": cancelPolicyHtml.current.innerHTML,

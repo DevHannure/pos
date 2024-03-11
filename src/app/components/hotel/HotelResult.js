@@ -14,6 +14,14 @@ import {format, addDays} from 'date-fns';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useRouter } from 'next/navigation';
+import Select from 'react-select';
+
+const roomOptions = [
+  { value: '5', label: (<>Refundable</>)},
+  { value: '4', label: (<>Non-Refundable</>)},
+  { value: '3', label: (<>Status Unknown</>)},
+  { value: '2', label: (<>Preferred</>)}
+];
 
 export default function HotelResult(props) {
   const noRefundBtn = useRef(null);
@@ -95,9 +103,10 @@ export default function HotelResult(props) {
   const [supplierNameVar, setSupplierNameVar] = useState('');
   const [systemIdVar, setSystemIdVar] = useState('');
   
-  const roomDetail = async(hotelCollapseCode, hotelCode, systemId, supplierName) => {
-    setSupplierNameVar(supplierName);
-    setSystemIdVar(systemId);
+  const roomDetail = async(v) => {
+    let hotelCollapseCode = '#room'+v.systemId;
+    setSupplierNameVar(v.supplierName);
+    setSystemIdVar(v.systemId);
 
     if(hotelCollapseCode!==htlCollapse){
       setHtlCollapse(hotelCollapseCode)
@@ -105,15 +114,14 @@ export default function HotelResult(props) {
     else{
       setHtlCollapse('')
     }
-
-    let htlRoomObj = {
+    const htlRoomObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
         "CityName": qry.destination[0].cityName,
         "CountryName": qry.destination[0].countryName,
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
-        "HotelCode": systemId,
+        "HotelCode": v.systemId,
         "CheckInDate": qry.chkIn,
         "CheckOutDate": qry.chkOut,
         "Currency": qry.currency,
@@ -127,28 +135,81 @@ export default function HotelResult(props) {
           "ChildrenAges": childrenAgesVar,
           "NoOfRooms": qry.num_rooms?.toString(),
           "ClassificationCode": qry.starRating?.toString(),
-          "ProductCode": hotelCode,
+          "ProductCode": v.adsProductCode,
           "ProductName": "",
-          "UniqueId": qry.uniqId,
+          "UniqueId": getOrgHtlResult?.generalInfo?.localSessionId,
           "OccupancyStr": occupancyStrVar,
           "ActiveSuppliers": qry.activeSuppliers
         }
       },
-      "SessionId": supplierName==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
+      //"SessionId": supplierName?.toLowerCase()==="local" ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
+      "SessionId": getOrgHtlResult?.generalInfo?.sessionId
     }
-    
     //let roomRes = {}
     let roomItems = {...roomData}
-    if (_.isEmpty(roomData[hotelCode])) {
-      let responseHtlRoom = null;
-      if(supplierName==="LOCAL"){
-        responseHtlRoom = HotelService.doLocalHotelRoomDetails(htlRoomObj, qry.correlationId);
+    let resHtlRoomDtl = null;
+    if (_.isEmpty(roomData[v.systemId])) {
+      if(v.matchBoth){
+        let adsRoomObj = htlRoomObj;
+        const responseXmlRoom = HotelService.doHotelRoomDetails(adsRoomObj, qry.correlationId);
+
+        let localRoomObj = htlRoomObj;
+        localRoomObj.SessionId = getOrgHtlResult?.generalInfo?.localSessionId;
+        localRoomObj.SearchParameter.TassProInfo.ProductCode = v.localProductCode;
+        const responseLocalRoom = HotelService.doLocalHotelRoomDetails(localRoomObj, qry.correlationId);
+        
+        let resLocalRoomResult = await responseLocalRoom;
+        let resXmlRoomResult = await responseXmlRoom;
+        
+        if(resXmlRoomResult && resLocalRoomResult){
+          var xmlB2BRoom = resXmlRoomResult?.hotel?.rooms?.b2BRoom ? resXmlRoomResult.hotel.rooms.b2BRoom : [];
+          if(xmlB2BRoom){
+            xmlB2BRoom = xmlB2BRoom.map((item) => ({ ...item, productCode: v.adsProductCode, local:false }))
+          }
+          var localB2BRoom = resLocalRoomResult?.hotel?.rooms?.b2BRoom ? resLocalRoomResult.hotel.rooms.b2BRoom : [];
+          if(localB2BRoom){
+            localB2BRoom = localB2BRoom.map((item) => ({ ...item, productCode: v.localProductCode, local:true }))
+          }
+          var mixB2BRoom = [...xmlB2BRoom, ...localB2BRoom];
+          mixB2BRoom.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
+          resXmlRoomResult.hotel.rooms.b2BRoom = mixB2BRoom;
+          resHtlRoomDtl = resXmlRoomResult;
+        }
       }
+      
       else{
-        responseHtlRoom = HotelService.doHotelRoomDetails(htlRoomObj, qry.correlationId);
+        if(v.supplierName?.toLowerCase()==="local"){
+          let localRoomObj = htlRoomObj;
+          localRoomObj.SessionId = getOrgHtlResult?.generalInfo?.localSessionId;
+          localRoomObj.SearchParameter.TassProInfo.ProductCode = v.localProductCode;
+          const responseLocalRoom = HotelService.doLocalHotelRoomDetails(localRoomObj, qry.correlationId);
+          let resLocalRoomResult = await responseLocalRoom;
+          if(resLocalRoomResult){
+            var localB2BRoom = resLocalRoomResult?.hotel?.rooms?.b2BRoom ? resLocalRoomResult.hotel.rooms.b2BRoom : [];
+            if(localB2BRoom){
+              localB2BRoom = localB2BRoom.map((item) => ({ ...item, productCode: v.localProductCode, local:true }));
+              resLocalRoomResult.hotel.rooms.b2BRoom = localB2BRoom
+            }
+            resLocalRoomResult?.hotel?.rooms?.b2BRoom.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
+            resHtlRoomDtl = resLocalRoomResult
+          }
+        }
+        else{
+          const responseXmlRoom = HotelService.doHotelRoomDetails(htlRoomObj, qry.correlationId);
+          let resXmlRoomResult = await responseXmlRoom;
+          if(resXmlRoomResult){
+            var xmlB2BRoom = resXmlRoomResult?.hotel?.rooms?.b2BRoom ? resXmlRoomResult.hotel.rooms.b2BRoom : [];
+            if(xmlB2BRoom){
+              xmlB2BRoom = xmlB2BRoom.map((item) => ({ ...item, productCode: v.adsProductCode, local:false }));
+              resXmlRoomResult.hotel.rooms.b2BRoom = xmlB2BRoom
+            }
+            resXmlRoomResult?.hotel?.rooms?.b2BRoom.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
+            resHtlRoomDtl = resXmlRoomResult
+          }
+        }
       }
-       
-      let resHtlRoomDtl = await responseHtlRoom;
+
+      //let resHtlRoomDtl = await responseHtlRoom;
       // roomTypeName
       // groupCode
       // marriageIdentifier
@@ -189,11 +250,11 @@ export default function HotelResult(props) {
           }
         })
       }
-      const tempArr = newArr.map(item => ({item:item, hotelCode: hotelCode, }))
+      const tempArr = newArr.map(item => ({item:item, hotelCode: v.systemId, }))
       if (_.isEmpty(roomData)) {
         roomItems = {}
       }
-      roomItems[hotelCode] = tempArr;
+      roomItems[v.systemId] = tempArr;
       dispatch(doRoomDtls(roomItems));
       //setRoomData(roomItems)
     }
@@ -285,7 +346,8 @@ export default function HotelResult(props) {
           }
           {row.item[0].isDynamic &&
           <span className="circleicon ms-1" title="Dynamic" data-bs-toggle="tooltip">D</span>
-          }
+          } 
+          &nbsp;
         </div>
       ),
       sortable: true,
@@ -335,7 +397,7 @@ export default function HotelResult(props) {
           "Children": qry.paxInfoArr.reduce((totalChld, v) => totalChld + parseInt(v.chdVal), 0)?.toString(),
           "ChildrenAges": childrenAgesVar,
           "NoOfRooms": qry.num_rooms?.toString(),
-          "ProductCode": hotelCode,
+          "ProductCode": roomVal.productCode,
           "RoomTypeCode": roomVal.roomTypeCode,
           "RateBasisCode": roomVal.roomBasisCode,
           "SupplierCode": roomVal.supplierCodeFK,
@@ -346,7 +408,7 @@ export default function HotelResult(props) {
           "RoomType3": ""
         }
       },
-      "SessionId": supplierNameVar==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
+      "SessionId": roomVal.local ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
     }
 
     let fbRes = {}
@@ -354,7 +416,7 @@ export default function HotelResult(props) {
 
     if (_.isEmpty(fareBrkupData[hotelCode+'_'+roomVal.rateCode])) {
       let responseFarebrkup = null;
-      if(supplierNameVar==="LOCAL"){
+      if(roomVal.local){
         responseFarebrkup = HotelService.doLocalPriceBreakup(fareBrkupObj, qry.correlationId);
       }
       else{
@@ -396,11 +458,11 @@ export default function HotelResult(props) {
           "CustomerCode": qry.customerCode,
           "RegionID": qry.regionCode?.toString(),
           "NoOfRooms": qry.num_rooms?.toString(),
-          "ProductCode": hotelCode,
+          "ProductCode": roomVal.productCode,
           "RateKey": rateKeyArray.map(item => item).join('splitter')
         }
       },
-      "SessionId": supplierNameVar==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
+      "SessionId": roomVal.local ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
     }
 
     let cpRes = {}
@@ -408,7 +470,7 @@ export default function HotelResult(props) {
 
     if (_.isEmpty(cancelPolicyData[hotelCode+'_'+roomVal.rateCode])) {
       let responseCancelPol = null;
-      if(supplierNameVar==="LOCAL"){
+      if(roomVal.local){
         responseCancelPol = HotelService.doLocalCancellationPolicy(canPolicyObj, qry.correlationId);
       }
       else{
@@ -492,12 +554,13 @@ export default function HotelResult(props) {
       "noOfRooms": qry.num_rooms?.toString(),
       "classificationCode": qry.starRating?.toString(),
       "supplierCode": val.item[0].supplierCodeFK,
-      "uniqueId": qry.uniqId,
+      "uniqueId": getOrgHtlResult?.generalInfo?.localSessionId,
       "occupancyStr": occupancyStrVar,
       "supplierName": supplierNameVar,
       "systemId": systemIdVar,
       "rateType": val.item[0].rateType,
-      "sessionId": supplierNameVar==="LOCAL" ? qry.uniqId : getOrgHtlResult?.generalInfo?.sessionId
+      "productCode": val.item[0].productCode,
+      "sessionId": val.item[0].local ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
     };
 
     let htlObj = {
@@ -567,14 +630,14 @@ export default function HotelResult(props) {
               </ul>
             </nav>
           </div>
-          <div className="col-lg-2 text-end" data-badges={getOrgHtlResult?.generalInfo?.sessionId}>Total Result Found: {getOrgHtlResult?.hotels?.b2BHotel?.length}</div>
+          <div className="col-lg-2 text-end" data-xml={getOrgHtlResult?.generalInfo?.sessionId} data-local={getOrgHtlResult?.generalInfo?.localSessionId}>Total Result Found: {getOrgHtlResult?.hotels?.b2BHotel?.length}</div>
         </div>
     
         <div>
           {getHtlRes?.hotels?.b2BHotel.slice(currentPage * pageSize,(currentPage + 1) * pageSize).map((v) => {
           return (
-            <div key={v.productCode} className="htlboxcol rounded mb-3 shadow-sm">
-              <div className={"row gx-2 " + (htlCollapse==='#room'+v.productCode ? 'colOpen':'collapsed')} aria-expanded={htlCollapse==='#room'+v.productCode}>
+            <div key={v.systemId} className="htlboxcol rounded mb-3 shadow-sm">
+              <div className={"row gx-2 " + (htlCollapse==='#room'+v.systemId ? 'colOpen':'collapsed')} aria-expanded={htlCollapse==='#room'+v.systemId}>
                 <div className="col-lg-7">
                   <div className="d-flex flex-row">
                     <div className="hotelImg rounded-start bg-light">
@@ -617,21 +680,38 @@ export default function HotelResult(props) {
                       <div className="blue fw-semibold fs-6 mt-n1">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
                     </div>
                     <div>
-                      <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => roomDetail(`#room${v.productCode}`,v.productCode, v.systemId, v.supplierName)}>&nbsp;Select</button>
+                      <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => roomDetail(v)}>&nbsp;Select</button>
                     </div>
                   </div>
                 </div>
               </div>
 
               
-              <div className={"collapse "+(htlCollapse==='#room'+v.productCode ? 'show':'')}>
+              <div className={"collapse "+(htlCollapse==='#room'+v.systemId ? 'show':'')}>
                 <div>
                   <div className="fn13 roomColumn">
                     <div className="fs-6 fw-semibold mx-2 mt-1">Room Rates: {qry.paxInfoArr.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
-                    {roomData?.[v.productCode] ?
+                    {roomData?.[v.systemId] ?
                     <>
-                    {roomData?.[v.productCode]?.length ?
-                    <div className="mt-n1"><DataTable columns={columns} data={roomData?.[v.productCode]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  /></div>
+                    {roomData?.[v.systemId]?.length ?
+                    <div className="mt-n1">
+                      {/* <div className="px-2">
+                        <div className="row gx-2 justify-content-end">
+                          <div className="col-md-3">
+                            <Select
+                              isMulti
+                              name="selectFltr"
+                              options={roomOptions}
+                              classNamePrefix="selectSm"
+                            />
+                          </div>
+                          <div className="col-md-3">
+                            <input type="text" className="form-control form-control-sm fn13" placeholder="Search by Room Name" value={fltrRoomTxt} onChange={(e) => (setFltrRoomTxt(e.target.value))}  />
+                          </div>
+                        </div>
+                      </div> */}
+                      <DataTable columns={columns} data={roomData?.[v.systemId]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  />
+                    </div>
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>
                     }

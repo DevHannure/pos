@@ -1,18 +1,24 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
+  deviceInfo:null,
   userInfo:null,
   country:null,
   b2bXmlSupplier:null,
   regionCodeSaver:null,
   custCreditDtls:null,
-  appFeaturesDtls: null
+  appFeaturesDtls: null,
+  recentSearch: null
 };
 
 export const commonResult = createSlice({
   name: "commonResult",
   initialState,
   reducers: {
+    doDeviceInfo:  (state, action) => {
+      state.deviceInfo = action.payload
+    },
+
     doUserInfo:  (state, action) => {
       state.userInfo = action.payload
     },
@@ -35,10 +41,14 @@ export const commonResult = createSlice({
       state.appFeaturesDtls = action.payload
     },
 
+    doRecentSearch:  (state, action) => {
+      state.recentSearch = action.payload
+    },
+
   }
 
 });
 
-export const {doUserInfo, doCustCreditDtls, doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doAppFeatures} = commonResult.actions
+export const {doDeviceInfo, doUserInfo, doCustCreditDtls, doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doAppFeatures, doRecentSearch} = commonResult.actions
 
 export default commonResult.reducer;

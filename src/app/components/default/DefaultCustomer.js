@@ -1,10 +1,13 @@
 "use client"
 import React, {useState, useEffect} from 'react';
-import {useSelector } from "react-redux";
+import {useDispatch, useSelector } from "react-redux";
+import MasterService from '@/app/services/master.service';
+import { doRecentSearch} from '@/app/store/commonStore/common';
 
 export default function DefaultCustomer(props) {
-
+  const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const recentSearchMain = useSelector((state) => state.commonResultReducer?.recentSearch);
   const [cusCurrency, setCusCurrency] = useState('');
   const [customerCode, setCustomerCode] = useState(null);
 
@@ -12,7 +15,15 @@ export default function DefaultCustomer(props) {
     if(userInfo){
       if(process.env.NEXT_PUBLIC_APPCODE==='1'){
         setCusCurrency(userInfo.user.currencyCode);
-        setCustomerCode(userInfo?.user?.userCode)
+        setCustomerCode(userInfo?.user?.userCode);
+      }
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    if(userInfo){
+      if(recentSearchMain===null){
+        recentSearcheBtn(userInfo?.user?.userCode)
       }
     }
   }, [userInfo]);
@@ -20,6 +31,17 @@ export default function DefaultCustomer(props) {
   useEffect(() => {
     props.customerDetails({'custCurrency':cusCurrency, 'custCode': customerCode})
   }, [props, cusCurrency]);
+
+  const recentSearcheBtn = async(cusCode)=> {
+    if(cusCode){
+      const reacentObj= {
+        "CustomerCode": cusCode
+      }
+      const responseRecent = await MasterService.doGetRecentSearchListCustomerwise(reacentObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+      const resRecent = responseRecent;
+      dispatch(doRecentSearch(resRecent));
+    }
+  }
 
   return (
   <>
@@ -35,7 +57,6 @@ export default function DefaultCustomer(props) {
       </div>
     </>
     :
-
     <>
       <div className="col-lg-3">
         <div className="mb-3">

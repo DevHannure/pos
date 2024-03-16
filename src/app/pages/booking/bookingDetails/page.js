@@ -81,7 +81,7 @@ export default function BookingDetailsPage() {
           if(objPax){
             dt.PaxNew = objPax
           }
-          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
           if(objCancellation){
             dt.CancellationNew = objCancellation
           }
@@ -384,9 +384,7 @@ export default function BookingDetailsPage() {
                       }
                     </div>
                   </div>
-                  
 
-                  
                 </div>
               </div>
               <div className='d-lg-table-cell align-top rightResult pt-0'>
@@ -399,10 +397,8 @@ export default function BookingDetailsPage() {
                 </div>
 
                 <div id="printableArea">
-                  
-
                   {isActive('detailsColumn') &&
-                    <BookingDetails res={bkngDetails} query={qry} />
+                    <BookingDetails res={bkngDetails} query={qry} noPrint={noPrint} />
                   }
 
                   {isActive('itineraryColumn') &&

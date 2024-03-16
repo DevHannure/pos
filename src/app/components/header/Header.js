@@ -4,13 +4,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPowerOff } from "@fortawesome/free-solid-svg-icons";
+import { faBell} from "@fortawesome/free-regular-svg-icons";
 import { useSession, signOut } from "next-auth/react";
 import Bowser from "bowser";
 import AuthService from '@/app/services/auth.service';
 import MasterService from '@/app/services/master.service';
+import ReservationService from '@/app/services/reservation.service';
 import { useSelector, useDispatch } from "react-redux";
-import { doUserInfo, doCustCreditDtls, doAppFeatures } from '@/app/store/commonStore/common';
+import { doUserInfo, doCustCreditDtls, doAppFeatures, doDeviceInfo } from '@/app/store/commonStore/common';
 import { doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import { doBookingTypeCounts} from '@/app/store/reservationStore/reservation';
 import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
 import { useRouter } from 'next/navigation';
 
@@ -19,9 +22,28 @@ export default function Header() {
   const dispatch = useDispatch();
   const router = useRouter();
   const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
+  const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
   const reservationLink = useSelector((state) => state.reservationListReducer?.reserveQryObj);
+  const bookingTypeCountInfo = useSelector((state) => state.reservationReducer?.bookTypeCount);
+
+  useEffect(() => {
+    if(deviceInfo===null){
+      let browserInfo = Bowser.parse(window.navigator.userAgent);
+      fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+        .then(response => response.json())
+        .then(data => {
+          let deviceObj = {
+            "ipAddress": data.ip_address,
+            "ipLocation": data.city + ', ' + data.country,
+            "deviceName":toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName,
+            "browserName":browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version
+          }
+          dispatch(doDeviceInfo(deviceObj));
+          }).catch(err => console.error(err));
+    }
+  }, []);
   
   //console.log("session666", data)
   // console.log("session", status)
@@ -42,6 +64,9 @@ export default function Header() {
     }
     if(data && !appFeaturesInfo){
       appFeaturesBtn();
+    }
+    if(data && !bookingTypeCountInfo){
+      bookingTypeCountsBtn(process.env.NEXT_PUBLIC_APPCODE === "1" ? data?.user.userEmail : data?.user.userCode);
     }
   }, [data]);
   
@@ -120,6 +145,15 @@ export default function Header() {
     const resAppFeatures = await responseAppFeatures;
     dispatch(doAppFeatures(resAppFeatures));
   }
+
+  const bookingTypeCountsBtn = async(userCode) => {
+    let reqObj={
+      "UserId": userCode
+    }
+    const responseBookingTypeCount = ReservationService.doGetBookingTypeListCounts(reqObj, data?.correlationId);
+    const resBookingTypeCount = await responseBookingTypeCount;
+    dispatch(doBookingTypeCounts(resBookingTypeCount));
+  }
   
   return (
     <>
@@ -157,18 +191,23 @@ export default function Header() {
                   </ul> */}
                 </li> 
                }
-                
-
-                {/* <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
-                <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li> */}
-                {/* <li className="nav-item dropdown"><Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Dashboard</Link>
-                  <ul className="dropdown-menu">
-                    <li><Link className="dropdown-item" href="#">Action</Link></li>
-                    <li><Link className="dropdown-item" href="#">Another action</Link></li>
-                    <li><Link className="dropdown-item" href="#">Something else here</Link></li>
+               <li className="nav-item dropdown">
+                <Link className="nav-link dropdown-toggle position-relative pe-0" href="#" data-bs-toggle="dropdown">
+                  <FontAwesomeIcon icon={faBell} className='fs-5' />
+                  <span className="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger p-1">{bookingTypeCountInfo?.[0]?.TotalBkgTypeCount}</span>
+                </Link>
+                  <ul className="dropdown-menu dropdown-menu-end fn14">
+                    <li className="border-bottom"><Link className="dropdown-item d-flex justify-content-between" href="#">Unvouchered Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUnvoucheredBkgCount}</span></Link></li>
+                    <li className="border-bottom"><Link className="dropdown-item d-flex justify-content-between" href="#">On Request Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalOnRequestBkgCount}</span></Link></li>
+                    <li className="border-bottom"><Link className="dropdown-item d-flex justify-content-between" href="#">Failed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalFailedBkgCount}</span></Link></li>
+                    <li><Link className="dropdown-item d-flex justify-content-between" href="#">Unticketed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUntktBkgCount}</span></Link></li>
                   </ul>
                 </li> 
-                <li className="nav-item"><Link className="nav-link" href="#">More</Link></li>*/}
+                
+                {/* <li className="nav-item"><Link className="nav-link" href="#">Quotation</Link></li>
+                <li className="nav-item"><Link className="nav-link" href="#">Dashboard</Link></li> */}
+                
+                {/* <li className="nav-item"><Link className="nav-link" href="#">More</Link></li>*/}
               </ul>
             </div>
           </div>

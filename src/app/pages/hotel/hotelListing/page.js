@@ -8,11 +8,13 @@ import DummyHotelResult from '@/app/components/hotel/DummyResult';
 import { useSearchParams  } from 'next/navigation';
 import { useDispatch, useSelector } from "react-redux";
 import HotelService from '@/app/services/hotel.service';
+import MasterService from '@/app/services/master.service';
 import { doHotelSearchOnLoad } from '@/app/store/hotelStore/hotel';
+import { doRecentSearch} from '@/app/store/commonStore/common';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useSession } from "next-auth/react";
-import {format} from 'date-fns';
+import {format, differenceInDays} from 'date-fns';
 import Image from 'next/image';
 
 function getUID() {return Date.now().toString(36);}
@@ -25,6 +27,8 @@ export default function HotelListing() {
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
 
   const [countDown, setCountDown] = useState(0);
@@ -183,7 +187,30 @@ export default function HotelListing() {
       resHtlResult.generalInfo.localSessionId = resLocalHtlResult?.generalInfo?.sessionId;
       resHtlResult.hotels.b2BHotel = finalB2BHotel;
     }
-    dispatch(doHotelSearchOnLoad(resHtlResult))
+    dispatch(doHotelSearchOnLoad(resHtlResult));
+
+    let saveActivity = {
+      "ActivityType": 2,
+      "Domain": `${window.location.origin}`,
+      "IPAddr": deviceInfo?.ipAddress,
+      "IPLocation": deviceInfo?.ipLocation,
+      "Browser": deviceInfo?.browserName,
+      "Device": deviceInfo?.deviceName,
+      "UserId": userInfo?.user?.userId,
+      "Location": qry?.destination[0]?.predictiveText,
+      "Date": format(new Date(qry.chkIn), 'dd MMM yyyy')+' - '+format(new Date(qry.chkOut), 'dd MMM yyyy')+', '+differenceInDays(new Date(qry.chkOut),new Date(qry.chkIn))+' Night(s)',
+      "NoGuest": qry?.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)+ ' Guest(s)',
+      "TypeId": 1, //Service Id
+      "Type": "Hotel",
+      "QueryString": `${window.location.href}`,
+      "CustomerCode": qry.customerCode,
+      "UniqueId": ""
+    }
+    const responseSaveRecent = await MasterService.doSaveActivityDetail(saveActivity, qry.correlationId);
+    const resSaveRecent = responseSaveRecent;
+    if(resSaveRecent?.isSuccess){
+      dispatch(doRecentSearch(null));
+    }
   }
 
   const [filterChoose, setFilterChoose] = useState(false);
@@ -251,7 +278,7 @@ export default function HotelListing() {
                 <div className='py-3'>
                   <div className='wonderImg'><Image src='/images/wonder.png' alt='loadin' width={290} height={290} priority={true} /></div>
                 </div>
-                <div className='text-end p-2 pt-0'>Waiting Time {minutes}:{seconds}</div>
+                <div className='text-end p-2 pt-0'>Results Anticipated In: {minutes}:{seconds}</div>
               </div>
             </div>
           }

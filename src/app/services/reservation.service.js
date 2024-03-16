@@ -81,6 +81,28 @@ const ReservationService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doUpdateBookingReference: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/UpdateBookingReference`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doGetBookingTypeListCounts: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/GetBookingTypeListCounts`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
 }
 
 export default ReservationService

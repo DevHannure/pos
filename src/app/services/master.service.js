@@ -163,6 +163,39 @@ const MasterService = {
     } catch (error) {console.log("errorConsultantDelete", error)}
   },
 
+  doSaveActivityDetail: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/activity/SaveActivityDetail`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorSaveSearch", error)}
+  },
+
+  doGetRecentSearchListCustomerwise: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/activity/GetRecentSearchListCustomerwise`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorRecentSearch", error)}
+  },
+
+  doDeleteRecentSearchItem: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/activity/DeleteRecentSearchItem`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorRecentDelete", error)}
+  },
+
   
  
   

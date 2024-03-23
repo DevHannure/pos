@@ -704,7 +704,7 @@ export default function BBReservationTray() {
                   <div className='col-lg-4 mb-2 align-self-end'>
                     <button type='button' className='btn btn-sm btn-warning' onClick={() => getReservations()}>Filter Bookings</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-light' onClick={() => resetFilter()}>Reset</button> &nbsp;
-                    <button type='button' className='btn btn-sm btn-outline-primary' onClick={() => getExcel()}>Export To Excel</button>
+                    <button type='button' className='btn btn-sm btn-outline-warning' onClick={() => getExcel()}>Export To Excel</button>
                   </div>
                 </div>
 

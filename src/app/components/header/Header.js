@@ -13,9 +13,11 @@ import ReservationService from '@/app/services/reservation.service';
 import { useSelector, useDispatch } from "react-redux";
 import { doUserInfo, doCustCreditDtls, doAppFeatures, doDeviceInfo } from '@/app/store/commonStore/common';
 import { doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
-import { doBookingTypeCounts} from '@/app/store/reservationStore/reservation';
+import { doBookingTypeCounts, doBookingType} from '@/app/store/reservationStore/reservation';
 import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
 import { useRouter } from 'next/navigation';
+import AES from 'crypto-js/aes';
+import { enc } from 'crypto-js';
 
 export default function Header() {
   const { data, status } = useSession();
@@ -154,6 +156,22 @@ export default function Header() {
     const resBookingTypeCount = await responseBookingTypeCount;
     dispatch(doBookingTypeCounts(resBookingTypeCount));
   }
+
+  const bookingTypeDetailsBtn = (bookingType,count) => {
+    let qry = {
+      "BookingType": bookingType,
+      "UserId": process.env.NEXT_PUBLIC_APPCODE === "1" ? data?.user.userEmail : data?.user.userCode,
+      "Count": count,
+      "Skip": "0",
+      "Take": "10",
+      "ActivePage":0,
+      "correlationId":data?.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    dispatch(doBookingType(null));
+    router.push(`/pages/booking/bookingTypeList?qry=${encData}`);
+  }
   
   return (
     <>
@@ -197,10 +215,10 @@ export default function Header() {
                   <span className="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger p-1">{bookingTypeCountInfo?.[0]?.TotalBkgTypeCount}</span>
                 </Link>
                   <ul className="dropdown-menu dropdown-menu-end fn14">
-                    <li className="border-bottom"><Link className="dropdown-item d-flex justify-content-between" href="#">Unvouchered Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUnvoucheredBkgCount}</span></Link></li>
-                    <li className="border-bottom"><Link className="dropdown-item d-flex justify-content-between" href="#">On Request Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalOnRequestBkgCount}</span></Link></li>
-                    <li className="border-bottom"><Link className="dropdown-item d-flex justify-content-between" href="#">Failed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalFailedBkgCount}</span></Link></li>
-                    <li><Link className="dropdown-item d-flex justify-content-between" href="#">Unticketed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUntktBkgCount}</span></Link></li>
+                    <li className="border-bottom"><button onClick={()=> bookingTypeDetailsBtn("1", bookingTypeCountInfo?.[0]?.TotalUnvoucheredBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Unvouchered Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUnvoucheredBkgCount}</span></button></li>
+                    <li className="border-bottom"><button onClick={()=> bookingTypeDetailsBtn("2", bookingTypeCountInfo?.[0]?.TotalOnRequestBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">On Request Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalOnRequestBkgCount}</span></button></li>
+                    <li className="border-bottom"><button onClick={()=> bookingTypeDetailsBtn("3", bookingTypeCountInfo?.[0]?.TotalFailedBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Failed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalFailedBkgCount}</span></button></li>
+                    <li><button onClick={()=> bookingTypeDetailsBtn("4", bookingTypeCountInfo?.[0]?.TotalUntktBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Unticketed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUntktBkgCount}</span></button></li>
                   </ul>
                 </li> 
                 

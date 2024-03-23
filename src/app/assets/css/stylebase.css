@@ -44,6 +44,7 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 --bs-btn-disabled-bg: #014689;
 --bs-btn-disabled-border-color: #014689;
 }
+.btn-outline-warning{--bs-btn-color:#014689; --bs-btn-border-color:#014689; --bs-btn-hover-color: #FFF; --bs-btn-hover-bg: #062f57; --bs-btn-hover-border-color: #062f57; --bs-btn-active-color: #FFF; --bs-btn-active-border-color: #062f57; --bs-btn-disabled-border-color: #014689;}
 .list-group-item.active {background-color:#014689; border-color:#014689;}
 .pagination{--bs-pagination-active-bg:#014689;}
 .btn-success{--bs-btn-bg:#4cae4c}

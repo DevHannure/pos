@@ -18,7 +18,7 @@ import {useDispatch, useSelector } from "react-redux";
 import MasterService from '@/app/services/master.service';
 import DefaultCustomer from '@/app/components/default/DefaultCustomer';
 import { doHotelSearchOnLoad, doRoomDtls } from '@/app/store/hotelStore/hotel';
-import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode } from '@/app/store/commonStore/common';
+import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doRecentSearch } from '@/app/store/commonStore/common';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 
@@ -121,7 +121,7 @@ export default function ModifySearch(props) {
   // console.log("arr", arr)
 
 
-
+  const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const router = useRouter();
   const dispatch = useDispatch();
@@ -601,9 +601,11 @@ export default function ModifySearch(props) {
 
   const [searchLoading, setSearchLoading] = useState(false)
   //let uniqId = getUID();
-  const srchHtl = () => {
+  const srchHtl = async(e) => {
     let allowMe = validate();
     if(allowMe){
+      e.nativeEvent.target.disabled = true;
+      e.nativeEvent.target.innerHTML = 'Searching...';
       dispatch(doHotelSearchOnLoad(null));
       dispatch(doRoomDtls({}));
       setSearchLoading(true)
@@ -628,9 +630,34 @@ export default function ModifySearch(props) {
         //"uniqId": uniqId,
         "paxInfoArr": rmCountArr
       }
-      let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString()
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson))
-      setSearchLoading(false)
+      let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
+      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+      setSearchLoading(false);
+
+      let saveActivity = {
+        "ActivityType": 2,
+        "Domain": `${window.location.origin}`,
+        "IPAddr": deviceInfo?.ipAddress,
+        "IPLocation": deviceInfo?.ipLocation,
+        "Browser": deviceInfo?.browserName,
+        "Device": deviceInfo?.deviceName,
+        "UserId": userInfo?.user?.userId,
+        "Location": qry?.destination[0]?.predictiveText,
+        "Date": format(new Date(qry.chkIn), 'dd MMM yyyy')+' - '+format(new Date(qry.chkOut), 'dd MMM yyyy')+', '+differenceInDays(new Date(qry.chkOut),new Date(qry.chkIn))+' Night(s)',
+        "NoGuest": qry?.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)+ ' Guest(s)',
+        "TypeId": 1, //Service Id
+        "Type": "Hotel",
+        "QueryString": `${window.location.origin}/pages/hotel/hotelListing?qry=${encData}`,
+        "CustomerCode": qry.customerCode,
+        "UniqueId": ""
+      }
+      const responseSaveRecent = await MasterService.doSaveActivityDetail(saveActivity, qry.correlationId);
+      const resSaveRecent = responseSaveRecent;
+      if(resSaveRecent?.isSuccess){
+        dispatch(doRecentSearch(null));
+      }
+      e.nativeEvent.target.disabled = false;
+      e.nativeEvent.target.innerHTML = 'Search';
       router.push(`/pages/hotel/hotelListing?qry=${encData}`);
     }
   }
@@ -791,7 +818,7 @@ export default function ModifySearch(props) {
           <div className="row gx-3">
             <div className="col text-end">
               <div className="mb-3 mt-lg-0 mt-3">
-                <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" onClick={srchHtl} disabled={searchLoading}>{searchLoading ? 'Searching' : 'Search'}</button>
+                <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)} disabled={searchLoading}>{searchLoading ? 'Searching' : 'Search'}</button>
               </div>
             </div>
           </div>
@@ -952,7 +979,7 @@ export default function ModifySearch(props) {
             <div className="row gx-3">
               <div className="col text-end">
                 <div className="mb-3 mt-lg-0 mt-3">
-                  <button type="button" className="btn btn-light px-4 py-2 fw-semibold" onClick={srchHtl}>Search</button>
+                  <button type="button" className="btn btn-light px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)}>Search</button>
                 </div>
               </div>
             </div>

@@ -103,6 +103,17 @@ const ReservationService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetBookingTypeListDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/GetBookingTypeListDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response?.json()
+    } catch (error) {console.log("BookingTypeListError", error)}
+  },
+
 }
 
 export default ReservationService

@@ -10,7 +10,6 @@ export default function HotelBookingItinerary(props) {
   const deleteService = (id) => {
     props.onSelectDltId(id);            
   }
-
   return (
     <>
     {props?.response &&
@@ -33,13 +32,15 @@ export default function HotelBookingItinerary(props) {
               }
             </td>
           </tr>
+
+          {props.bookingDetail?.BookingStatus !== "-1" &&
           <tr>
             <td style={{padding:'12px 10px 2px'}}>
               <table width="100%" cellPadding="2" cellSpacing="0" style={{fontFamily:'Arial, Helvetica, sans-serif', fontSize:'13px'}}>
                 <tbody>
                   <tr>
                     <td>
-                      <strong><span style={{color:'#01468a'}}>Booking {props.response.ServiceMasterCode}  Supplier Ref. No: {props.response.SupplierReferenceNo} &nbsp; | &nbsp; Status:&nbsp; 
+                      <strong><span style={{color:'#01468a'}}>Booking {props.response.BookingNo} &nbsp; | &nbsp; Supplier Ref. No: {props.response.SupplierConfirmationNo} &nbsp; | &nbsp; Status:&nbsp; 
                       {props.response?.ServiceStatus ==="-1" && <span style={{color:'#ff3300'}}>Pending</span>}
                       {props.response?.ServiceStatus ==="0" && <span style={{color:'#ff3300'}}>Pending</span>}
                       {props.response?.ServiceStatus ==="1" && <span style={{color:'#fc5900'}}>PENDING CONFIRMATION</span>}
@@ -59,6 +60,8 @@ export default function HotelBookingItinerary(props) {
             </td>
             <td valign="bottom" align="right" style={{padding:'12px 10px 2px', lineHeight:'20px'}}> </td>
           </tr>
+          }
+
           <tr>
             <td colSpan="2" style={{padding:'5px 10px'}}>
               <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dddddd" style={{width:'100%', maxWidth:'100%', borderCollapse:'collapse',borderSpacing:0,fontFamily:'Arial, Helvetica, sans-serif', fontSize:'13px', marginBottom:'20px', marginBottom:'0px', border:'1px solid #dddddd'}}>

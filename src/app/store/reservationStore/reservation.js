@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  bookTypeCount:null
+  bookTypeCount:null,
+  bookTypeList:null
 };
 
 export const reservation = createSlice({
@@ -11,11 +12,14 @@ export const reservation = createSlice({
     doBookingTypeCounts: (state, action) => {
       state.bookTypeCount = action.payload
     },
+    doBookingType: (state, action) => {
+      state.bookTypeList = action.payload
+    },
 
   }
 
 });
 
-export const {doBookingTypeCounts} = reservation.actions
+export const {doBookingTypeCounts, doBookingType} = reservation.actions
 
 export default reservation.reducer;

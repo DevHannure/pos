@@ -169,7 +169,7 @@ export default function Header() {
     }
     let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    dispatch(doBookingType(null));
+    //dispatch(doBookingType(null));
     router.push(`/pages/booking/bookingTypeList?qry=${encData}`);
   }
   

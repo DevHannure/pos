@@ -1,5 +1,6 @@
 "use client"
 import React, {useEffect, useRef, useState} from 'react';
+import { useSession } from "next-auth/react";
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSort} from "@fortawesome/free-solid-svg-icons";
@@ -9,9 +10,15 @@ import { enc } from 'crypto-js';
 import {format} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import ReservationService from '@/app/services/reservation.service';
-import {doBookingType} from '@/app/store/reservationStore/reservation';
+import ReservationtrayService from '@/app/services/reservationtray.service';
+import {doBookingType, doBookingTypeCounts} from '@/app/store/reservationStore/reservation';
+import CommonLoader from '@/app/components/common/CommonLoader';
+import BookingVoucher from '@/app/components/reports/bookingVoucer/BookingVoucher';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function BookingTypeList() {
+  const { data, status } = useSession();
   const router = useRouter();
   const dispatch = useDispatch();
   const searchparams = useSearchParams();
@@ -19,17 +26,21 @@ export default function BookingTypeList() {
   let decData = search ? enc.Base64.parse(search).toString(enc.Utf8) : null;
   let bytes = decData ? AES.decrypt(decData, 'ekey').toString(enc.Utf8): null;
   const qry = bytes ? JSON.parse(bytes) : null;
-
   const refDiv = useRef(null);
-  console.log("qry", qry)
-
+  const cancelServiceModalClose = useRef(null);
   const listRes = useSelector((state) => state.reservationReducer?.bookTypeList);
+
+  const [mainLoader, setMainLoader] = useState(false);
+  useEffect(() => {
+      setMainLoader(true);
+      doBookingTypeOnLoad();
+  }, [qry?.BookingType]);
 
   useEffect(() => {
     if(!listRes){
       doBookingTypeOnLoad();
     }
-  }, [qry]);
+  }, [listRes]);
 
   const [dimensions, setDimensions] = useState(null);
   const [dtlCollapse, setDtlCollapse] = useState('');
@@ -98,6 +109,7 @@ export default function BookingTypeList() {
     }
     const responseBookType = ReservationService.doGetBookingTypeListDetails(bookingTypeObj, qry.correlationId);
     const resBookType = await responseBookType;
+    setMainLoader(false);
     dispatch(doBookingType(resBookType));
     setActivePage(Number(currentPage));
     setCurrentPageObj(false);
@@ -131,8 +143,60 @@ export default function BookingTypeList() {
     router.push(`/pages/booking/bookingDetails?qry=${encData}`);
   }
 
+  const [cancelBookingId, setCancelBookingId] = useState("");
+  const [cancelServiceId, setCancelServiceId] = useState("");
+
+  const cancelServiceBtn = async(e) => {
+    e.nativeEvent.target.disabled = true;
+    e.nativeEvent.target.innerHTML = 'Processing...';
+    let cancelReq = {
+      "BookingNo": cancelBookingId,
+      "ServiceMasterCode":cancelServiceId
+    }
+    const responseCancelService = ReservationtrayService.doCancelFailedService(cancelReq, qry.correlationId);
+    const resCancelService = await responseCancelService;
+    if(resCancelService==='Success'){
+      dispatch(doBookingType(null));
+      toast.success("Service Cancellation Successful!",{theme: "colored"});
+      let reqObj={
+        "UserId": process.env.NEXT_PUBLIC_APPCODE === "1" ? data?.user.userEmail : data?.user.userCode
+      }
+      const responseBookingTypeCount = ReservationService.doGetBookingTypeListCounts(reqObj, data?.correlationId);
+      const resBookingTypeCount = await responseBookingTypeCount;
+      dispatch(doBookingTypeCounts(resBookingTypeCount));
+    }
+    else{
+      toast.error("Something went wrong! Please try after sometime.",{theme: "colored"});
+      setSubmitLoad(false);
+    }
+    e.nativeEvent.target.disabled = false;
+    e.nativeEvent.target.innerHTML = 'Cancel Service';
+    cancelServiceModalClose.current?.click();
+  }
+  
+  
+  const [voucherBellModal, setVoucherBellModal] = useState(false);
+  const [voucherObj, setVoucherObj] = useState({
+    "bookingId": "",
+    "customerCode": "",
+    "correlationId": qry.correlationId
+  });
+
+  const voucherBtn = async(e) => {
+    const voucherItems = {...voucherObj}
+    voucherItems.bookingId = e.BookingNo?.toString();
+    voucherItems.customerCode = e.CustomerCode?.toString();
+    setVoucherObj(voucherItems);
+    setVoucherBellModal(true);
+  }
+  
+
   return (
     <MainLayout>
+      <ToastContainer />
+      {mainLoader &&
+        <CommonLoader Type="1" />
+      }
       <div className="middle">
         <div className="container-fluid">
           <div className='pt-3'>
@@ -177,10 +241,12 @@ export default function BookingTypeList() {
                                   <div className='divCell text-nowrap text-end'>
                                     <button onClick={()=> viewDetails(e.BookingNo)} type="button" className='btn btn-sm btn-outline-warning fn12'>&nbsp;View&nbsp;</button> &nbsp;
                                     {qry?.BookingType === "1" ?
-                                    <button onClick={()=> viewDetails(e.BookingNo)} type="button" className='btn btn-sm btn-warning fn12'>Voucher</button>
+                                    <>
+                                    <button onClick={()=> voucherBtn(e)} type="button" className='btn btn-sm btn-warning fn12'>Voucher</button>
+                                    </>
                                     :
                                     ["2","3"].includes(qry?.BookingType) ?
-                                    <button type="button" className='btn btn-sm btn-warning fn12'>&nbsp;Cancel&nbsp;</button>
+                                    <button onClick={()=> (setCancelBookingId(e.BookingNo?.toString()), setCancelServiceId(e.ServiceMasterCode?.toString()))} data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-warning fn12'>&nbsp;Cancel&nbsp;</button>
                                     :
                                     null
                                     }
@@ -311,14 +377,41 @@ export default function BookingTypeList() {
                     <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
                   </div>
                 }
-              
-              {listRes?.map((e, i) => (
-                <React.Fragment key={i}>
-                   <div className='divRow'>
 
-                   </div>
-                </React.Fragment>
-              ))}
+                <div className="modal fade" id="cancelServiceModal" data-bs-backdrop="static" data-bs-keyboard="false">
+                  <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h5 className="modal-title fs-6">Cancel Failed Service</h5>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div className="modal-body">
+                        <div className='fs-6 fw-semibold'>Do you want to cancel this (Service id: {cancelServiceId}) failed service?</div>
+                      </div>
+                      <div className='modal-footer'>
+                        <button type="button" className='btn btn-sm btn-warning px-3' onClick={(e) => cancelServiceBtn(e)}>Cancel Service</button> &nbsp; 
+                        <button ref={cancelServiceModalClose} type="button" className='btn btn-sm btn-light px-3' data-bs-dismiss="modal" aria-label="Close">Close</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {voucherBellModal &&
+                  <div className="modal d-block bg-black bg-opacity-25">
+                  <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h5 className="modal-title fs-6">Booking Id: {voucherObj.bookingId}</h5>
+                        <button type="button" className="btn-close" onClick={()=>setVoucherBellModal(false)}></button>
+                      </div>
+                      <div className="modal-body">
+                        <BookingVoucher dtl={voucherObj} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                }
+                
 
             </div>
           </div>

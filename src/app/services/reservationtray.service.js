@@ -146,6 +146,17 @@ const ReservationtrayService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doCancelFailedService: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/CancelFailedService`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("error", error)}
+  },
+
 }
 
 export default ReservationtrayService

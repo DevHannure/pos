@@ -1,5 +1,5 @@
 "use client"
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import Link from 'next/link';
 import {useDispatch, useSelector} from "react-redux";
 import MasterService from '@/app/services/master.service';
@@ -82,6 +82,7 @@ export default function RecentSearch() {
                   ))
                   }
                 </Slider>
+                
               </div>
             </div>
 

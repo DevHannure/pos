@@ -90,100 +90,108 @@ export default function PaymentOrder() {
         <div className="container">
           <div className='pt-3'>
             {!resHtml &&
-              <div className='row justify-content-center'>
-                <div className='col-lg-8'>
-                  <div className="bg-white shadow-sm">
+              <>
+              {bookingAmount ?
+                <div className='row justify-content-center'>
+                  <div className='col-lg-8'>
                     <div className="bg-white shadow-sm">
-                      <div className="bg-primary bg-opacity-10 px-3 py-2 fs-6 fw-semibold border mb-2">Payment</div>
-                      <div className='px-3 py-2 fn15'>
+                      <div className="bg-white shadow-sm">
+                        <div className="bg-primary bg-opacity-10 px-3 py-2 fs-6 fw-semibold border mb-2">Payment</div>
+                        <div className='px-3 py-2 fn15'>
 
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'>Payment Server Display Language Locale :</div>
-                          <div className='col-7'><strong></strong></div>
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'>Payment Server Display Language Locale :</div>
+                            <div className='col-7'><strong></strong></div>
+                          </div>
+
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'>Merchant Transaction Reference :</div>
+                            <div className='col-7'><strong>{qry?.bookingNo}</strong></div>
+                          </div>
+
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'>Order Info :</div>
+                            <div className='col-7'><strong>{qry?.bookingNo}</strong></div>
+                          </div>
+
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'>Billing Amount :</div>
+                            <div className='col-7'><strong>{bookingAmount?.sysCurrency} {parseFloat(bookingAmount?.sysNetAmount).toFixed(2)}</strong></div>
+                          </div>
+
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'>Convenience Fee :</div>
+                            <div className='col-7'><strong>{bookingAmount?.sysCurrency} {parseFloat(bookingAmount?.serviceCharge).toFixed(2)}</strong></div>
+                          </div>
+
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'>Total :</div>
+                            <div className='col-7'><strong>{bookingAmount?.sysCurrency} {parseFloat(parseFloat(bookingAmount?.sysNetAmount)+parseFloat(bookingAmount?.serviceCharge)).toFixed(2)}</strong></div>
+                          </div>
+
+                          {qry.pGSupplier === 2 &&
+                            <>
+                              <h4 className="fs-5">Billing information(optional)</h4>
+                              <hr />
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>Name :</div>
+                                <div className='col-7'><strong>{billingInfo?.customerName}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>Address :</div>
+                                <div className='col-7'><strong>{billingInfo?.address}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>City :</div>
+                                <div className='col-7'><strong>{billingInfo?.cityname}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>Zip :</div>
+                                <div className='col-7'><strong>{billingInfo?.poBox}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>State :</div>
+                                <div className='col-7'><strong>{billingInfo?.cityname}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>Country :</div>
+                                <div className='col-7'><strong>{billingInfo?.countryName}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>Telephone :</div>
+                                <div className='col-7'><strong>{billingInfo?.telephone}</strong></div>
+                              </div>
+
+                              <div className="row gx-2 mb-3">
+                                <div className='col-5'>Email :</div>
+                                <div className='col-7'><strong>{billingInfo?.email}</strong></div>
+                              </div>
+                            </>
+                          }
+                          <hr />
+                          <div className="row gx-2 mb-3">
+                            <div className='col-5'><button className='btn btn-light px-4 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button></div>
+                            <div className='col-7'><button className='btn btn-warning px-4 py-2' onClick={(e)=>doBooking(e)}>Pay Now!</button></div>
+                          </div>
+
                         </div>
-
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'>Merchant Transaction Reference :</div>
-                          <div className='col-7'><strong>{qry?.bookingNo}</strong></div>
-                        </div>
-
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'>Order Info :</div>
-                          <div className='col-7'><strong>{qry?.bookingNo}</strong></div>
-                        </div>
-
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'>Billing Amount :</div>
-                          <div className='col-7'><strong>{bookingAmount?.sysCurrency} {bookingAmount?.sysNetAmount}</strong></div>
-                        </div>
-
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'>Convenience Fee :</div>
-                          <div className='col-7'><strong>{bookingAmount?.sysCurrency} {bookingAmount?.serviceCharge}</strong></div>
-                        </div>
-
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'>Total :</div>
-                          <div className='col-7'><strong>{bookingAmount?.sysCurrency} {parseFloat(bookingAmount?.sysNetAmount)+parseFloat(bookingAmount?.serviceCharge)}</strong></div>
-                        </div>
-
-                        {qry.pGSupplier === 2 &&
-                          <>
-                            <h4 className="fs-5">Billing information(optional)</h4>
-                            <hr />
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>Name :</div>
-                              <div className='col-7'><strong>{billingInfo?.customerName}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>Address :</div>
-                              <div className='col-7'><strong>{billingInfo?.address}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>City :</div>
-                              <div className='col-7'><strong>{billingInfo?.cityname}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>Zip :</div>
-                              <div className='col-7'><strong>{billingInfo?.poBox}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>State :</div>
-                              <div className='col-7'><strong>{billingInfo?.cityname}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>Country :</div>
-                              <div className='col-7'><strong>{billingInfo?.countryName}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>Telephone :</div>
-                              <div className='col-7'><strong>{billingInfo?.telephone}</strong></div>
-                            </div>
-
-                            <div className="row gx-2 mb-3">
-                              <div className='col-5'>Email :</div>
-                              <div className='col-7'><strong>{billingInfo?.email}</strong></div>
-                            </div>
-                          </>
-                        }
-                        <hr />
-                        <div className="row gx-2 mb-3">
-                          <div className='col-5'><button className='btn btn-light px-4 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button></div>
-                          <div className='col-7'><button className='btn btn-warning px-4 py-2' onClick={(e)=>doBooking(e)}>Pay Now!</button></div>
-                        </div>
-
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+                :
+                <div className='text-center blue py-5'>
+                  <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
+                </div>
+              }
+              </>
             }
             <div ref={divRef}></div>
           </div>

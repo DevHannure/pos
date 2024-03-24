@@ -286,10 +286,13 @@ svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:2
 .rptButton{display:flex;}
 /* .recentCol .image-gallery-thumbnail{font-size:14px; line-height: normal; height: auto; border:0px !important; width:33%; white-space: inherit; padding:7px;} */
 .recentCol .slick-slider{ padding-bottom:40px;}
-.recentCol .slick-prev{left:47%;}
-.recentCol .slick-next{right:47%;}
+.recentCol .slick-prev{left:calc(50% - 32px);}
+.recentCol .slick-next{right:calc(50% - 32px);}
 .recentCol .slick-prev, .recentCol .slick-next{top:85%;transform:translate(50%, 0%); width:30px; height:30px; }
 .recentCol .slick-prev:before, .recentCol .slick-next:before{color:#01468a; font-size:30px;}
+
+.offlineNav .navbar-nav .nav-link{padding:12px 20px; background:#014689; color:#FFF;}
+.offlineNav .navbar-nav .nav-link.collapsed{background:transparent; color:#000;}
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

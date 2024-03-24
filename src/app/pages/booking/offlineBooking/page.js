@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import ReservationService from '@/app/services/reservation.service';
 import {doBookingType} from '@/app/store/reservationStore/reservation';
 
-export default function offlineBook() {
+export default function OfflineBook() {
 
   const [activeItem, setActiveItem] = useState('dtlColumn');
 

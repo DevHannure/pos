@@ -2,7 +2,7 @@
 import React, {useEffect, useState} from 'react';
 import {format, parse} from 'date-fns';
 
-export default function BookingVoucher(props) {
+export default function Voucher(props) {
   const resDetails = props?.res;
   const mapKey = process.env.NEXT_PUBLIC_MAPAPIKEY;
 

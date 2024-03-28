@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
 import {faCheckCircle} from "@fortawesome/free-regular-svg-icons";
-
 import { useSearchParams  } from 'next/navigation';
 import HotelService from '@/app/services/hotel.service';
 import ReservationService from '@/app/services/reservation.service';
@@ -607,7 +606,7 @@ export default function HotelItinerary() {
             {resReprice && htlDetails ?
             <>
             <div className="row">
-              <div className="mb-2 col-lg-8 order-lg-1 order-2">
+              <div className="mb-2 col-lg-8">
                 <div className="bg-white rounded shadow-sm p-2 pb-3">
                   <h2 className="fs-4 text-warning mb-4">Book in 3 Simple Steps</h2>
                   <div className="nav nav-tabs nav-justified stepNav">
@@ -695,10 +694,10 @@ export default function HotelItinerary() {
                         </div>
                       </div>   
 
-                      <div className='d-flex justify-content-between'>
+                      {/* <div className='d-flex justify-content-between'>
                         <button className='btn btn-light px-4 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button>
                         <button className='btn btn-warning px-4 py-2' onClick={() => setActive('reviewColumn')}>Next <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button>
-                      </div>
+                      </div> */}
                     </div>
                   }
 
@@ -757,10 +756,10 @@ export default function HotelItinerary() {
                           : null
                         }
                       </div> 
-                      <div className='d-flex justify-content-between'>
+                      {/* <div className='d-flex justify-content-between'>
                         <button className='btn btn-light px-4 py-2' onClick={() => setActive('paxColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button>
                         <button className='btn btn-warning px-4 py-2' onClick={() => setActive('paymentColumn')} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Next'} <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button>
-                      </div>  
+                      </div>   */}
                     </div>
                   }
                   
@@ -769,11 +768,6 @@ export default function HotelItinerary() {
                     <BookingItinerarySub qry={bookItneryReq} />
                     </div>
                   }
-
-                  <div>
-
-                  </div>
-
                 </div>
                    
                 {/* <button className='btn btn-warning' onClick={bookBtn} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Continue'} <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button> */}
@@ -933,7 +927,7 @@ export default function HotelItinerary() {
 
               </div>
               
-              <div className="mb-2 col-lg-4 order-lg-2 order-1">
+              <div className="mb-2 col-lg-4">
                 <div className="bg-white rounded shadow-sm border p-2 py-2 mb-3">
                   <div className='d-sm-flex flex-row'>
                     <div className="hotelImg rounded d-none d-sm-block">
@@ -1023,6 +1017,23 @@ export default function HotelItinerary() {
                     </tbody>
                   </table>
                 </div>
+
+                <div className="mt-4">
+                  {isActive('paxColumn') &&
+                  <div className='row gx-2'>
+                    <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button></div>
+                    <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('reviewColumn')}>Book <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
+                  </div>
+                  }
+
+                  {isActive('reviewColumn') &&
+                  <div className='row gx-2'>
+                    <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => setActive('paxColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Edit Pax Info</button></div>
+                    <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('paymentColumn')} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Payment'} <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
+                  </div>
+                  }
+                </div>
+
               </div>
             </div>
 
@@ -1125,7 +1136,7 @@ export default function HotelItinerary() {
             </>
             :
             <div className='row placeholder-glow'>
-              <div className="mb-2 col-lg-8 order-lg-1 order-2">
+              <div className="mb-2 col-lg-8">
                 <div className="bg-white rounded shadow-sm p-2">
                   <div className="placeholder col-8 m-h-15 mb-2"></div>
                   <div className="placeholder col-5"></div>
@@ -1143,7 +1154,7 @@ export default function HotelItinerary() {
                 </div>
 
               </div>
-              <div className="mb-2 col-lg-4 order-lg-2 order-1">
+              <div className="mb-2 col-lg-4">
                 <div className="bg-white rounded shadow-sm border p-2 py-2 mb-3">
                   <div className='d-sm-flex flex-row'>
                     <div className="hotelImg rounded d-none d-sm-block placeholder" style={{width:160,height:115}}>

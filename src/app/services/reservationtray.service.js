@@ -154,7 +154,29 @@ const ReservationtrayService = {
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.text()
+    } catch (error) {console.log("errorCancelFailed", error)}
+  },
+
+  doGetHotelCancellationPolicyDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetHotelCancellationPolicyDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
     } catch (error) {console.log("error", error)}
+  },
+
+  doGetRefundReasons: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetRefundReasons`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorRefundReason", error)}
   },
 
 }

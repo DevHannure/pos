@@ -59,7 +59,7 @@ export default function BookingItinerarySub(props) {
           if(objPax){
             dt.PaxNew = objPax
           }
-          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
           if(objCancellation){
             dt.CancellationNew = objCancellation
           }
@@ -247,6 +247,8 @@ export default function BookingItinerarySub(props) {
     }
     
     const resHotelBook = await responseHotelBook;
+    debugger;
+
     if(resHotelBook){
       if(payMode==='PL'){
         confirmReservationServiceBtn(hotelReq,resHotelBook, index);

@@ -13,7 +13,7 @@ import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import {doBookingType, doBookingTypeCounts} from '@/app/store/reservationStore/reservation';
 import CommonLoader from '@/app/components/common/CommonLoader';
-import BookingVoucher from '@/app/components/reports/bookingVoucer/BookingVoucher';
+import BookingVoucher from '@/app/components/reports/bookingVoucher/BookingVoucher';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -178,19 +178,26 @@ export default function BookingTypeList() {
   const [voucherBellModal, setVoucherBellModal] = useState(false);
   const [voucherObj, setVoucherObj] = useState({
     "bookingId": "",
+    "serviceMasterCode": "",
     "customerCode": "",
+    "Services": [],
     "correlationId": qry.correlationId
   });
 
   const voucherBtn = async(e) => {
     const voucherItems = {...voucherObj}
     voucherItems.bookingId = e.BookingNo?.toString();
+    voucherItems.serviceMasterCode = e.ServiceMasterCode?.toString();
     voucherItems.customerCode = e.CustomerCode?.toString();
+    voucherItems.Services = [e];
     setVoucherObj(voucherItems);
     setVoucherBellModal(true);
   }
-  
 
+  const voucherBellModalClose = () => {
+    setVoucherBellModal(false)
+  }
+  
   return (
     <MainLayout>
       <ToastContainer />
@@ -227,7 +234,7 @@ export default function BookingTypeList() {
                             {listRes?.map((e, i) => (
                               <React.Fragment key={i}>
                                 <div className='divRow'>
-                                  <div className={"divCell curpointer " + (dtlCollapse==='#detailsub'+e.ServiceMasterCode ? 'colOpen':'collapsed')} aria-expanded={dtlCollapse==='#detailsub'+e.ServiceMasterCode} onClick={() => detailsBtn(`#detailsub${e.ServiceMasterCode}`)}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
+                                  <div className={"divCell curpointer " + (dtlCollapse==='#detailsub'+e.ServiceMasterCode ? 'colOpen':'collapsed')} aria-expanded={dtlCollapse==='#detailsub'+e.ServiceMasterCode} onClick={() => detailsBtn(`#detailsub${e.ServiceMasterCode}`)}><button className="btn btn-warning py-0 px-2 togglePlus btn-sm" type="button"></button></div>
                                   <div className='divCell'>{e.BookingNo}</div>
                                   <div className='divCell'>{e.ServiceMasterCode}</div>
                                   <div className='divCell'>{format(new Date(e.BookingDate), 'dd MMM yyyy HH:mm')}</div>
@@ -405,7 +412,7 @@ export default function BookingTypeList() {
                         <button type="button" className="btn-close" onClick={()=>setVoucherBellModal(false)}></button>
                       </div>
                       <div className="modal-body">
-                        <BookingVoucher dtl={voucherObj} />
+                        <BookingVoucher dtl={voucherObj} onCloseModal={voucherBellModalClose} />
                       </div>
                     </div>
                   </div>

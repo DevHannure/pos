@@ -2,7 +2,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {format, parse} from 'date-fns';
 
-export default function BookingItinerary(props) {
+export default function Itinerary(props) {
   const [resDetails, setResDetails] = useState(props?.res);
   const qry = props?.query;
 

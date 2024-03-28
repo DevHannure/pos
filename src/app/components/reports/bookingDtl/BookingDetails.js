@@ -213,7 +213,7 @@ export default function BookingDetails(props) {
           </tbody>
         </table>
 
-        {noPrintSub &&
+        {/* {noPrintSub &&
         <>
         {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus === "2" &&
         <>
@@ -256,7 +256,7 @@ export default function BookingDetails(props) {
           
 
         </>
-        }
+        } */}
         
       </div>
       </>

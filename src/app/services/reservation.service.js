@@ -114,6 +114,17 @@ const ReservationService = {
     } catch (error) {console.log("BookingTypeListError", error)}
   },
 
+  doCancelReservationService: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/CancelReservationService`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response?.json()
+    } catch (error) {console.log("CancelServiceError", error)}
+  },
+
 }
 
 export default ReservationService

@@ -11,6 +11,8 @@ import {useRouter, useSearchParams} from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
+import HotelService from '@/app/services/hotel.service';
+import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import MasterService from '@/app/services/master.service';
 import { doReserveListOnLoad, doReserveListQry, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
@@ -320,7 +322,6 @@ export default function BBReservationTray() {
   }
 
   const dtlData = useSelector((state) => state.reservationListReducer?.subDtlsList);
-
   const [dtlCollapse, setDtlCollapse] = useState('');
 
   useEffect(() => {
@@ -605,14 +606,16 @@ export default function BBReservationTray() {
 
       //Cancel Service
       case 'cs':
-        if(IfUserHasreadWriteAccess('ReservationEditCancellation')){
-          return true;
-        }
-        if((process.env.NEXT_PUBLIC_SHORTCODE=="ZAM" || serviceFlag == 1 || serviceFlag == 2 || serviceFlag == 3 || serviceFlag == 5 || serviceFlag == 6 || serviceFlag == 12 || serviceFlag == 14 || serviceFlag == 7) && !(serviceFlagNew == "h" && bServiceStatus == "on request")){
-          return false;
+        // if(IfUserHasreadWriteAccess('ReservationEditCancellation')){
+        //   return true;
+        // }
+        if((process.env.NEXT_PUBLIC_SHORTCODE=="ZAM" || serviceFlag == 1 || serviceFlag == 2 || serviceFlag == 3 || serviceFlag == 5 || serviceFlag == 6 || serviceFlag == 7 || serviceFlag == 12 || serviceFlag == 14) && !(serviceFlagNew == "h" && bServiceStatus == "on request")){
+          //return false;
+          if (IfUserHasreadWriteAccess('ReservationEditCancellation')) {return true;} 
+          else {return false;}
         }
         else{
-          return true;
+          return false;
         }
         break;
 
@@ -657,7 +660,206 @@ export default function BBReservationTray() {
 
   }
 
+  const [cancelServiceDtl, setCancelServiceDtl] = useState(null);
+  const [cancelPolicy, setCancelPolicy] = useState(null);
+  const [refundReason, setRefundReason] = useState(null);
+  const [supplierCanCharge, setSupplierCanCharge] = useState(0);
+  const [sysCanCharge, setSysCanCharge] = useState(0);
+  const [customerCanCharge, setCustomerCanCharge] = useState(0);
+
+  const cancelBtn = async(s) => {
+    setCancelLoad(false);
+    setCancelPolicy(null);
+    setRefundReason(null);
+    setCancelServiceDtl(s);
+    let reqObj = {
+      "ServiceMasterCode": s.ServiceMasterCode?.toString()
+    }
+
+    if(s.ServiceCode?.toString()==="1"){
+      const responseCancelPolicyHtl = ReservationtrayService.doGetHotelCancellationPolicyDetails(reqObj, userInfo.correlationId);
+      const resCancelPolicyHtl = await responseCancelPolicyHtl;
+      if(resCancelPolicyHtl){
+        setCancelPolicy(resCancelPolicyHtl)
+        let cancelPolicyData = JSON.parse(resCancelPolicyHtl[1]);
+        cancelPolicyData?.sort((a, b) => new Date(b.FromDate) - new Date(a.FromDate));
+
+        var supplierCancelCharge = 0;
+        var customerCancelCharge = 0;
+        var sysCancelCharge = 0;
+        var markUpAmount = 0;
+        var unique = [];
+        var distinct = [];
+        for (var i = 0; i < cancelPolicyData.length; i++) {
+          if (!unique[cancelPolicyData[i].SDCode]) {
+            distinct.push(cancelPolicyData[i].SDCode);
+            unique[cancelPolicyData[i].SDCode] = 1;
+          }
+        }
+
+        for (var j = 0; j < distinct.length; j++) {
+          var bFound = false;
+          //var cpData = JSLINQ(cancelPolicyData).Where(function (item) { return item.SDCode == distinct[j] }).ToArray();
+          let cpData = []
+          cancelPolicyData.map((item) => {
+            if(item.SDCode == distinct[j]){
+              cpData.push(item)
+            }
+          })
+
+          for (var i = 0; i < cpData.length; i++) {
+            var fromDate = new Date(cpData[i].FromDate);
+            var todaydate = new Date();
+            if (i == cpData.length - 1) {
+              if (todaydate >= fromDate) {
+                supplierCancelCharge += cpData[i].SupplierCancelCharges;
+                customerCancelCharge += cpData[i].CustomerCancelCharges;
+                sysCancelCharge += cpData[i].SystemCancelCharges;
+                markUpAmount += cpData[i].MarkUpAmt;
+                bFound = true;
+              }
+            } 
+            else {
+              if (todaydate >= fromDate) {
+                supplierCancelCharge += cpData[i].SupplierCancelCharges;
+                customerCancelCharge += cpData[i].CustomerCancelCharges;
+                sysCancelCharge += cpData[i].SystemCancelCharges;
+                markUpAmount += cpData[i].MarkUpAmt;
+                bFound = true;
+              }
+            }
+            if (bFound) break;
+          }
+
+          if (supplierCancelCharge > 0) {
+            setSupplierCanCharge(parseFloat(supplierCancelCharge).toFixed(2))
+          }
+          if (sysCancelCharge > 0) {
+            setSysCanCharge(parseFloat(sysCancelCharge).toFixed(2))
+          }
+          if (customerCancelCharge > 0) {
+            setCustomerCanCharge(parseFloat(customerCancelCharge).toFixed(2))
+          }
+        }
+      }
+    }
+
+    const responseRfndRsn = ReservationtrayService.doGetRefundReasons(reqObj, userInfo.correlationId);
+    const resRfndRsn = await responseRfndRsn;
+    setRefundReason(resRfndRsn)
+  }
+
+  const cancelModalClose = useRef(null);
+  const [cancelLoad, setCancelLoad] = useState(false);
+  const [cancelReason, setCancelReason] = useState("0");
   
+  const validate = () => {
+    let status = true;
+    if (cancelReason === '0') {
+      status = false;
+      toast.error("Please Select Cancellation Reasons",{theme: "colored"});
+      return false
+    }
+    return status
+  }
+
+  const cancelServiceBtn = async() => {
+    let allowMe = validate();
+    if(allowMe){
+      setCancelLoad(true);
+      if(cancelServiceDtl?.ServiceCode?.toString()==="1"){
+        if(cancelServiceDtl?.SupplierType==="Xml"){
+          let cancelObj = {
+            "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
+            "Currency": cancelServiceDtl?.Currency,
+            "ADSConfirmationNumber": cancelServiceDtl?.H2HBookingNo,
+            "CancelRooms": {
+              "CancelRoom": []
+            },
+            "SessionId": cancelServiceDtl?.H2HSessionId
+          }
+          cancelServiceDtl.H2HRatekey?.split('splitter')?.map((k, ind) => {cancelObj.CancelRooms.CancelRoom.push({"RoomIdentifier": (ind+1).toString()})});
+          const responseCancel = HotelService.doCancel(cancelObj, userInfo.correlationId);
+          const resCancel = await responseCancel;
+          if(resCancel?.errorInfo){
+            toast.error(resCancel?.errorInfo?.description,{theme: "colored"});
+            cancelModalClose.current?.click();
+            setCancelLoad(false);
+          }
+          else{
+            if(resCancel?.status==="4"){
+              CancelReservationServiceBtn()
+            }
+            else{
+              toast.error("Cancellation unsuccessful",{theme: "colored"});
+              cancelModalClose.current?.click();
+              setCancelLoad(false);
+              dispatch(doReserveListOnLoad(null));
+              dispatch(doSubDtlsList({}));
+              router.push('/pages/booking/b2bReservationTray');
+            }
+          }
+        }
+
+        else{
+          let cancelLocalObj = {
+            "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
+            "Currency": cancelServiceDtl?.Currency,
+            "CustomerRefNumber": (cancelServiceDtl?.BookingNo).toString()+'-'+(cancelServiceDtl.ServiceMasterCode).toString(),
+            "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+            "TassProInfo": {
+                "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
+                "NoOfRooms": (cancelServiceDtl.H2HRatekey?.split('splitter').length+1).toString(),
+                "CancelledDate": format(new Date(), 'yyyy-MM-dd'),
+                "SysCancellationCharge": sysCanCharge.toString(),
+                "ActCancellationCharge": customerCanCharge.toString(),
+                "PurchaseCancellationCharge": supplierCanCharge.toString(),
+                "AccWalkInCancelCharge": "0"
+            },
+            "SessionId": cancelServiceDtl?.UniqueId?.split('-')[1] 
+          }
+
+          const responseCancel = HotelService.doLocalCancel(cancelLocalObj, userInfo.correlationId);
+          const resCancel = await responseCancel;
+          if(resCancel?.errorInfo){
+            toast.error(resCancel?.errorInfo?.description,{theme: "colored"});
+            cancelModalClose.current?.click();
+            setCancelLoad(false);
+          }
+        }
+      }
+      setCancelLoad(false);
+    }
+
+  }
+
+  const CancelReservationServiceBtn = async() => {
+    setCancelLoad(true);
+    let reqObj  = {
+      "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
+      "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+      "BookedFrom":format(new Date(cancelServiceDtl?.BookedFrom), 'yyyy-MM-dd'),
+      "EmailHtml": "",
+      "Service": {
+        "SupplierRemarks": "",
+        "ActualCancellationCharges": customerCanCharge.toString(),
+        "SysCancellationCharges": sysCanCharge.toString(),
+        "FCPurchCancelCharges": supplierCanCharge.toString()
+      }
+    }
+    const responseCancelService = ReservationService.doCancelReservationService(reqObj, userInfo.correlationId);
+    const resCancelService = await responseCancelService;
+    if(resCancelService){
+      toast.success("Cancellation Successfully!",{theme: "colored"});
+    }
+    cancelModalClose.current?.click();
+    setCancelLoad(false);
+    dispatch(doReserveListOnLoad(null));
+    dispatch(doSubDtlsList({}));
+    router.push('/pages/booking/b2bReservationTray');
+  }
+
   return (
     <MainLayout>
       <ToastContainer />
@@ -779,7 +981,7 @@ export default function BBReservationTray() {
                         <React.Fragment key={i}>
                         <div className='divRow'>
 
-                          <div className={"divCell curpointer " + (dtlCollapse==='#detailsub'+e.bookingNo ? 'colOpen':'collapsed')} aria-expanded={dtlCollapse==='#detailsub'+e.bookingNo} onClick={() => detailsBtn(`#detailsub${e.bookingNo}`,e.bookingNo)}><button className="btn btn-success py-0 px-2 togglePlus btn-sm" type="button"></button></div>
+                          <div className={"divCell curpointer " + (dtlCollapse==='#detailsub'+e.bookingNo ? 'colOpen':'collapsed')} aria-expanded={dtlCollapse==='#detailsub'+e.bookingNo} onClick={() => detailsBtn(`#detailsub${e.bookingNo}`,e.bookingNo)}><button className="btn btn-warning py-0 px-2 togglePlus btn-sm" type="button"></button></div>
                           
                           <div className='divCell'>{e.bookingNo}</div>
                           <div className='divCell'>{e.bookingDate}</div>
@@ -791,66 +993,10 @@ export default function BBReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                                <>
                                 <div className='divCell'><button onClick={()=> viewDetails(e.bookingNo)} type="button" className='sqBtn' title="Details" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
-                                {/* <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div> */}
-                                </>
                               }
                             </>
                           }
-                          
-                          {/* {process.env.NEXT_PUBLIC_APPCODE!=='0' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
-                          <>
-                            {ifMenuExist('ViewItineraryReport') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
-                                  <div className='divCell'>
-                                    {e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
-                                    <><button type="button" className='sqBtn disabledBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></>
-                                    :
-                                    <><button onClick={()=> viewItineraryRpt(e.bookingNo)} type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></>
-                                    }
-                                  </div>
-                                }
-                              </>
-                            }
-
-                            {ifMenuExist('ViewVoucher') &&
-                              <>
-                              {IfUserHasreadWriteAccess('ViewVoucher') &&
-                                <div className='divCell'>
-                                  {e.status?.toLowerCase() == "supp.confirmed" || e.status?.toLowerCase() == "on request" || e.status?.toLowerCase() == "on request(p-allc)" || e.status?.toLowerCase() == "sent to supp." || e.status?.toLowerCase() == "not available" || e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
-                                  <><button className='sqBtn disabledBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></>
-                                  :
-                                  <><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='sqBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></>
-                                  }
-                                </div>
-                              }
-                              </>
-                            }
-
-                            {ifMenuExist('ViewInvoice') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewInvoice') &&
-                                  <div className='divCell'>
-                                  {e.status?.toLowerCase() !== "on cancellation" || e.status?.toLowerCase() !== "open" ?
-                                  <><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='sqBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></>
-                                  :
-                                  <><button type="button" className='sqBtn disabledBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></>
-                                  }
-                                </div>
-                                }
-                              </>
-                            }
-
-                            {e.isCCBkg == "True" ?
-                            <div className='divCell'><button onClick={()=> viewCCReceipt(e.bookingNo)} type="button" className='sqBtn'><Image src='/images/icon8.png' alt='icon' width={14} height={14} /></button></div>
-                            :
-                            <div className='divCell'><button type="button" className='sqBtn disabledBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
-                            }
-                          </>
-                          : null
-                          } */}
                         </div>
 
                         <div className='divRow'>
@@ -1033,8 +1179,13 @@ export default function BBReservationTray() {
                                       </div>
 
                                       <div className='divCell'>
-                                      <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button>
-                                        {/* <button data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button> */}
+                                      {/* <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button> */}
+                                      
+                                      {DisablePopupMenu(s, 'cs') ?
+                                        <button onClick={()=> cancelBtn(s)} data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button>
+                                        : 
+                                        <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button>
+                                      }
                                       </div>
 
                                       {s.ServiceCode === 17 &&
@@ -1130,26 +1281,44 @@ export default function BBReservationTray() {
                       <div className="modal-dialog modal-dialog-centered modal-lg">
                         <div className="modal-content">
                           <div className="modal-header">
-                            <h5 className="modal-title fs-6">Cancel Service  (Cancellation display amount will be in customer currency.)</h5>
+                            <h5 className="modal-title fs-6">Cancel Service (Cancellation display amount will be in customer currency.)</h5>
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
-                          <div className="modal-body">
-                            <div className='row gx-3'>
-                              <div className='col-md-4 mb-3'>
-                                <label>Cancellation Reasons</label>
-                                <select className="form-select form-select-sm">
-                                  <option value="0">-- Select Reason --</option><option value="1">Traveller Cancelled Trip</option><option value="2">Date Change</option><option value="3">Schedule Change</option><option value="4">Other Reason</option><option value="1002">Traveller booked another service</option><option value="1003">Book Out</option>
-                                </select>
+                            {refundReason && cancelPolicy ?
+                            <>
+                            <div className="modal-body">
+                              <div className='row gx-3'>  
+                                <div className='col-md-4 mb-3'>
+                                  <label className="fw-semibold">Cancellation Reasons</label>
+                                  <select className="form-select form-select-sm" value={cancelReason} onChange={event => setCancelReason(event.target.value)}>
+                                    <option value="0">-- Select Reason --</option>
+                                    {JSON.parse(refundReason[0])?.map((v, i) => (
+                                    <React.Fragment key={i}>
+                                      <option value={v.ID}>{v.Name}</option>
+                                    </React.Fragment>
+                                    ))}   
+                                  </select>
+                                </div>
+                                <div className='col-md-4 mb-3'>
+                                  <label className="fw-semibold">Cancellation Charges</label>
+                                  <input type="text" value={customerCanCharge} className="form-control form-control-sm" readOnly disabled />
+                                </div>
                               </div>
-                              <div className='col-md-4 mb-3'>
-                                <label>Cancellation Reasons</label>
-                                <input type="text" value="0" className="form-control form-control-sm" disabled />
+
+                              <div className="cancelBrnone" style={{fontSize:'12px'}} dangerouslySetInnerHTML={{ __html:JSON.parse(cancelPolicy[0])?.[0]?.CancellationPolicy}}></div>
+
+                            </div>
+                            <div className='modal-footer'>
+                              <button type="button" className='btn btn-primary' onClick={() => cancelServiceBtn()} disabled={cancelLoad}> {cancelLoad ? 'Submitting...' : 'Cancel Service'} </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={cancelModalClose}>Close</button> 
+                            </div>
+                            </>
+                            :
+                            <div className="modal-body">
+                              <div className='text-center blue py-5'>
+                                <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
                               </div>
                             </div>
-                          </div>
-                          <div className='modal-footer'>
-                            <button type="button" className='btn btn-primary' onClick={generateSOBtn} disabled={soLoad}> {soLoad ? 'Submitting...' : 'Cancel Service'} </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={soModalClose}>Close</button> 
-                          </div>
+                            }
                         </div>
                       </div>
                     </div>

@@ -135,12 +135,12 @@ export default function ModifySearch(props) {
 
   const [isLoading, setIsLoading] = useState(false);
  
-  const [options, setOptions] = useState(props.HtlReq ? [{
-    cityName: props.HtlReq.destination[0]?.cityName, 
-    countryCode: props.HtlReq.destination[0]?.countryCode, 
-    countryName: props.HtlReq.destination[0]?.countryName,
-    destinationCode: props.HtlReq.destination[0]?.destinationCode,
-    predictiveText:  props.HtlReq.destination[0]?.predictiveText
+  const [options, setOptions] = useState(props.TurReq ? [{
+    cityName: props.TurReq.destination[0]?.cityName, 
+    countryCode: props.TurReq.destination[0]?.countryCode, 
+    countryName: props.TurReq.destination[0]?.countryName,
+    destinationCode: props.TurReq.destination[0]?.destinationCode,
+    predictiveText:  props.TurReq.destination[0]?.predictiveText
   }]
   :
   [{
@@ -153,9 +153,9 @@ export default function ModifySearch(props) {
   
   const [selectedDestination, setSelectedDestination] = useState(options);
   const [calNum, setCalNum] = useState(2);
-  const [chkIn, setChkIn] = useState(props.HtlReq !== '' ? new Date(props.HtlReq.chkIn) : new Date());
-  const [chkOut, setChkOut] = useState(props.HtlReq !== '' ? new Date(props.HtlReq.chkOut) : new Date(new Date().setDate(new Date().getDate() + 1)));
-  const [rmCountArr, setRmCountArr] = useState(props.HtlReq !== '' ? props.HtlReq.paxInfoArr : [
+  const [chkIn, setChkIn] = useState(props.TurReq !== '' ? new Date(props.TurReq.chkIn) : new Date());
+  const [chkOut, setChkOut] = useState(props.TurReq !== '' ? new Date(props.TurReq.chkOut) : new Date(new Date().setDate(new Date().getDate() + 1)));
+  const [rmCountArr, setRmCountArr] = useState(props.TurReq !== '' ? props.TurReq.paxInfoArr : [
     {
       idAdt: 'adt0',
       idChd: 'chd0',
@@ -199,15 +199,15 @@ export default function ModifySearch(props) {
   const selectedXML = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
   //const [selectedXML, setSelectedXML] = useState(null);
   const [xmlOptions, setXmlOptions] = useState([]);
-  const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
+  const [cusNationality, setCusNationality] = useState(props.TurReq ? props.TurReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
   //const [nationalityOptions, setNationalityOptions] = useState([]);
   const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
   const regionCodeSav = useSelector((state) => state.commonResultReducer?.regionCodeSaver);
   const [regionCode, setRegionCode] = useState(regionCodeSav ? regionCodeSav : '');
-  const [cusCurrency, setCusCurrency] = useState(props.HtlReq ? props.HtlReq.currency : '');
-  const [cusCode, setCusCode] = useState(props.HtlReq ? props.HtlReq.customerCode : null);
+  const [cusCurrency, setCusCurrency] = useState(props.TurReq ? props.TurReq.currency : '');
+  const [cusCode, setCusCode] = useState(props.TurReq ? props.TurReq.customerCode : null);
   const [isLoadingHtl, setIsLoadingHtl] = useState(false);
-  const [optionsHtl, setOptionsHtl] = useState(props.HtlReq ? props.HtlReq.hotelName : []);
+  const [optionsHtl, setOptionsHtl] = useState(props.TurReq ? props.TurReq.hotelName : []);
   const [selectedHotel, setSelectedHotel] = useState(optionsHtl);
   const typeaheadHtlRef = useRef(null);
 
@@ -227,7 +227,7 @@ export default function ModifySearch(props) {
     setOptions([]);
     const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/DestinationsPrediction`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+      headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.TurReq ? props.TurReq.correlationId : userInfo.correlationId},
       body: JSON.stringify({
       "text": query,
       "customercode":process.env.NEXT_PUBLIC_SHORTCODE,
@@ -486,7 +486,7 @@ export default function ModifySearch(props) {
       setOptionsHtl([]);
       const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/HotelsPrediction`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.TurReq ? props.TurReq.correlationId : userInfo.correlationId},
         body: JSON.stringify({
         "text": query,
         "destinationId":selectedDestination[0].destinationCode,
@@ -516,7 +516,7 @@ export default function ModifySearch(props) {
   }, [userInfo]);
 
   const nationalityReq = async()=> {
-    const responseCoutry = await MasterService.doGetCountries(props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+    const responseCoutry = await MasterService.doGetCountries(props.TurReq ? props.TurReq.correlationId : userInfo.correlationId);
     const resCoutry = responseCoutry;
     dispatch(doCountryOnLoad(resCoutry));
   }
@@ -532,7 +532,7 @@ export default function ModifySearch(props) {
         "NationalityCode": cusNationality.split('-')[0],
         "CustomerCode": cusCode
       }
-      const responseRegion = await MasterService.doGetRegionBasedOnCustomerNationality(regionObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+      const responseRegion = await MasterService.doGetRegionBasedOnCustomerNationality(regionObj, props.TurReq ? props.TurReq.correlationId : userInfo.correlationId);
       const resRegion = responseRegion;
       dispatch(doRegionCode(resRegion));
       setRegionCode(resRegion)
@@ -545,7 +545,7 @@ export default function ModifySearch(props) {
       "ServiceCode": 1,
       "CustomerCode": userInfo.user.userCode
     }
-    const responseXml = await MasterService.doGetXMLSuppliers(xmlObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+    const responseXml = await MasterService.doGetXMLSuppliers(xmlObj, props.TurReq ? props.TurReq.correlationId : userInfo.correlationId);
     const resXml = responseXml;
     let xmlAraay = []
     if(resXml){
@@ -623,7 +623,7 @@ export default function ModifySearch(props) {
         "nationality": cusNationality,
         "regionCode": regionCode,
         "activeSuppliers":selectedXML,
-        "correlationId": props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId,
+        "correlationId": props.TurReq ? props.TurReq.correlationId : userInfo.correlationId,
         "starRating": starOpt,
         "hotelName": selectedHotel,
         "num_rooms": parseInt(rmCountArr.length),
@@ -668,7 +668,7 @@ export default function ModifySearch(props) {
   <ToastContainer />
   {props?.Type === 'landing' ?
   <div className="searchPanel">  
-    <Image className="searchImage" src='/images/leftsearchAORYX-bg.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} priority />
+    <Image className="searchImage" src='/images/tourBannerAORYX.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} priority />
     <div className="searchBox">
       <div className="container">
         <ServiceNav />
@@ -693,7 +693,6 @@ export default function ModifySearch(props) {
                   defaultSelected={options.slice(0, 1)}
                   onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
                   //clearButton={true}
-                  onFocus={(event)=> event.target.select()}
                 />
                
               </div>
@@ -835,7 +834,7 @@ export default function ModifySearch(props) {
         : 
         <>
           <div className="fn15 d-lg-flex justify-content-between align-items-center d-none">
-            <div className="py-1">{props.HtlReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.HtlReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.HtlReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.HtlReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.HtlReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-light btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6 blue" /> Modify Search</button></div>
+            <div className="py-1">{props.TurReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.TurReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.TurReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.TurReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.TurReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-light btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6 blue" /> Modify Search</button></div>
             <div className="py-2">
               <button type="button" className="btn btn-light btn-sm"><FontAwesomeIcon icon={faMap} className="fs-6 blue" /> Map View</button>
             </div>
@@ -871,7 +870,6 @@ export default function ModifySearch(props) {
                     defaultSelected={options.slice(0, 1)}
                     onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
                     //clearButton={true}
-                    onFocus={(event)=> event.target.select()}
                     inputProps={{className: 'border-0 fn14'}}
                   />
                 </div>

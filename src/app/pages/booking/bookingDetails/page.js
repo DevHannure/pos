@@ -1,18 +1,14 @@
 "use client"
 import React, {useEffect, useState, useRef } from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
-import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerary/HotelBookingItinerary';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faEnvelope, faPrint, faStar, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
-import {faShareFromSquare, faTrashCan} from "@fortawesome/free-regular-svg-icons";
+import {faEnvelope, faPrint, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
 import {format} from 'date-fns';
 import { useRouter, useSearchParams  } from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
-import HotelService from '@/app/services/hotel.service';
-import MasterService from '@/app/services/master.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
@@ -20,13 +16,13 @@ import {useSelector, useDispatch } from "react-redux";
 import {doReserveListQry, doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 import {useSession} from "next-auth/react";
 import BookingDetails from '@/app/components/reports/bookingDtl/BookingDetails';
-import BookingItinerary from '@/app/components/reports/itineraryRpt/BookingItinerary';
-import BookingInvoice from '@/app/components/reports/invoiceRpt/BookingInvoice';
-import BookingVoucher from '@/app/components/reports/voucherRpt/BookingVoucher';
-import BookingCCReceipt from '@/app/components/reports/ccReceiptRpt/BookingCCReceipt';
+import Itinerary from '@/app/components/reports/itineraryRpt/Itinerary';
+import Invoice from '@/app/components/reports/invoiceRpt/Invoice';
+import Voucher from '@/app/components/reports/voucherRpt/Voucher';
+import CCReceipt from '@/app/components/reports/ccReceiptRpt/CCReceipt';
+import BookingVoucher from '@/app/components/reports/bookingVoucher/BookingVoucher';
 
 export default function BookingDetailsPage() {
-  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
@@ -34,6 +30,7 @@ export default function BookingDetailsPage() {
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
   const {data} = useSession();
 
@@ -301,6 +298,19 @@ export default function BookingDetailsPage() {
     });
   }
 
+  const [voucherBellModal, setVoucherBellModal] = useState(false);
+  const voucherObj = {
+    "bookingId": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
+    "serviceMasterCode": null,
+    "customerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
+    "Services": bkngDetails?.ReservationDetail?.Services,
+    "correlationId": qry.correlationId
+  };
+
+  const voucherBellModalClose = () => {
+    setVoucherBellModal(false)
+  }
+
   return (
     <MainLayout>
       <ToastContainer />
@@ -323,7 +333,14 @@ export default function BookingDetailsPage() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
+                              <>
                               <button type="button" onClick={() => setActive('detailsColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('detailsColumn') ? 'active' : '')}>Booking Details</button>
+                              
+                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus === "2" &&
+                                // <button type="button" onClick={() => setActive('bookingVoucherColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('bookingVoucherColumn') ? 'active' : '')}>Booking Voucher</button>
+                                <button onClick={()=> setVoucherBellModal(true)} type="button" className='list-group-item fs-6 text-start rounded-0 '>Booking Voucher</button>
+                              }
+                              </>
                               }
                             </>
                           }
@@ -334,7 +351,7 @@ export default function BookingDetailsPage() {
                               <>
                                 {IfUserHasreadWriteAccess('ViewItineraryReport') &&
                                 <>
-                                  {bStatus?.toLowerCase() == "on cancellation" || bStatus?.toLowerCase() == "cancelled" || bStatus?.toLowerCase() == "cancelled(p)" ?
+                                  {["on cancellation", "cancelled", "cancelled(p)"].includes(bStatus?.toLowerCase()) ?
                                   <></>
                                   :
                                   <button type="button" onClick={() => setActive('itineraryColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('itineraryColumn') ? 'active' : '')}>Itinerary Report</button>
@@ -348,7 +365,7 @@ export default function BookingDetailsPage() {
                               <>
                                 {IfUserHasreadWriteAccess('ViewInvoice') &&
                                 <>
-                                  {bStatus?.toLowerCase() !== "on cancellation" || bStatus?.toLowerCase() !== "open" ?
+                                  {!["on cancellation", "cancelled", "cancelled(p)", "open"].includes(bStatus?.toLowerCase()) ?
                                   <button type="button" onClick={() => setActive('invoiceColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('invoiceColumn') ? 'active' : '')}>Invoice</button>
                                   :
                                   <></>
@@ -362,7 +379,7 @@ export default function BookingDetailsPage() {
                               <>
                                 {IfUserHasreadWriteAccess('ViewVoucher') &&
                                   <>
-                                    {bStatus?.toLowerCase() == "supp.confirmed" || bStatus?.toLowerCase() == "on request" || bStatus?.toLowerCase() == "on request(p-allc)" || bStatus?.toLowerCase() == "sent to supp." || bStatus?.toLowerCase() == "not available" || bStatus?.toLowerCase() == "on cancellation" || bStatus?.toLowerCase() == "cancelled" || bStatus?.toLowerCase() == "cancelled(p)" ?
+                                    {["supp.confirmed", "on request", "on request(p-allc)", "sent to supp.", "not available", "on cancellation", "cancelled", "cancelled(p)"].includes(bStatus?.toLowerCase()) ?
                                     <></>
                                     :
                                     <button type="button" onClick={() => (doVoucherLoad(), setActive('voucherColumn'))} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('voucherColumn') ? 'active' : '')}>Voucher</button>
@@ -401,17 +418,21 @@ export default function BookingDetailsPage() {
                     <BookingDetails res={bkngDetails} query={qry} noPrint={noPrint} />
                   }
 
+                  {/* {isActive('bookingVoucherColumn') &&
+                    <BookingVoucher dtl={voucherObj} />
+                  } */}
+
                   {isActive('itineraryColumn') &&
-                    <BookingItinerary res={invoiceDetails} query={qry} />
+                    <Itinerary res={invoiceDetails} query={qry} />
                   }
                   {isActive('invoiceColumn') &&
-                    <BookingInvoice res={invoiceDetails} query={qry} noPrint={noPrint} />
+                    <Invoice res={invoiceDetails} query={qry} noPrint={noPrint} />
                   }
                   {isActive('voucherColumn') &&
-                    <BookingVoucher res={voucherDetails} />
+                    <Voucher res={voucherDetails} />
                   }
                   {isActive('receiptColumn') &&
-                    <BookingCCReceipt res={ccDetails} query={qry} />
+                    <CCReceipt res={ccDetails} query={qry} />
                   }
                 </div>
 
@@ -429,6 +450,22 @@ export default function BookingDetailsPage() {
                     </div>
                   </div>
                 </div>
+
+                {voucherBellModal &&
+                  <div className="modal d-block bg-black bg-opacity-25">
+                  <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h5 className="modal-title fs-6">Booking Id: {voucherObj.bookingId}</h5>
+                        <button type="button" className="btn-close" onClick={()=>setVoucherBellModal(false)}></button>
+                      </div>
+                      <div className="modal-body">
+                        <BookingVoucher dtl={voucherObj} onCloseModal={voucherBellModalClose} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                }
 
               </div>
             </div>

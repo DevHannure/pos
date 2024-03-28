@@ -1,11 +1,14 @@
 "use client"
 import React, {useState, useRef } from 'react';
+import { useSession } from "next-auth/react";
 import { useSelector, useDispatch } from "react-redux";
 import ReservationService from '@/app/services/reservation.service';
 import HotelService from '@/app/services/hotel.service';
 import MasterService from '@/app/services/master.service';
 import {doCustCreditDtls } from '@/app/store/commonStore/common';
 import {doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import {doBookingType, doBookingTypeCounts} from '@/app/store/reservationStore/reservation';
+import CommonLoader from '@/app/components/common/CommonLoader';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useRouter } from 'next/navigation';
@@ -13,7 +16,9 @@ import {toast} from 'react-toastify';
 
 function getUID() {return Date.now().toString(36);}
 
-export default function BookingVoucher(prop) {
+export default function Voucher(prop) {
+  const { data, status } = useSession();
+
   const dispatch = useDispatch();
   const router = useRouter();
   const voucherModalOpen = useRef(null);
@@ -55,6 +60,7 @@ export default function BookingVoucher(prop) {
     else{
       let updateBookingObj = {
         "BookingNo": prop?.dtl?.bookingId,
+        "ServiceMasterCode": prop?.dtl?.serviceMasterCode,
         "BookingType": "",
         "CustomerReferenceNo": bookingRefText,
         "UserId": ""
@@ -62,23 +68,26 @@ export default function BookingVoucher(prop) {
       const responseUpdateBooking = ReservationService.doUpdateBookingReference(updateBookingObj, prop?.dtl?.correlationId);
       const resUpdateBooking = await responseUpdateBooking;
       if(resUpdateBooking==="Success"){
+        toast.success("Successfully!",{theme: "colored"});
         voucherModalClose.current?.click();
         dispatch(doReserveListOnLoad(null));
         if(process.env.NEXT_PUBLIC_ISOPAQUE_CONTRACT==="true"){
-          // bkngDetails?.ReservationDetail?.Services?.map(async(s) => {
-          //   if(s.ServiceCode==="1"){
-          //     let updateObj = {
-          //       "ADSConfirmationNumber": s.XMLBookingNo,
-          //       "SessionId": s.XMLSessionId
-          //     }
-          //     const responseUpdateTass = HotelService.doTassProUpdate(updateObj, prop?.dtl?.correlationId);
-          //     const resUpdateTass = await responseUpdateTass;
-          //   }
-          // });
-          window.location.reload();
+          prop?.dtl?.Services?.map(async(s) => {
+            if(s.ServiceCode==="1"){
+              let updateObj = {
+                "ADSConfirmationNumber": s.XMLBookingNo,
+                "SessionId": s.XMLSessionId
+              }
+              const responseUpdateTass = HotelService.doTassProUpdate(updateObj, prop?.dtl?.correlationId);
+              const resUpdateTass = await responseUpdateTass;
+            }
+          });
+          //window.location.reload();
+          pageReload();
         }
         else{
-          window.location.reload();
+          //window.location.reload();
+          pageReload();
         }
       }
       else{
@@ -105,8 +114,47 @@ export default function BookingVoucher(prop) {
     router.push(`/pages/payment/paymentOrder?qry=${encData}`);
   }
 
+  const [mainLoader, setMainLoader] = useState(false);
+
+  const pageReload = async() =>{
+    setMainLoader(true);
+    closeParentModal();
+    dispatch(doBookingType(null));
+    let reqObj={
+      "UserId": process.env.NEXT_PUBLIC_APPCODE === "1" ? data?.user.userEmail : data?.user.userCode
+    }
+    let customersCreditDetailsObj={
+      "CustomerCode": data?.user.userCode
+    }
+    const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, data?.correlationId);
+    const responseBookingTypeCount = ReservationService.doGetBookingTypeListCounts(reqObj, data?.correlationId);
+    const resCustCreditDtls = await responseCustCreditDtls;
+    dispatch(doCustCreditDtls(resCustCreditDtls));
+    const resBookingTypeCount = await responseBookingTypeCount;
+    dispatch(doBookingTypeCounts(resBookingTypeCount));
+
+    let bookItnery = {
+      "bcode": prop?.dtl?.bookingId,
+      "btype": "",
+      "returnurl": '/pages/booking/b2bReservationTray',
+      "correlationId": prop?.dtl?.correlationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    setMainLoader(false);
+    router.push(`/pages/booking/bookingDetails?qry=${encData}`);
+  }
+
+  const closeParentModal = () => {
+    prop.onCloseModal();            
+  }
+
   return (
     <>
+      {mainLoader &&
+        <CommonLoader Type="1" />
+      }
+
       <div>      
         <div className="row g-1 align-items-center">
           <div className="col-12">

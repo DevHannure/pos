@@ -20,7 +20,7 @@ export default function CommonLoader(props) {
   <div className="mainloader1">
     <div className="loader1 d-block text-center">
       <div><FontAwesomeIcon icon={faSpinner} className="slow-spin fs-1 mb-1" /></div>
-      <p className="fs-5">Payment and booking is under process.<br /> Please do not refresh the page.</p>
+      <p className="fs-5">Booking is under process.<br /> Please do not refresh the page.</p>
     </div>
   </div>
   }

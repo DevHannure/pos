@@ -2,17 +2,28 @@
 import React, {useEffect, useRef, useState} from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faArrowRightLong, faArrowLeftLong, faFileImport, faCloudUploadAlt} from "@fortawesome/free-solid-svg-icons";
+import { faStar, faArrowRightLong, faArrowLeftLong, faFileImport, faCloudUploadAlt, faPlus, faPencilAlt, faTrashAlt} from "@fortawesome/free-solid-svg-icons";
+import {faCheckCircle} from "@fortawesome/free-regular-svg-icons";
 import {useRouter, useSearchParams} from 'next/navigation';
-import {format} from 'date-fns';
+import DatePicker from "react-datepicker";
+import {format, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
-import ReservationService from '@/app/services/reservation.service';
-import {doBookingType} from '@/app/store/reservationStore/reservation';
+import OfflineService from '@/app/services/offline.service';
+import {doBookingTypeCounts} from '@/app/store/offlineStore/offlineSer';
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function OfflineBook() {
+  const dispatch = useDispatch();
+  
+  const [calNum, setCalNum] = useState(2);
+  useEffect(() => {
+    let w = window.innerWidth;
+    if (w < 960) {
+      setCalNum(1)
+    } 
+  }, []);
 
   const [activeItem, setActiveItem] = useState('dtlColumn');
-
   const setActive = async(menuItem) => {
     if(isActive('cmpltColumn')){
       return false
@@ -45,25 +56,25 @@ export default function OfflineBook() {
                   <div className="nav nav-tabs nav-justified stepNav">
                     <button onClick={() => setActive('dtlColumn')} className={"btn btn-link nav-link " + (isActive('guestColumn') || isActive('serviceColumn') || isActive('cmpltColumn') ? 'active' : '')}>
                       <span className="stepTxt">
-                      <i className="far fa-check-circle stepTick"></i>
+                      <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
                       &nbsp;Customer Details
                       </span>
                     </button>
                     <button onClick={() => setActive('guestColumn')} className={"btn btn-link nav-link " + (!isActive('guestColumn') && !isActive('serviceColumn') && !isActive('cmpltColumn') ? 'disabled' : '' || (isActive('serviceColumn') || isActive('cmpltColumn')) ? 'active':'')}>
                       <span className="stepTxt">
-                      <i className="far fa-check-circle stepTick"></i>
+                      <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
                       &nbsp;Guest Details
                       </span>
                     </button>
                     <button onClick={() => setActive('serviceColumn')} className={"btn btn-link nav-link " + (!isActive('serviceColumn') && !isActive('cmpltColumn') ? 'disabled' : '' || isActive('cmpltColumn') ? 'active':'')}>
                       <span className="stepTxt">
-                      <i className="far fa-check-circle stepTick"></i>
+                      <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
                       &nbsp;Add Services
                       </span>
                     </button>
                     <button onClick={() => setActive('cmpltColumn')} className={"btn btn-link nav-link " + (!isActive('cmpltColumn') ? 'disabled' : '')}>
                       <span className="stepTxt">
-                      <i className="far fa-check-circle stepTick"></i>
+                      <FontAwesomeIcon icon={faCheckCircle} className="stepTick" />
                       &nbsp;Complete Booking
                       </span>
                     </button>
@@ -82,7 +93,8 @@ export default function OfflineBook() {
                             </div>
                             <div className="col-md-3 mb-3">
                               <label className="fw-semibold">Booking Date</label>
-                              <input className="form-control form-control-sm" type="text" />
+                              <DatePicker className="form-control form-control-sm" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))}  
+                              showMonthDropdown showYearDropdown />
                             </div>
                           </div>
                           
@@ -234,7 +246,7 @@ export default function OfflineBook() {
                             </nav>
                             <div id="flightService" className="collapse" data-bs-parent="#serviceTab">flightService</div>
                             
-                            {/* <div id="hotelService" className="collapse show" data-bs-parent="#serviceTab">
+                            <div id="hotelService" className="collapse show" data-bs-parent="#serviceTab">
                               <div className="row gx-3">
                                 <div className="col-md-12 mb-4 fs-6">
                                   <span className="fw-semibold">Hotels From &nbsp;&nbsp;</span>
@@ -245,7 +257,10 @@ export default function OfflineBook() {
                               <div className="row gx-3">
                                 <div className="col-md-3 mb-4">
                                   <label className="fw-semibold">Check In - Check Out Date</label>
-                                  <input className="form-control form-control-sm" type="text" />
+                                  <div>
+                                    <DatePicker className="form-control form-control-sm" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
+                                    showMonthDropdown showYearDropdown />
+                                  </div>
                                 </div>
                                 
                                 <div className="col-md-auto mb-4">
@@ -327,7 +342,7 @@ export default function OfflineBook() {
                                     <div className="col-md-6 mb-4">
                                       <label className="fw-semibold">Hotel Name</label>
                                       <input className="form-control form-control-sm" placeholder="Enter Hotel Name" type="text" />
-                                      <div className="text-end fn12">Rating: <i className="fas fa-star starGold"></i><i className="fas fa-star starGold"></i><i className="fas fa-star starGold"></i><i className="fas fa-star starBlank"></i><i className="fas fa-star starBlank"></i></div>
+                                      <div className="text-end fn12">Rating: <FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /></div>
                                     </div>
                                   </div>
                                   
@@ -504,7 +519,7 @@ export default function OfflineBook() {
                                 </div>
                               </div>
                               
-                            </div> */}
+                            </div>
                             
                             <div id="tourService" className="collapse" data-bs-parent="#serviceTab">tourService</div>
                             <div id="cabsService" className="collapse" data-bs-parent="#serviceTab">cabsService</div>
@@ -569,9 +584,9 @@ export default function OfflineBook() {
                                 </td>
                                 <td><input type="text" className="form-control form-control-sm border-0 p-0 shadow-none" value="34" /></td>
                                 <td className="text-nowrap">
-                                  <button className="btn btn-sm btn-link" title="Add"><i className="fas fa-plus text-primary"></i></button>
-                                  <button className="btn btn-sm btn-link" title="Edit"><i className="fas fa-pencil-alt text-dark"></i></button>
-                                  <button className="btn btn-sm btn-link" title="Delete"><i className="fas fa-trash-alt text-danger"></i></button>
+                                  <button className="btn btn-sm btn-link" title="Add"><FontAwesomeIcon icon={faPlus} className="text-primary" /></button>
+                                  <button className="btn btn-sm btn-link" title="Edit"><FontAwesomeIcon icon={faPencilAlt} className="text-dark" /></button>
+                                  <button className="btn btn-sm btn-link" title="Delete"><FontAwesomeIcon icon={faTrashAlt} className="text-danger" /></button>
                                 </td>
                               </tr>
                               </tbody>
@@ -580,8 +595,14 @@ export default function OfflineBook() {
                           
                           <hr />
                           
+                          <div className='d-flex justify-content-between'>
+                            
+                            
+                          </div>
+
                           <div className="d-flex justify-content-between">
-                            <button className='btn btn-light px-4 py-2' onclick="location.href='step2.html'"><i className="fas fa-long-arrow-alt-left fn14"></i> Back</button>
+                            <button className='btn btn-light px-4 py-2' onClick={() => setActive('serviceColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button>
+
                             <div>
                               <button className="btn btn-light px-4 py-2" disabled>
                               Reset
@@ -590,9 +611,7 @@ export default function OfflineBook() {
                               <i className="fas fa-plus fn14"></i>  Add Service to Cart
                               </button>
                               &nbsp;
-                              <button className="btn btn-warning px-4 py-2" onclick="location.href='step4.html'">
-                                Next <i className="fas fa-long-arrow-alt-right fn14"></i>
-                              </button>
+                              <button className='btn btn-warning px-4 py-2' onClick={() => setActive('cmpltColumn')}>Next <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button>
                             </div>
                           </div>
                           

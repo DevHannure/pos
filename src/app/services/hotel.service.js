@@ -210,6 +210,28 @@ const HotelService = {
       return response.json()
     } catch (error) {console.log("error", error)}
   },
+
+  doCancel: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/hotel/Cancel`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorCancel", error)}
+  },
+
+  doLocalCancel: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/localhotel/Cancel`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorLocalCancel", error)}
+  },
   
 
 }

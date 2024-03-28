@@ -955,88 +955,84 @@ export default function HotelResult(props) {
             <div className="modal-body">
               {roomRow &&
               <div className="mb-3">
-                <div className='fs-6 fw-semibold'>
-                  <span className="text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()}</span>
+                <div>
+                  <span className="fw-semibold text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()}</span>
                   {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <span> &nbsp;|&nbsp; Supplier: {roomRow.shortCodeName}</span>
                   }
                   
-                  {fareBrkData?.priceBreakdown?.length > 0 &&
+                  {fareBrkData?.priceBreakdown &&
                     <span> &nbsp;|&nbsp; {qry?.currency} {parseFloat(fareBrkData?.priceBreakdown.reduce((totalAmount, a) => totalAmount + a.netAmount, 0)).toFixed(2)}</span>
                   }
-
-                  <span className="ms-1">
-                    {['Refundable', 'refundable'].includes(roomRow.rateType) ?
+                  
+                  <span className="fn12 align-top ms-1">
+                    {roomRow.rateType==='Refundable' || roomRow.rateType==='refundable' ?
                     <span className="text-success">Refundable</span>
                     :
                     ''
                     }
-                    {['Non-Refundable', 'Non Refundable', 'non-refundable','non refundable'].includes(roomRow.rateType) ?
+                    {roomRow.rateType==='Non-Refundable' || roomRow.rateType==='Non Refundable' || roomRow.rateType==='non-refundable' || roomRow.rateType==='non refundable' ?
                     <span className="text-danger">Non-Refundable</span>
                     :
                     ''
                     }
                   </span>
+
                 </div>
               </div>
               }
               
               {fareBrkData ?
               <>
-              {fareBrkData?.priceBreakdown?.length > 0 ?
-                <div>
-                {fareBrkData.priceBreakdown.map((a, i) => ( 
-                  <div key={i} className="row">
-                    <div className="col-md-12 blue fs-6 text-capitalize"><strong>Room {a.roomIdentifier}: {a.roomName?.toLowerCase()}</strong></div>
-                    <div className="col-md-4">
-                      <p className="mb-1"><strong>Fare Summary</strong></p>
-                      <table className="table table-bordered">
+              <div>
+              {fareBrkData.priceBreakdown.map((a, i) => ( 
+                <div key={i} className="row">
+                  <div className="col-md-12 blue fs-6 text-capitalize"><strong>Room {a.roomIdentifier}: {a.roomName?.toLowerCase()}</strong></div>
+                  <div className="col-md-4">
+                    <p className="mb-1"><strong>Fare Summary</strong></p>
+                    <table className="table table-bordered">
+                      <tbody>
+                        <tr className="table-light">
+                          <th><strong>Category</strong></th>
+                          <th className="text-end"><strong>Fare ({qry?.currency})</strong></th>
+                        </tr>
+                        <tr>
+                          <td>Total Fare</td>
+                          <td className="text-end">{parseFloat(a.netAmount).toFixed(2)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="col-md-8">
+                    <p className="mb-1"><strong>&nbsp;</strong></p>
+                    <div className="table-responsive">
+                      <table className="table table-bordered text-center w-auto tablePad0">
                         <tbody>
-                          <tr className="table-light">
-                            <th><strong>Category</strong></th>
-                            <th className="text-end"><strong>Fare ({qry?.currency})</strong></th>
-                          </tr>
                           <tr>
-                            <td>Total Fare</td>
-                            <td className="text-end">{parseFloat(a.netAmount).toFixed(2)}</td>
+                            {a.dateRange.map((b, i) => ( 
+                            <td key={i}>
+                              <div className="bg-light px-3 py-2 border-bottom">
+                                {format(new Date(b.fromDate), 'dd MMM')}, {format(new Date(b.fromDate), 'eee')}
+                              </div>
+                              <div className="p-2">{parseFloat(b.text).toFixed(2)}</div>
+                            </td>
+                            ))}
                           </tr>
                         </tbody>
                       </table>
                     </div>
-                    <div className="col-md-8">
-                      <p className="mb-1"><strong>&nbsp;</strong></p>
-                      <div className="table-responsive">
-                        <table className="table table-bordered text-center w-auto tablePad0">
-                          <tbody>
-                            <tr>
-                              {a.dateRange.map((b, i) => ( 
-                              <td key={i}>
-                                <div className="bg-light px-3 py-2 border-bottom">
-                                  {format(new Date(b.fromDate), 'dd MMM')}, {format(new Date(b.fromDate), 'eee')}
-                                </div>
-                                <div className="p-2">{parseFloat(b.text).toFixed(2)}</div>
-                              </td>
-                              ))}
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div className='col-md-12'>
-                      {a.otherFee &&
-                      <div>
-                        <strong>{a.otherFee[0]?.feeText.toUpperCase().replace('_',' ') }</strong>: <span>{a.otherFee[0]?.feeValue}</span>
-                      </div>
-                      }
-                    </div>
                   </div>
-                ))}
-                </div>
-                :
-                <div className='fs-6 fw-semibold mb-1 text-danger'>Fare breakup not provided by the supplier</div>
-              }
 
+                  <div className='col-md-12'>
+                    {a.otherFee &&
+                    <div>
+                      <strong>{a.otherFee[0]?.feeText.toUpperCase().replace('_',' ') }</strong>: <span>{a.otherFee[0]?.feeValue}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+              ))}
+              </div>
               <p className='fn12'>The total room price might vary from night wise/room breakup due to individual round off/currency conversion.</p>
               </>
               :
@@ -1065,19 +1061,19 @@ export default function HotelResult(props) {
             <div className="modal-body">
               {roomRow &&
               <div className="mb-2">
-                <div className='fs-6 fw-semibold'>
-                  <span className="text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()} &nbsp;|&nbsp; </span>
+                <div>
+                  <span className="fw-semibold text-capitalize">{roomRow.roomTypeName.toLowerCase()}, {roomRow.roomBasisName.toLowerCase()} &nbsp;|&nbsp; </span>
                   {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <span>Supplier: {roomRow.shortCodeName} &nbsp;|&nbsp;</span>
                   }
                   {/* <span>{qry?.currency} {roomRow.amount}</span> */}
                   <span>
-                    {['Refundable', 'refundable'].includes(roomRow.rateType) ?
+                    {roomRow.rateType==='Refundable' || roomRow.rateType==='refundable' ?
                     <span className="text-success">Refundable</span>
                     :
                     ''
                     }
-                    {['Non-Refundable', 'Non Refundable', 'non-refundable','non refundable'].includes(roomRow.rateType) ?
+                    {roomRow.rateType==='Non-Refundable' || roomRow.rateType==='Non Refundable' || roomRow.rateType==='non-refundable' || roomRow.rateType==='non refundable' ?
                     <span className="text-danger">Non-Refundable</span>
                     :
                     ''

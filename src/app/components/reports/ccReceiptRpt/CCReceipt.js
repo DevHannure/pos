@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import {format, parse} from 'date-fns';
 import CurrencyWords from "@/app/components/common/CurrencyWords"
 
-export default function BookingCCReceipt(props) {
+export default function CCReceipt(props) {
   const resDetails = props?.res;
   const qry = props?.query;
 

@@ -4,7 +4,7 @@ import {format, parse} from 'date-fns';
 import { useSelector } from "react-redux";
 import CurrencyWords from "@/app/components/common/CurrencyWords"
 
-export default function BookingInvoice(props) {
+export default function Invoice(props) {
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const systemCurrency = userInfo?.user?.systemCurrencyCode;
 

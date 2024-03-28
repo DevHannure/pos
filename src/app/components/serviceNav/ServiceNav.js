@@ -41,6 +41,7 @@ export default function ServiceNav() {
             {hotelService?.canView &&
               <li className="lihotelservice active"><Link href="/">Accommodation</Link></li>
             }
+            {/* <li className="litourservice"><Link href="/pages/tour">Tour &amp; Excursion</Link></li> */}
             {tourService?.canView &&
               <li className="litourservice"><Link href="#">Tour &amp; Excursion</Link></li>
             }
@@ -56,8 +57,8 @@ export default function ServiceNav() {
             {otherServiceService?.canView &&
               <li className="liother2"><Link href="#">Other Service</Link></li>
             }
-            {/* <li className="liimportbooking"><Link href="#">Import Booking</Link></li>
-            <li className="liofflineBooking"><Link href="#">New Offline Booking</Link></li> */}
+            {/* <li className="liimportbooking"><Link href="#">Import Booking</Link></li>*/}
+            {/* <li className="liofflineBooking"><Link href="/pages/booking/offlineBooking">Offline Booking</Link></li>  */}
           </ul>
         </div>
     </div>

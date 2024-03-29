@@ -1261,8 +1261,7 @@ export default function BBReservationTray() {
 
                                       <div className='divCell'>
                                       {/* <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button> */}
-                                      <button onClick={()=> bookingDetailBtn(s)} type="button" className='btn btn-sm btn-outline-danger py-0 border'>B</button>
-
+                                      
                                       {DisablePopupMenu(s, 'cs') ?
                                         <button onClick={()=> cancelBtn(s)} data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button>
                                         : 

@@ -20,6 +20,8 @@ import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {useSession} from "next-auth/react";
+import EmailBooking from '@/app/components/booking/emailBooking/EmailBooking';
+import CommonLoader from '@/app/components/common/CommonLoader';
 
 const selBookingOptions = [
   { value: 'On Request', label:'On Request'},
@@ -839,7 +841,7 @@ export default function BBReservationTray() {
       "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
       "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
       "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
-      "BookedFrom":format(new Date(cancelServiceDtl?.BookedFrom), 'yyyy-MM-dd'),
+      "BookedFrom": format(new Date(cancelServiceDtl?.BookedFrom), 'yyyy-MM-dd'),
       "EmailHtml": "",
       "Service": {
         "SupplierRemarks": "",
@@ -851,6 +853,7 @@ export default function BBReservationTray() {
     const responseCancelService = ReservationService.doCancelReservationService(reqObj, userInfo.correlationId);
     const resCancelService = await responseCancelService;
     if(resCancelService){
+      bookingDetailBtn();
       toast.success("Cancellation Successfully!",{theme: "colored"});
     }
     cancelModalClose.current?.click();
@@ -860,9 +863,87 @@ export default function BBReservationTray() {
     router.push('/pages/booking/b2bReservationTray');
   }
 
+
+  const [sMasterCode, setSMasterCode] = useState("");
+  const [emailBookingRes, setEmailBookingRes] = useState(null);
+  const [bkngCombDetails, setBkngCombDetails] = useState(null);
+  
+  const bookingDetailBtn = async() => {
+    setSMasterCode("");
+    setEmailBookingRes(null);
+    let bookingItineraryObj = {
+      "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
+      "BookingType": ""
+    }
+    const responseItinerary = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, userInfo.correlationId);
+    const resItinerary = await responseItinerary;
+    setSMasterCode(cancelServiceDtl?.ServiceMasterCode?.toString())
+    setEmailBookingRes(resItinerary);
+    doServiceComb(resItinerary);
+  }
+
+  const doServiceComb = (resItinerary) => {
+    let serviceComb = []
+    serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
+      if(s.ServiceCode==="1"){
+        let filterDtl = []
+        resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
+          if(s.ServiceMasterCode===d.ServiceMasterCode){
+            filterDtl.push(d)
+          }
+        });
+        let combArr = []
+        combArr = filterDtl.map((dt, i) => {
+          let objPax = resItinerary?.ReservationDetail?.PaxDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objPax){
+            dt.PaxNew = objPax
+          }
+          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objCancellation){
+            dt.CancellationNew = objCancellation
+          }
+          return dt
+        })
+        s.RoomDtlNew = combArr
+      }
+      return s
+    });
+    setBkngCombDetails(serviceComb)
+  }
+
+  useEffect(()=>{
+    if(emailBookingRes){
+      emailBookingBtn();
+    }
+  },[emailBookingRes]);
+
+  const emailBookingBtn = async() => {
+    let emailHtml = document.getElementById("emailArea").innerHTML;
+    let emailReq = {
+      "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
+      "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+      "BookedFrom": format(new Date(cancelServiceDtl?.BookedFrom), 'yyyy-MM-dd'),
+      "EmailHtml": emailHtml,
+      "Service": {
+        "SupplierRemarks": "",
+        "ActualCancellationCharges": customerCanCharge.toString(),
+        "SysCancellationCharges": sysCanCharge.toString(),
+        "FCPurchCancelCharges": supplierCanCharge.toString()
+      }
+    }
+    const responseCancelEmail = ReservationService.doSendReservationCancelledEmail(emailReq, userInfo.correlationId);
+    const resCancelEmail = await responseCancelEmail;
+    setEmailBookingRes(null);
+  }
+  
+
   return (
     <MainLayout>
       <ToastContainer />
+      {cancelLoad &&
+        <CommonLoader Type="3" />
+      }
       <div className="middle">
         <div className="container-fluid">
           <div className='pt-3'>
@@ -1180,7 +1261,8 @@ export default function BBReservationTray() {
 
                                       <div className='divCell'>
                                       {/* <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button> */}
-                                      
+                                      <button onClick={()=> bookingDetailBtn(s)} type="button" className='btn btn-sm btn-outline-danger py-0 border'>B</button>
+
                                       {DisablePopupMenu(s, 'cs') ?
                                         <button onClick={()=> cancelBtn(s)} data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button>
                                         : 
@@ -1375,6 +1457,16 @@ export default function BBReservationTray() {
           </div>
         </div>
       </div>
+
+      {emailBookingRes &&
+        <div id="emailArea" className="d-none">
+            <EmailBooking res={emailBookingRes} masterCode={sMasterCode} />
+          </div>
+      }
+      
+
+      
+
     </MainLayout>
   )
 }

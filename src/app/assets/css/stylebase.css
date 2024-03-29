@@ -64,7 +64,7 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .popover-body{padding:12px;font-size:13px;}
 .form-check-input{border-color:#a59e9e !important;}
 
-.mainloader1{display:flex; justify-content:center; align-items: center; position: fixed; left:0px; right: 0px; top:0px; bottom:0px; background:rgba(0,0,0,0.65); z-index: 999;}
+.mainloader1{display:flex; justify-content:center; align-items: center; position: fixed; left:0px; right: 0px; top:0px; bottom:0px; background:rgba(0,0,0,0.65); z-index: 9999}
 .loader1 {color: #FFF; font-weight:500; font-size:25px; box-sizing: content-box; height:40px; padding:10px 10px; display:flex;}
 .wordLoad {display:block; height:100%; color: #FFA822; animation: spin_up 4s infinite;}
 @keyframes spin_up {

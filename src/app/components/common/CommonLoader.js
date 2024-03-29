@@ -24,6 +24,15 @@ export default function CommonLoader(props) {
     </div>
   </div>
   }
+
+  {props.Type==="3" &&
+  <div className="mainloader1">
+    <div className="loader1 d-block text-center">
+      <div><FontAwesomeIcon icon={faSpinner} className="slow-spin fs-1 mb-1" /></div>
+      <p className="fs-5">Booking cancel is under process.<br /> Please do not refresh the page.</p>
+    </div>
+  </div>
+  }
   </>
   )
 }

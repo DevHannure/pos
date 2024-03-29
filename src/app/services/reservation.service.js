@@ -125,6 +125,19 @@ const ReservationService = {
     } catch (error) {console.log("CancelServiceError", error)}
   },
 
+  doSendReservationCancelledEmail: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/SendReservationCancelledEmail`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response?.text()
+    } catch (error) {console.log("CancelEmailError", error)}
+  },
+
+  
+
 }
 
 export default ReservationService

@@ -20,7 +20,7 @@ import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {useSession} from "next-auth/react";
-import EmailBooking from '@/app/components/booking/emailBooking/EmailBooking';
+import BookingDetails from '@/app/components/reports/bookingDtl/BookingDetails';
 import CommonLoader from '@/app/components/common/CommonLoader';
 
 const selBookingOptions = [
@@ -385,18 +385,6 @@ export default function BBReservationTray() {
     }
   }
 
-  const viewBooking = (id) => {
-    let bookItnery = {
-      "bcode": id,
-      "btype": "",
-      "returnurl": '/pages/booking/b2bReservationTray',
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
-  }
-
   const viewDetails = (id) => {
     let bookItnery = {
       "bcode": id,
@@ -408,109 +396,7 @@ export default function BBReservationTray() {
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/booking/bookingDetails?qry=${encData}`);
   }
-
-  
-
-  const viewSalesReport = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/salesRpt?qry=${encData}`);
-  }
-
-  const viewItineraryRpt = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/itineraryRpt?qry=${encData}`);
-  }
-
-  const viewVoucher = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "serviceMasterCode": "0",
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingVoucher?qry=${encData}`);
-  }
-
-  const viewInvoice = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
-  }
-
-  const viewServiceLpo = (bkgNo, masterCode, suppCode, lpo) => {
-    let reqRptObj = {
-      "bookingNo": bkgNo,
-      "serviceMasterCode": masterCode,
-      "supplier": suppCode,
-      "lpo": lpo,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/bookingForm?qry=${encData}`);
-  }
-  const [sonumber, setSonumber] = useState('');
-  const [soLoad, setSoLoad] = useState(false);
-  const soModalClose = useRef(null);
-
-  const generateSOBtn = async() => {
-    setSoLoad(true)
-    let reqSoObj = {
-      "BookingNo": sonumber,
-      "UserId": ""
-    }
-    const responseDtls = ReservationtrayService.doGenerateSO(reqSoObj, userInfo?.correlationId);
-    const resDtls = await responseDtls;
-    if(resDtls==='Success'){
-      toast.success("Generate SO Successfully!",{theme: "colored"});
-      setSoLoad(false);
-      soModalClose.current?.click();
-      getReservations();
-    }
-    else{
-      toast.error("Something went wrong! Please try after sometime.",{theme: "colored"});
-      setSoLoad(false);
-      soModalClose.current?.click();
-    }
-  }
-
-  const [amndmentHistory, setAmndmentHistory] = useState(null);
-
-  const viewAmndmentHistory = async(bkgNo, masterCode) => {
-    let reqAmndObj = {
-      "BookingNo": bkgNo,
-      "ServiceMasterCode": masterCode
-    }
-    const responseDtls = ReservationtrayService.doGetServiceAmendmentHistory(reqAmndObj, userInfo?.correlationId);
-    const resDtls = await responseDtls;
-    setAmndmentHistory(resDtls)
-  }
-
-  const viewCCReceipt = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingCCReceipt?qry=${encData}`);
-  }
-  
+ 
 
   const ifMenuExist = (feature) => {
     let ifexist = false;
@@ -866,9 +752,11 @@ export default function BBReservationTray() {
 
   const [sMasterCode, setSMasterCode] = useState("");
   const [emailBookingRes, setEmailBookingRes] = useState(null);
-  const [bkngCombDetails, setBkngCombDetails] = useState(null);
+  const [sQry, setSQry] = useState(null);
+  
   
   const bookingDetailBtn = async() => {
+    setSQry(null);
     setSMasterCode("");
     setEmailBookingRes(null);
     let bookingItineraryObj = {
@@ -877,12 +765,6 @@ export default function BBReservationTray() {
     }
     const responseItinerary = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, userInfo.correlationId);
     const resItinerary = await responseItinerary;
-    setSMasterCode(cancelServiceDtl?.ServiceMasterCode?.toString())
-    setEmailBookingRes(resItinerary);
-    doServiceComb(resItinerary);
-  }
-
-  const doServiceComb = (resItinerary) => {
     let serviceComb = []
     serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
       if(s.ServiceCode==="1"){
@@ -908,7 +790,9 @@ export default function BBReservationTray() {
       }
       return s
     });
-    setBkngCombDetails(serviceComb)
+    setSQry({"bcode": cancelServiceDtl?.BookingNo?.toString(), "btype":""});
+    setSMasterCode(cancelServiceDtl?.ServiceMasterCode?.toString())
+    setEmailBookingRes(resItinerary);
   }
 
   useEffect(()=>{
@@ -936,7 +820,6 @@ export default function BBReservationTray() {
     const resCancelEmail = await responseCancelEmail;
     setEmailBookingRes(null);
   }
-  
 
   return (
     <MainLayout>
@@ -1024,38 +907,9 @@ export default function BBReservationTray() {
                               <div className='divCell text-nowrap'>Details</div>
                               {/* <div className='divCell text-nowrap'>View</div> */}
                               </>
-                                
                               }
                             </>
                           }
-                          {/* {process.env.NEXT_PUBLIC_APPCODE!=='0' &&
-                          <>
-                            {ifMenuExist('ViewItineraryReport') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
-                                  <div className='divCell text-nowrap'>IR</div>
-                                }
-                              </>
-                            }
-                            {ifMenuExist('ViewVoucher') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewVoucher') &&
-                                  <div className='divCell text-nowrap'>VR</div>
-                                }
-                              </>
-                            }
-                            {ifMenuExist('ViewInvoice') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewInvoice') &&
-                                  <div className='divCell text-nowrap'>PI</div>
-                                }
-                              </>
-                            }
-
-                            <div className='divCell text-nowrap'>PR</div>
-                          </>
-                          }  */}
-                          
                         </div>
 
                         {resListRes?.bookings?.map((e, i) => (
@@ -1189,16 +1043,6 @@ export default function BBReservationTray() {
                                         <>
                                         <div style={{width:115}}>
                                           {s.DueDate}
-                                          {/* <div className='row gx-0'>
-                                            <div className='col-9'>
-                                              {s.DueDate && s.DueDate !=="01 Jan 1900" ?
-                                              <><DatePicker className="border-end-0 rounded-end-0 form-control px-1 fn12" dateFormat="dd MMM yyyy" selected={new Date(s.DueDate)} monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 1))} /></>
-                                              :
-                                              <><DatePicker className="border-end-0 rounded-end-0 form-control px-1 fn12" dateFormat="dd MMM yyyy" monthsShown={2} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 1))} /></>
-                                              }
-                                            </div>
-                                            <div className='col-3'><button className="rounded-start-0 btn btn-outline-secondary btn-sm"><FontAwesomeIcon icon={faFloppyDisk} /></button></div>
-                                          </div> */}
                                         </div>
                                         </>
                                         }
@@ -1404,37 +1248,6 @@ export default function BBReservationTray() {
                       </div>
                     </div>
 
-                    <div className="modal fade" id="serOrderModal" data-bs-backdrop="static" data-bs-keyboard="false">
-                      <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                          <div className="modal-body">
-                            <div className="fs-5 lh-base">
-                              Are you sure you want to Generate SO for this Booking #{sonumber} ?
-                            </div>
-                          </div>
-                          <div className='modal-footer'>
-                            <button type="button" className='btn btn-primary' onClick={generateSOBtn} disabled={soLoad}> {soLoad ? 'Submitting...' : 'Generate SO'} </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={soModalClose}>Close</button> 
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="modal fade" id="amendmentHistoryModal">
-                      <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                          <div className="modal-header">
-                            <h5 className="modal-title">Booking History for Booking No</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div className="modal-body">
-                            <div className="fs-5 lh-base">
-                              dd
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                   </div>
                   </>
                   :
@@ -1444,11 +1257,6 @@ export default function BBReservationTray() {
                 :
                 <div className='text-center blue py-5'>
                   <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
-                  {/* <div className="dumwave align-middle">
-                    <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                    <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                    <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                  </div> */}
                 </div>
               }
 
@@ -1459,8 +1267,8 @@ export default function BBReservationTray() {
 
       {emailBookingRes &&
         <div id="emailArea" className="d-none">
-            <EmailBooking res={emailBookingRes} masterCode={sMasterCode} />
-          </div>
+          <BookingDetails res={emailBookingRes} masterCode={sMasterCode} query={sQry} />
+        </div>
       }
       
 

@@ -299,6 +299,8 @@ svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:2
 .offlineNav .navbar-nav .nav-link{padding:12px 20px; background:#014689; color:#FFF;}
 .offlineNav .navbar-nav .nav-link.collapsed{background:transparent; color:#000;}
 
+.travellerRight .cmpltBookBtn{width:100%;}
+
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}
 .mainNav .navbar-nav .nav-link{border-top:1px solid #eaeaea;}

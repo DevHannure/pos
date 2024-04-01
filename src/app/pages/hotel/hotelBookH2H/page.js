@@ -291,21 +291,37 @@ export default function HotelItinerary() {
     paxRoomItems[roomIndex].PaxDetails[adltIndex].LeadPax = true;
     setRoomObj(paxRoomItems);
   };
-  
+
   const validate = () => {
     let status = true;
     for (var k = 0; k < roomObj.length; k++) {
       for (var i = 0; i < roomObj[k].PaxDetails.length; i++) {
+        let re = /[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi;
         if(roomObj[k].PaxDetails[i].FName===''){
           status = false;
           document.getElementById("firstName"+k+i).focus();
           toast.error("Please enter passenger's first name",{theme: "colored"})
           break;
         }
+
+        if(re.test(roomObj[k].PaxDetails[i].FName)) {
+          status = false;
+          document.getElementById("firstName"+k+i).focus();
+          toast.error("Special character's are not allowed in first name",{theme: "colored"});
+          break;
+        }
+
         if(roomObj[k].PaxDetails[i].LName===''){
           status = false;
           document.getElementById("lastName"+k+i).focus();
           toast.error("Please enter passenger's last name",{theme: "colored"})
+          break;
+        }
+
+        if(re.test(roomObj[k].PaxDetails[i].LName)) {
+          status = false;
+          document.getElementById("lastName"+k+i).focus();
+          toast.error("Special character's are not allowed in last name",{theme: "colored"});
           break;
         }
       }
@@ -313,6 +329,20 @@ export default function HotelItinerary() {
         break;
       }
     }
+
+    if(status){
+      let mergePax = []
+      roomObj.map((p) => {mergePax.push(...p.PaxDetails)});
+      const unique = mergePax.filter((obj, index) => {
+        return index === mergePax.findIndex(o => (obj.FName.toLowerCase().replace(/ /g, '') == o.FName.toLowerCase().replace(/ /g, '') && obj.LName.toLowerCase().replace(/ /g, '') == o.LName.toLowerCase().replace(/ /g, '') ))
+      });
+        
+      if (unique.length < mergePax.length) {
+        toast.error("Duplicate pax names found. Please enter unique pax names",{theme: "colored"})
+        status = false;
+      }
+    }
+   
     return status
 
   }
@@ -424,6 +454,7 @@ export default function HotelItinerary() {
           "ServiceDetails": roomObj,
         }
       }
+
       const responseAddCart = ReservationService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
       const resAddCart = await responseAddCart;
       if(resAddCart > 0){
@@ -484,7 +515,7 @@ export default function HotelItinerary() {
         let addServiceCartObj = {
           "BookingNo": "0",
           "IsNewBooking": true,
-          "UserId": userInfo?.user?.customerConsultantEmail,
+          "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
           "BookingDetail": {
             "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
             "BookingStatus": "-1",
@@ -607,7 +638,7 @@ export default function HotelItinerary() {
             <>
             <div className="row">
               <div className="mb-2 col-lg-8">
-                <div className="bg-white rounded shadow-sm p-2 pb-3">
+                <div className="p-2">
                   <h2 className="fs-4 text-warning mb-4">Book in 3 Simple Steps</h2>
                   <div className="nav nav-tabs nav-justified stepNav">
                     <button onClick={() => setActive('paxColumn')} className={"btn btn-link nav-link " + (isActive('reviewColumn') || isActive('paymentColumn') ? 'active' : '')}>
@@ -763,16 +794,16 @@ export default function HotelItinerary() {
                     </div>
                   }
                   
-                  {isActive('paymentColumn') &&
+                  {/* {isActive('paymentColumn') &&
                     <div>
                     <BookingItinerarySub qry={bookItneryReq} />
                     </div>
-                  }
+                  } */}
                 </div>
                    
                 {/* <button className='btn btn-warning' onClick={bookBtn} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Continue'} <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button> */}
 
-                <div className='bg-white rounded shadow-sm p-2 mt-4'>
+                <div className='p-2'>
 
                   <div className={"bg-warning bg-opacity-75 text-white rounded px-3 py-1 fs-5 mb-2 d-flex justify-content-between curpointer "+ (otherInfo ? '':'collapsed')} aria-expanded={otherInfo} onClick={()=> setOtherInfo(!otherInfo)}>
                     <strong>Cancellation Policy</strong>
@@ -927,7 +958,7 @@ export default function HotelItinerary() {
 
               </div>
               
-              <div className="mb-2 col-lg-4">
+              <div className="mb-2 col-lg-4 travellerRight">
                 <div className="bg-white rounded shadow-sm border p-2 py-2 mb-3">
                   <div className='d-sm-flex flex-row'>
                     <div className="hotelImg rounded d-none d-sm-block">
@@ -988,7 +1019,12 @@ export default function HotelItinerary() {
                     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <div className='fn12 mb-1'><strong >Supplier:</strong> {v.shortCode}</div>
                     }
-                    <div className="fn13"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren): {qry.childrenAges} yrs]</span>:null}</div>
+                    <div className="fn13"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren):&nbsp;
+                      {qry.paxInfoArr[i].chdAgesArr?.map((c,i) => (
+                        <React.Fragment key={i}>{!c.disabled && <span>{i!==0 && ', '} {c.chdAgeVal}</span>}</React.Fragment>
+                      ))
+                      } yrs]</span>:null}
+                    </div>
                   </div>
                   ))}
                 </div>
@@ -1031,6 +1067,12 @@ export default function HotelItinerary() {
                     <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => setActive('paxColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Edit Pax Info</button></div>
                     <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('paymentColumn')} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Payment'} <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
                   </div>
+                  }
+
+                  {isActive('paymentColumn') &&
+                    <div>
+                      <BookingItinerarySub qry={bookItneryReq} />
+                    </div>
                   }
                 </div>
 

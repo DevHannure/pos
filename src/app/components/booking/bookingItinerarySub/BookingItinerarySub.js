@@ -12,6 +12,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
 import {useSelector} from "react-redux";
+//import BookingDetails from '@/app/components/reports/bookingDtl/BookingDetails';
 
 function getUID() {return Date.now().toString(36);}
 
@@ -110,7 +111,6 @@ export default function BookingItinerarySub(props) {
         }
         const responseCustomerHasCredit = MasterService.doCheckIfCustomerHasCredit(customerHasCreditObj, props?.qry.correlationId);
         const resCustomerCredit = await responseCustomerHasCredit;
-        //const resCustomerCredit = true;
         if(resCustomerCredit){
           convertCartToReservationBtn()
         }
@@ -121,11 +121,7 @@ export default function BookingItinerarySub(props) {
       else{
         convertCartToReservationBtn()
       }
-      //if(payMode==='PL'){
-        //bkngCombDetails?.map((s, i) => {
-          //convertCartToReservationBtn(s, i)
-        //});
-      //}
+      
     }
   };
 
@@ -133,6 +129,7 @@ export default function BookingItinerarySub(props) {
     setMainLoader(true);
     let cartToReservationObj = {
       "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
+      //"UserId": userInfo?.user?.userId
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId
     }
     const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, props?.qry.correlationId);
@@ -169,10 +166,26 @@ export default function BookingItinerarySub(props) {
           router.push(`/pages/payment/paymentOrder?qry=${encData}`);
         }
         else{
+          const promises = [];
           resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
             if(value.ServiceCode==="1"){
               hotelBookBtn(value, index)
             }
+            promises.push(index);
+          });
+  
+          Promise.all(promises).then(() => 
+          {
+            let bookItnery = {
+              "bcode": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
+              "btype": "",
+              "returnurl": null,
+              "emailSend": true,
+              "correlationId": props?.qry.correlationId
+            }
+            let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+            let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+            router.push(`/pages/booking/bookingDetails?qry=${encData}`);
           });
         }
       }
@@ -247,22 +260,23 @@ export default function BookingItinerarySub(props) {
     }
     
     const resHotelBook = await responseHotelBook;
-    debugger;
 
     if(resHotelBook){
       if(payMode==='PL'){
-        confirmReservationServiceBtn(hotelReq,resHotelBook, index);
+        confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
       }
       if(payMode==='PN'){
-        reconfirmReservationServiceBtn(hotelReq,resHotelBook, index);
+        reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
       }
     }
   };
 
-  const confirmReservationServiceBtn = async(serviceReq,serviceRes, index) => {
+  const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
     let cRSAEobj = {
-      "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
-      "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
+      // "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
+      // "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
+      "BookingNo": value.BookingNo,
+      "ServiceMasterCode": value.ServiceMasterCode,
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "BookedFrom": serviceReq.CheckInDate,
       "EmailHtml": "",
@@ -278,26 +292,18 @@ export default function BookingItinerarySub(props) {
     }
     const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, props?.qry.correlationId);
     const resConfirm = await responseConfirm;
-    if(bkngDetails?.ReservationDetail?.Services?.length -1 === index){
+    if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
-      let bookItnery = {
-        "bcode": serviceRes.customerRefNumber?.split('-')[0],
-        "btype": "",
-        "returnurl": null,
-        "emailSend": true,
-        "correlationId": props?.qry.correlationId
-      }
-      let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
-      router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }
 
-  const reconfirmReservationServiceBtn = async(serviceReq,serviceRes, index) => {
+  const reconfirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
     let rCRSAEobj = {
-      "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
-      "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
+      // "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
+      // "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
+      "BookingNo": value.BookingNo,
+      "ServiceMasterCode": value.ServiceMasterCode,
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "CustomerReferenceNo": agentRefText,
       "BookedFrom": serviceReq.CheckInDate,
@@ -314,24 +320,14 @@ export default function BookingItinerarySub(props) {
     }
     const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, props?.qry.correlationId);
     const resConfirm = await responseConfirm;
-    if(bkngDetails?.ReservationDetail?.Services?.length -1 === index){
+    if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
-      let bookItnery = {
-        "bcode": serviceRes.customerRefNumber?.split('-')[0],
-        "btype": "",
-        "returnurl": null,
-        "emailSend": true,
-        "correlationId": props?.qry.correlationId
-      }
-      let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-      let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
-      router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }
 
   return (
-    <div className='pt-3'>
+    <div>
       <ToastContainer />
       {mainLoader &&
         <CommonLoader Type="2" />
@@ -382,7 +378,7 @@ export default function BookingItinerarySub(props) {
                 }
 
                 <div className="mb-2">
-                  <button type='button' className='btn btn-warning btn-lg' onClick={completeBtn}>&nbsp; Complete Booking &nbsp;</button>
+                  <button type='button' className='btn btn-warning btn-lg cmpltBookBtn' onClick={completeBtn}>&nbsp; Complete Booking &nbsp;</button>
                 </div>
 
               </div>
@@ -405,6 +401,13 @@ export default function BookingItinerarySub(props) {
           </div>
         </div>
       }
+
+      {/* {emailBookingRes &&
+        <div id="emailArea" className="d-none">
+          <BookingDetails res={emailBookingRes} masterCode={sMasterCode} query={sQry} />
+        </div>
+      } */}
+
     </div>
   )
 }

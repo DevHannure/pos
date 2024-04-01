@@ -1,5 +1,5 @@
 "use client"
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {format, parse} from 'date-fns';
 
 export default function Voucher(props) {
@@ -401,7 +401,7 @@ export default function Voucher(props) {
                           <div>Emergency Contact Details: <strong>{resDetails.reportHeader?.emergencyPhone}</strong></div>
                         </td>
                         <td width="40%" bgcolor="#004181" style={{backgroundColor:'#004181 !important',color:'#FFF !important',color:'#FFF'}} valign="middle">
-                          <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div>
+                          <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div>
                         </td>
                       </tr>
                     </tbody>
@@ -671,8 +671,8 @@ export default function Voucher(props) {
                                               {productAddressEnc(v)}
                                             </td>
                                             <td valign="top" width="40%" style={{textAlign:'center'}}>
-                                              {v.PickupDetails ?
-                                              <img src={v.PickupDetails} alt="" style={{maxHeight:'275px',maxWidth:'100%'}} />
+                                              {v.pickupDetails ?
+                                              <img src={v.pickupDetails} alt="" style={{maxHeight:'275px',maxWidth:'100%'}} />
                                               :
                                               <img src="http://staging.giinfotech.ae/Forms/Templates/Template3/Assets/images/No-Image-Available.gif" alt="" style={{maxHeight:'275px',maxWidth:'100%'}} />
                                               }
@@ -684,15 +684,15 @@ export default function Voucher(props) {
                                               <div>Emergency Contact Details: <strong>{resDetails.reportHeader?.emergencyPhone}</strong></div>
                                             </td>
                                             <td width="40%" bgcolor="#004181" style={{backgroundColor:'#004181 !important',color:'#FFF !important',color:'#FFF'}} valign="middle">
-                                              {v.suppconno ?
+                                              {v.suppConNo ?
                                               <>
-                                                {v.suppconno?.contains(',') ?
-                                                  <><div style={{color:'#FFF !important',color:'#FFF'}}>Supplier Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno.split(',')[i]}</div></>
+                                                {v.suppConNo?.includes(',') ?
+                                                  <><div style={{color:'#FFF !important',color:'#FFF'}}>Supplier Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo.split(',')[i]}</div></>
                                                   :
-                                                  v.suppconno?.contains('|') ?
-                                                  <><div style={{color:'#FFF !important',color:'#FFF'}}>Supplier Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno.split('|').join('<br />')}</div></>
+                                                  v.suppConNo?.includes('|') ?
+                                                  <><div style={{color:'#FFF !important',color:'#FFF'}}>Supplier Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo.split('|').join('<br />')}</div></>
                                                   :
-                                                  <><div style={{color:'#FFF !important',color:'#FFF'}}>Supplier Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div></>
+                                                  <><div style={{color:'#FFF !important',color:'#FFF'}}>Supplier Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div></>
                                                 }
                                               </>
                                               :
@@ -700,7 +700,7 @@ export default function Voucher(props) {
                                                 {v.h2HBookingNo ?
                                                   <><div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.h2HBookingNo}</div></>
                                                 :
-                                                <><div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div></>
+                                                <><div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div></>
                                                 }
                                               </>
                                               }
@@ -828,7 +828,7 @@ export default function Voucher(props) {
                                               {v.h2HBookingNo ?
                                                 <><div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.h2HBookingNo}</div></>
                                               :
-                                              <><div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div></>
+                                              <><div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div></>
                                               }
                                             </td>
                                           </tr>
@@ -887,8 +887,8 @@ export default function Voucher(props) {
                                                   v.h2HBookingNo ?
                                                   <>{v.h2HBookingNo}</>
                                                   :
-                                                  v.suppconno ?
-                                                  <>{v.suppconno}</>
+                                                  v.suppConNo ?
+                                                  <>{v.suppConNo}</>
                                                   :
                                                   null
                                                 }
@@ -1067,7 +1067,7 @@ export default function Voucher(props) {
                                             <div>Emergency Contact Details: <strong>{resDetails.reportHeader?.emergencyPhone}</strong></div>
                                           </td>
                                           <td width="40%" bgcolor="#004181" style={{backgroundColor:'#004181 !important',color:'#FFF !important',color:'#FFF'}} valign="middle">
-                                            <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div>
+                                            <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div>
                                           </td>
                                         </tr>
                                       </tbody>
@@ -1116,7 +1116,7 @@ export default function Voucher(props) {
                                               <div>Emergency Contact Details: <strong>{resDetails.reportHeader?.emergencyPhone}</strong></div>
                                             </td>
                                             <td width="40%" bgcolor="#004181" style={{backgroundColor:'#004181 !important',color:'#FFF !important',color:'#FFF'}} valign="middle">
-                                              <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div>
+                                              <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div>
                                             </td>
                                           </tr>
                                         </tbody>
@@ -1178,7 +1178,7 @@ export default function Voucher(props) {
                                               <div>Emergency Contact Details: <strong>{resDetails.reportHeader?.emergencyPhone}</strong></div>
                                             </td>
                                             <td width="40%" bgcolor="#004181" style={{backgroundColor:'#004181 !important',color:'#FFF !important',color:'#FFF'}} valign="middle">
-                                              <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppconno}</div>
+                                              <div style={{color:'#FFF !important',color:'#FFF'}}>Confirmation Number:</div><div style={{fontSize:'16px',textAlign:'right',lineHeight:'36px',color:'#FFF !important',color:'#FFF'}}>{v.suppConNo}</div>
                                             </td>
                                           </tr>
                                         </tbody>

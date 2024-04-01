@@ -749,11 +749,9 @@ export default function BBReservationTray() {
     router.push('/pages/booking/b2bReservationTray');
   }
 
-
   const [sMasterCode, setSMasterCode] = useState("");
   const [emailBookingRes, setEmailBookingRes] = useState(null);
   const [sQry, setSQry] = useState(null);
-  
   
   const bookingDetailBtn = async() => {
     setSQry(null);

@@ -125,7 +125,7 @@ export default function HotelBookingItinerary(props) {
           </tr>
           <tr>
             <td colSpan="2" valign="bottom" style={{lineHeight:'20px', padding:'3px 10px'}}>
-              <div className="cancelBrnone" style={{fontSize:'12px'}} dangerouslySetInnerHTML={{ __html:props.response?.CancellationPolicy}}></div>
+              <div style={{fontSize:'12px'}} dangerouslySetInnerHTML={{ __html:props.response?.CancellationPolicy}}></div>
             </td>
           </tr>
         </tbody>

@@ -166,31 +166,56 @@ export default function BookingItinerarySub(props) {
           router.push(`/pages/payment/paymentOrder?qry=${encData}`);
         }
         else{
-          const promises = [];
-          resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
-            if(value.ServiceCode==="1"){
-              hotelBookBtn(value, index)
-            }
-            promises.push(index);
-          });
+          Promise.all(resItineraryNew?.ReservationDetail?.Services?.map((async(value, index) => {
+            await new Promise(resolve => hotelBookBtn(value, index));
+          })));
+
+          debugger;
+          let bookItnery = {
+          "bcode": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
+          "btype": "",
+          "returnurl": null,
+          "emailSend": true,
+          "correlationId": props?.qry.correlationId
+          }
+          let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+          let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+          router.push(`/pages/booking/bookingDetails?qry=${encData}`);
+
+
+         // Call the other normal function once the map method loop is fully done
+         //pageDetailsBtn(mapResult);
+
+          //const promises = [];
+          //resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
+            //if(value.ServiceCode==="1"){
+              //hotelBookBtn(value, index)
+            //}
+            //promises.push(index);
+          //});
   
-          Promise.all(promises).then(() => 
-          {
-            let bookItnery = {
-              "bcode": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
-              "btype": "",
-              "returnurl": null,
-              "emailSend": true,
-              "correlationId": props?.qry.correlationId
-            }
-            let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-            let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-            router.push(`/pages/booking/bookingDetails?qry=${encData}`);
-          });
+          //Promise.all(promises).then(() => 
+          //{
+            
+          //});
+        //}
         }
       }
     }
   };
+
+  // const pageDetailsBtn = () => {
+  //   let bookItnery = {
+  //     "bcode": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
+  //     "btype": "",
+  //     "returnurl": null,
+  //     "emailSend": true,
+  //     "correlationId": props?.qry.correlationId
+  //   }
+  //   let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+  //   let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+  //   router.push(`/pages/booking/bookingDetails?qry=${encData}`);
+  // }
 
   const hotelBookBtn = async(value, index) => {
     let roomArr = []

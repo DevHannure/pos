@@ -746,6 +746,7 @@ export default function BBReservationTray() {
     setCancelLoad(false);
     dispatch(doReserveListOnLoad(null));
     dispatch(doSubDtlsList({}));
+    detailsBtn(`#detailsub${cancelServiceDtl?.BookingNo?.toString()}`,cancelServiceDtl?.BookingNo?.toString());
     router.push('/pages/booking/b2bReservationTray');
   }
 
@@ -920,7 +921,22 @@ export default function BBReservationTray() {
                           <div className='divCell'>{e.bookingDate}</div>
                           <div className='divCell'>{e.passengerName}</div>
                           <div className='divCell'>{e.customerRefNo}</div>
-                          <div className='divCell'>{e.status}</div>
+                          <div className='divCell fw-semibold'>
+                            {["cancelled", "cancelled(p)", "failed", "not available"].includes(e.status.toLowerCase()) ?
+                            <span className='text-danger'>{e.status}</span>
+                            :
+                            ["cust.confirmed"].includes(e.status.toLowerCase()) ?
+                            <><span className="text-success">Confirmed</span> <small>(UnVouchered)</small></>
+                            :
+                            ["supp.confirmed"].includes(e.status.toLowerCase()) ?
+                            <><span className="text-success">Confirmed</span> <small>(Vouchered)</small></>
+                            :
+                            ["on request", "sent to supp."].includes(e.status.toLowerCase()) ?
+                            <span className='starGold'>{e.status}</span>
+                            :
+                            <span>{e.status}</span>
+                            }
+                          </div>
                           <div className='divCell'>{Number(e.totalPrice).toFixed(2)}</div>
                           <div className='divCell'>{Number(e.totalCustomerPrice).toFixed(2)}</div>
                           {ifMenuExist('ViewItinerary') &&
@@ -1096,7 +1112,19 @@ export default function BBReservationTray() {
                                           s.ServiceStatus == "Posted" ?
                                           <>Posted</>
                                           :
-                                          <>{s.ServiceStatus}</>
+                                          ["cancelled", "cancelled(p)", "failed", "not available"].includes(s.ServiceStatus.toLowerCase()) ?
+                                          <span className='text-danger'>{s.ServiceStatus}</span>
+                                          :
+                                          ["cust.confirmed"].includes(s.ServiceStatus.toLowerCase()) ?
+                                          <><span className="text-success">Confirmed</span> <small>(UnVouchered)</small></>
+                                          :
+                                          ["supp.confirmed"].includes(s.ServiceStatus.toLowerCase()) ?
+                                          <><span className="text-success">Confirmed</span> <small>(Vouchered)</small></>
+                                          :
+                                          ["on request", "sent to supp."].includes(s.ServiceStatus.toLowerCase()) ?
+                                          <span className='starGold'>{s.ServiceStatus}</span>
+                                          :
+                                          <span>{s.ServiceStatus}</span>
                                           }
                                         </div>
                                       </div>

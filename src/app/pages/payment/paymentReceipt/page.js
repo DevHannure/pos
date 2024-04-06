@@ -12,8 +12,10 @@ import { enc } from 'crypto-js';
 
 export default function PaymentReceipt() {
   const router = useRouter();
-  const [searchparams] = useSearchParams();
-  const qry = Object.fromEntries([...searchparams]);
+  //const [searchparams] = useSearchParams();
+  //const qry = Object.fromEntries([...searchparams]);
+  const searchparams = useSearchParams();
+  const qry = searchparams.get('qry');
   console.log("qry", qry);
 
   const [getPreBookRes, setGetPreBookRes] = useState(null);

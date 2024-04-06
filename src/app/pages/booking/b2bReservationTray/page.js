@@ -214,7 +214,7 @@ export default function BBReservationTray() {
         "DateTo": dateTo? format(dateTo, 'yyyy-MM-dd') : "",
         "BookingType": bookingType,
         "BookingChannel": bookingChannel,
-        "CustomerCode": customerCode,
+        "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode,
         "SupplierCode": supplierCode,
         "RateType": rateType,
         "TicketType": ticketType,
@@ -245,7 +245,7 @@ export default function BBReservationTray() {
       "CancellationStartDate": dateType==='6' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
       "CancellationEndDate": dateType==='6' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "SupplierType": supplierCode?.value,
-      "CustomerCode": customerCode?.value,
+      "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode?.value,
       "BookingName": "",
       "CartId": "",
       "RateType": rateType,
@@ -298,7 +298,7 @@ export default function BBReservationTray() {
       "CancellationStartDate": dateType==='6' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
       "CancellationEndDate": dateType==='6' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "SupplierType": supplierCode?.value,
-      "CustomerCode": customerCode?.value,
+      "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode?.value,
       "BookingName": "",
       "CartId": "",
       "RateType": rateType,
@@ -697,14 +697,15 @@ export default function BBReservationTray() {
             "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
             "TassProInfo": {
                 "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
-                "NoOfRooms": (cancelServiceDtl.H2HRatekey?.split('splitter').length+1).toString(),
+                "NoOfRooms": cancelServiceDtl.H2HRatekey?.split('splitter').length.toString(),
                 "CancelledDate": format(new Date(), 'yyyy-MM-dd'),
                 "SysCancellationCharge": sysCanCharge.toString(),
                 "ActCancellationCharge": customerCanCharge.toString(),
                 "PurchaseCancellationCharge": supplierCanCharge.toString(),
                 "AccWalkInCancelCharge": "0"
             },
-            "SessionId": cancelServiceDtl?.UniqueId?.split('-')[1] 
+            //"SessionId": cancelServiceDtl?.UniqueId?.split('-')[1] 
+            "SessionId": cancelServiceDtl?.H2HSessionId
           }
 
           const responseCancel = HotelService.doLocalCancel(cancelLocalObj, userInfo.correlationId);

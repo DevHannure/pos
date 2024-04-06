@@ -29,7 +29,7 @@ const starOptions = [
   { value: '3', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
   { value: '2', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
   { value: '1', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
-  { value: '0', label: 'No Retings'}
+  { value: '0', label: 'No Rating'}
 ];
 
 const InputOption = ({

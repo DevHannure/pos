@@ -183,7 +183,7 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .rightResult {padding-left:1rem; padding-top:1rem; width:100%;}
 .htlboxcol{border:1px solid #f0f3f5; border-radius:6px;}
 .hotelImg{position: relative; min-width:140px; height:90px; overflow: hidden;}
-.hotelImg img{height:auto;}
+/* .hotelImg img{height:auto;} */
 .collapsed .togglePlus:before{content:'+'; font-weight:bold;}
 div[aria-expanded="true"] .togglePlus:before{content:'-'; font-weight:bold;}
 

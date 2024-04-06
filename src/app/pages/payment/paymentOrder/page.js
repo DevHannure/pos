@@ -21,6 +21,8 @@ export default function PaymentOrder() {
   const qry = JSON.parse(bytes);
   const divRef = useRef(null);
   const [resHtml, setResHtml] = useState(null);
+  const [htmlLoad, setHtmlLoad] = useState();
+
 
   useEffect(()=>{
     getBookingAmountBtn();
@@ -68,8 +70,21 @@ export default function PaymentOrder() {
       const resPay = await responsePay;
       setResHtml(resPay)
       if(resPay && resPay?.pgResponseType ===1){
-        const fragment = document.createRange().createContextualFragment(resPay.responseDetail);
-        divRef.current.append(fragment);
+        
+        if(qry.pGSupplier===3){
+          //Total Process
+          const fragment = document.createRange().createContextualFragment(resPay.responseDetail);
+          divRef.current.append(fragment);
+        }
+        else if(qry.pGSupplier===4){
+           //Pay Fort
+          setHtmlLoad(resPay.responseDetail)
+        }
+        else if(qry.pGSupplier===2 || qry.pGSupplier===5){
+          //CC Avenue
+          
+        }
+        
       }
       else{
         toast.error("Something went wrong! Please try after sometime",{theme: "colored"});
@@ -80,6 +95,16 @@ export default function PaymentOrder() {
       }
       e.nativeEvent.target.disabled = false;
       e.nativeEvent.target.innerHTML = 'Pay Now!';
+    }
+  }
+
+  useEffect(()=>{
+    subMit()
+  }, [htmlLoad]);
+
+  const subMit = () => {
+    if(htmlLoad){
+        document.forms["nonseamless"].submit()
     }
   }
 
@@ -193,7 +218,14 @@ export default function PaymentOrder() {
               }
               </>
             }
+            {/* Total Process */}
             <div ref={divRef}></div>
+
+            {/* Pay Fort */}
+            {htmlLoad && 
+              <div dangerouslySetInnerHTML={{ __html: htmlLoad }}></div>
+            }
+            
           </div>
         </div>
       </div>

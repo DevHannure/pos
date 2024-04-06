@@ -1,11 +1,11 @@
 "use client"
+import React, { useState, useEffect, useRef} from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
-import React, {useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faArrowRightLong, faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
 import {faCheckCircle} from "@fortawesome/free-regular-svg-icons";
-import { useSearchParams  } from 'next/navigation';
+import { useRouter} from 'next/navigation';
 import HotelService from '@/app/services/hotel.service';
 import ReservationService from '@/app/services/reservation.service';
 import MasterService from '@/app/services/master.service';
@@ -13,26 +13,30 @@ import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useRouter } from 'next/navigation';
 import {format, addDays, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import {doHotelReprice, doHotelDtl} from '@/app/store/hotelStore/hotel';
-import BookingItinerarySub from '@/app/components/booking/bookingItinerarySub/BookingItinerarySub'
+import BookingItinerarySub from '@/app/components/booking/bookingItinerarySub/BookingItinerarySub';
 
-export default function HotelItinerary() {
-  const noRefundBtn = useRef(null);
-  const soldOutBtn = useRef(null);
-  const cancelPolicyHtml = useRef(null);
+export default function HotelTravellerBook() {
+  const [qry, setQry] = useState(null);
+  useEffect(() => {
+    if(!qry){
+      const searchparams = sessionStorage.getItem('qryTraveller');
+      let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
+      let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
+      setQry(JSON.parse(bytes))
+    }
+  }, []);
   const router = useRouter();
-  const searchparams = useSearchParams();
-  const search = searchparams.get('qry');
-  let decData = enc.Base64.parse(search).toString(enc.Utf8);
-  let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
-  const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
   const htlDetails = useSelector((state) => state.hotelResultReducer?.htlDtls);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+
+  const noRefundBtn = useRef(null);
+  const soldOutBtn = useRef(null);
+  const cancelPolicyHtml = useRef(null);
 
   const [room1, setRoom1] = useState(null);
   const [room2, setRoom2] = useState(null);
@@ -40,23 +44,25 @@ export default function HotelItinerary() {
 
   useEffect(()=>{
     window.scrollTo(0, 0);
-    if(!resReprice) {
-      doHtlRepriceLoad()
+    if(qry){
+      if(!resReprice) {
+        doHtlRepriceLoad()
+      }
+      
+      if(qry?.paxInfoArr?.length===1){
+        roomRatetype1(qry.paxInfoArr[0])
+      }
+      else if(qry?.paxInfoArr?.length===2){
+        roomRatetype1(qry.paxInfoArr[0])
+        roomRatetype2(qry.paxInfoArr[1])
+      }
+      else{
+        roomRatetype1(qry.paxInfoArr[0])
+        roomRatetype2(qry.paxInfoArr[1])
+        roomRatetype3(qry.paxInfoArr[2])
+      }
     }
-    
-    if(qry?.paxInfoArr?.length===1){
-      roomRatetype1(qry.paxInfoArr[0])
-    }
-    else if(qry?.paxInfoArr?.length===2){
-      roomRatetype1(qry.paxInfoArr[0])
-      roomRatetype2(qry.paxInfoArr[1])
-    }
-    else{
-      roomRatetype1(qry.paxInfoArr[0])
-      roomRatetype2(qry.paxInfoArr[1])
-      roomRatetype3(qry.paxInfoArr[2])
-    }
-  },[searchparams]);
+  },[qry]);
 
   const [supplierNet, setSupplierNet] = useState(null);
   const [net, setNet] = useState(null);
@@ -194,9 +200,9 @@ export default function HotelItinerary() {
           k?.condition?.map((m, i) => {
             let cancelObj = {
               "FromDate": format(new Date(m.fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(m.fromDate), 'yyyy-MM-dd')+'T00:00:00' : format(addDays(new Date(m.fromDate), -2), 'yyyy-MM-dd')+'T00:00:00',
-              "FromTime": m.fromTime,
+              "FromTime": m.fromTime ? m.fromTime : "00:00",
               "ToDate": i === k?.condition.length -1 ? format(new Date(m.toDate), 'yyyy-MM-dd')+'T00:00:00' : format(addDays(new Date(m.toDate), -2), 'yyyy-MM-dd')+'T00:00:00',
-              "ToTime": m.toTime,
+              "ToTime": m.toTime ? m.toTime : "00:00",
               "AppliedOn": m.applicableOn,
               "Nights": m.nights,
               "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
@@ -349,133 +355,6 @@ export default function HotelItinerary() {
 
   const [custRemarks, setCustRemarks] = useState('');
   const [bookBtnLoad, setBookBtnLoad] = useState(false);
-
-  const bookBtn = async() => {
-    let allowMe = validate();
-    if(allowMe){
-      setBookBtnLoad(true);
-      let leadPaxName = ''
-      roomObj.forEach((v) => {
-        v.PaxDetails.forEach((val) => {
-          if (val.LeadPax) {
-            leadPaxName = val.PaxTitle +'. '+ val.PaxFullName
-          }
-        })
-      })
-
-      let dueDateFinal = '';
-      if(dueDateStart[0]){
-        dueDateFinal = format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + (dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00');
-      }
-      
-      let addServiceCartObj = {
-        "BookingNo": "0",
-        "IsNewBooking": true,
-        //"UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.userEmail : userInfo?.user?.userId,
-        "UserId": userInfo?.user?.customerConsultantEmail,
-        //"UserId": userInfo?.user?.userId,
-        "BookingDetail": {
-          "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
-          "BookingStatus": "-1",
-          "BookingCurrencyCode": userInfo?.user?.currencyCode,
-          "WalkinUserCode": "",
-          "BranchCode": userInfo?.user?.branchCode,
-          "RegionCode": qry?.regionID,
-          "CustomerCode": userInfo?.user?.userCode,
-          "CustomerConsultantCode": userInfo?.user?.customerConsultantCode,
-          "CompanyConsultantCode": userInfo?.user?.companyConsultantCode,
-          "CustomerRemarks": custRemarks,
-          "LeadPassengerName": leadPaxName,
-          "IsPackage": "",
-          "IsFromNewSystem": true
-        },
-        "Service": {
-          "ServiceCode": "1",
-          "ServiceType": "0",
-          "ServiceStatus": "0",
-          "ProductCode": qry?.hotelCode,
-          "ProductName": htlDetails?.hotelDetail?.hotelName,
-          "PeriodCode": resReprice.hotel?.rooms?.room[0]?.periodCode ? resReprice.hotel.rooms.room[0].periodCode : "",
-          "RoomTypeCode": resReprice.hotel?.rooms?.room[0]?.roomTypeCode ? resReprice.hotel?.rooms?.room[0]?.roomTypeCode : "0",
-          "RoomTypeName": resReprice.hotel?.rooms?.room[0]?.roomName,
-          "RateBasisCode": resReprice.hotel?.rooms?.room[0]?.rateBasisCode ? resReprice.hotel?.rooms?.room[0]?.rateBasisCode : "0",
-          "RateBasisName": resReprice.hotel?.rooms?.room[0]?.meal,
-          "BookedFrom": qry?.chkIn,
-          "BookedTo": qry?.chkOut,
-          "BookedNights": differenceInDays(new Date(qry?.chkOut),new Date(qry?.chkIn)).toString(),
-          "PickupDetails": 'https://static.giinfotech.ae/medianew'+htlDetails?.hotelDetail?.imageUrl,
-          "DropoffDetails": "",
-          "ProductAddress": htlDetails?.hotelDetail?.address1+', '+htlDetails?.hotelDetail?.address2,
-          "ProductSystemId": qry?.systemId,
-          "ProductCityCode": htlDetails?.hotelDetail?.destinationCode,
-          "ProductCityName": htlDetails?.hotelDetail?.cityName,
-          "ProductCountryISOCode": htlDetails?.hotelDetail?.countryCode,
-          "ProductCountryName": htlDetails?.hotelDetail?.countryName,
-          "ProductContactNo": htlDetails?.hotelDetail?.contactTelephone,
-          "ProductFaxNo": htlDetails?.hotelDetail?.contactFax,
-          "ProductWebSite": htlDetails?.hotelDetail?.contactWebUrl,
-          "ClassificationCode": htlDetails?.hotelDetail?.rating,
-          "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
-          "SupplierCode": qry.supplierCode,
-          "ReservationCode": qry?.supplierName?.toLowerCase()==="local" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
-          "SupplierConsultantCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : "111", //For ADS 111 & Local 138
-          "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
-          "SupplierRemarks": "",
-          "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
-          "SupplierExchangeRate":exchangeRate.toString(),
-          "SupplierPayableAmount": Number(supplierNet).toFixed(2).toString(),
-          "Rate":  Number(supplierNet * exchangeRate).toFixed(2).toString(),
-          "PayableAmount": Number(supplierNet * exchangeRate).toFixed(2).toString(),
-          "MarkupAmount": Number(markUpAmount*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-          "NetAmount": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-          "SellPrice": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-          "GSANet": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-          "VATInput": "0",
-          "VATInputAmount": resReprice.hotel?.rooms?.vatInputAmount ? Number(resReprice.hotel?.rooms?.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
-          "VATOutput": "0",
-          "VATOutputAmount": resReprice.hotel?.rooms?.vatOutputAmount ? Number(resReprice.hotel?.rooms?.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
-          "DueDate": dueDateFinal,
-          "UniqueId": qry.uniqueId,
-          "CustomerCurrencyCode": userInfo?.user?.currencyCode,
-          "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-          "CustomerNetAmount": Number(net).toFixed(2).toString(),
-          "XMLSupplierCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
-          "XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
-          "XMLSessionId": qry?.sessionId,
-          "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
-          "NoOfAdults": Number(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
-          "NoOfChildren": Number(qry.paxInfoArr.reduce((totalChld, c) => totalChld + c.chdVal, 0)).toString(),
-          "NoOfInfants": "0",
-          "AgesOfChildren": qry.childrenAges,
-          "VoucherLink": "",
-          "FairName": resReprice.hotel?.rooms?.room[0]?.fairName ? resReprice.hotel?.rooms?.room[0]?.fairName : "",
-          "NRF": qry.rateType==='Refundable' || qry.rateType==='refundable' ? false : true,
-          "IsHidden": false,
-          "ServiceDetails": roomObj,
-        }
-      }
-
-      const responseAddCart = ReservationService.doAddServiceToCart(addServiceCartObj, qry.correlationId);
-      const resAddCart = await responseAddCart;
-      if(resAddCart > 0){
-        let bookItnery = {
-          "bcode": resAddCart.toString(),
-          "btype": "O",
-          "returnurl": null,
-          "correlationId": qry.correlationId
-        }
-        let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
-        let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-        setBookBtnLoad(false);
-        router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
-      }
-      else{
-        toast.error("Something Wrong !!",{theme: "colored"});
-        setBookBtnLoad(false);
-      }
-    }
-  }
-
   
   const [bookItneryReq, setBookItneryReq] = useState(null);
 
@@ -509,7 +388,7 @@ export default function HotelItinerary() {
 
         let dueDateFinal = '';
         if(dueDateStart[0]){
-          dueDateFinal = format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + dueDateStart[0].fromTime : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + (dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00');
+          dueDateFinal = format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStart[0].fromDate), 'yyyy-MM-dd') + ' ' + (dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00') : format(addDays(new Date(dueDateStart[0].fromDate), -2), 'yyyy-MM-dd') + ' ' + (dueDateStart[0].fromTime ? dueDateStart[0].fromTime : '00:00:00');
         }
         
         let addServiceCartObj = {
@@ -535,7 +414,7 @@ export default function HotelItinerary() {
             "ServiceCode": "1",
             "ServiceType": "0",
             "ServiceStatus": "0",
-            "ProductCode": qry?.hotelCode,
+            "ProductCode": qry?.productCode,
             "ProductName": htlDetails?.hotelDetail?.hotelName,
             "PeriodCode": resReprice.hotel?.rooms?.room[0]?.periodCode ? resReprice.hotel.rooms.room[0].periodCode : "",
             "RoomTypeCode": resReprice.hotel?.rooms?.room[0]?.roomTypeCode ? resReprice.hotel?.rooms?.room[0]?.roomTypeCode : "0",
@@ -824,11 +703,7 @@ export default function HotelItinerary() {
                               {k?.type ==='CAN' &&
                               <>
                               <div className="blue fn14 text-capitalize"><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                              {/* {k?.condition?.map((m, i) => (
-                                <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                                &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                                &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' }</div>
-                              ))} */}
+                              
                               <table className="table table-sm table-bordered fn12 fw-semibold">
                                 <thead>
                                   <tr className="table-light blue">
@@ -862,11 +737,7 @@ export default function HotelItinerary() {
                                 {k?.condition &&
                                 <>
                                 <div className="blue fn14 text-capitalize"><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                {/* {k?.condition?.map((m, i) => (
-                                  <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
-                                ))} */}
+                                
                                 <table className="table table-sm table-bordered fn12 fw-semibold">
                                   <thead>
                                     <tr className="table-light blue">
@@ -901,11 +772,7 @@ export default function HotelItinerary() {
                                 {k?.condition &&
                                 <>
                                 <div className="blue fn14 text-capitalize"><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
-                                {/* {k?.condition?.map((m, i) => (
-                                  <div className="text-danger fw-semibold mb-1" key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } </div>
-                                ))} */}
+                                
                                 <table className="table table-sm table-bordered fn12 fw-semibold">
                                   <thead>
                                     <tr className="table-light blue">
@@ -996,31 +863,29 @@ export default function HotelItinerary() {
                     </thead>
                     <tbody>
                       <tr>
-                        <td>{qry.paxInfoArr.length}</td>
-                        <td>{format(new Date(qry.chkIn), 'eee, dd MMM yyyy')}</td>
-                        <td>{format(new Date(qry.chkOut), 'eee, dd MMM yyyy')}</td>
+                        <td>{qry?.paxInfoArr?.length}</td>
+                        <td>{qry ? format(new Date(qry?.chkIn), 'eee, dd MMM yyyy') : null}</td>
+                        <td>{qry ? format(new Date(qry?.chkOut), 'eee, dd MMM yyyy'): null}</td>
                       </tr>
                     </tbody>
                   </table>
-                  {/* <div><strong className='blue'>No. of Rooms:</strong> {qry.paxInfoArr.length}</div>
-                  <div><strong className='blue'>Check-in:</strong> {format(new Date(qry.chkIn), 'eee, dd MMM yyyy')}</div>
-                  <div><strong className='blue'>Check-out:</strong> {format(new Date(qry.chkOut), 'eee, dd MMM yyyy')}</div> */}
+                  
                   {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                   <div key={i} className='fw-semibold'>
                     <hr className='my-2' />
                     <div className='text-capitalize fn13 mb-1'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} with {v.meal?.toLowerCase()}
-                      {qry.rateType==='Refundable' || qry.rateType==='refundable' ?
+                      {['Refundable', 'refundable'].includes(qry?.rateType) ?
                       <span className="refund"> (Refundable)</span>:''
                       }
-                      {qry.rateType==='Non-Refundable' || qry.rateType==='Non Refundable' || qry.rateType==='non-refundable' || qry.rateType==='non refundable' ?
+                      {['Non-Refundable', 'Non Refundable', 'non-refundable','non refundable'].includes(qry?.rateType) ?
                       <span className="nonrefund"> (Non-Refundable)</span>:''
                       }
                     </div>
                     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <div className='fn12 mb-1'><strong >Supplier:</strong> {v.shortCode}</div>
                     }
-                    <div className="fn13"><strong className='blue'>Pax:</strong> {qry.paxInfoArr[i].adtVal} Adult(s){qry.paxInfoArr[i].chdVal ? <span>, {qry.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren):&nbsp;
-                      {qry.paxInfoArr[i].chdAgesArr?.map((c,i) => (
+                    <div className="fn13"><strong className='blue'>Pax:</strong> {qry?.paxInfoArr[i].adtVal} Adult(s){qry?.paxInfoArr[i].chdVal ? <span>, {qry?.paxInfoArr[i].chdVal} Child(ren), [Ages of Child(ren):&nbsp;
+                      {qry?.paxInfoArr[i].chdAgesArr?.map((c,i) => (
                         <React.Fragment key={i}>{!c.disabled && <span>{i!==0 && ', '} {c.chdAgeVal}</span>}</React.Fragment>
                       ))
                       } yrs]</span>:null}
@@ -1037,7 +902,7 @@ export default function HotelItinerary() {
                       {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                         <tr key={i}>
                           <td>Room {i+1}</td>
-                          <td className="text-end">{qry.currency} {Number(v.price.net+v.price.vatOutputAmount).toFixed(2)}</td>
+                          <td className="text-end">{qry?.currency} {Number(v.price.net+v.price.vatOutputAmount).toFixed(2)}</td>
                         </tr>
                       ))}
                       </tbody>
@@ -1048,7 +913,7 @@ export default function HotelItinerary() {
                     <tbody>
                       <tr className="table-light">
                         <td><strong>Total Amount</strong><br/><small>(Including all taxes & fees)</small></td>
-                        <td className="text-end"><strong>{qry.currency} {Number(resReprice.hotel?.rooms?.room.reduce((totalAmt, price) => totalAmt + price.price.net + price.price.vatOutputAmount, 0)).toFixed(2)}</strong></td>
+                        <td className="text-end"><strong>{qry?.currency} {Number(resReprice.hotel?.rooms?.room.reduce((totalAmt, price) => totalAmt + price.price.net + price.price.vatOutputAmount, 0)).toFixed(2)}</strong></td>
                       </tr>
                     </tbody>
                   </table>
@@ -1094,7 +959,7 @@ export default function HotelItinerary() {
                 {k?.condition?.map((m, i) => (
                   <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                   &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
+                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry?.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
                 ))}
                 </>
                 }
@@ -1108,7 +973,7 @@ export default function HotelItinerary() {
                   {k?.condition?.map((m, i) => (
                   <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                   &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
+                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry?.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
                   ))}
                   </>
                   }
@@ -1124,7 +989,7 @@ export default function HotelItinerary() {
                   {k?.condition?.map((m, i) => (
                   <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
                   &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
+                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry?.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
                   ))}
                   </>
                   }

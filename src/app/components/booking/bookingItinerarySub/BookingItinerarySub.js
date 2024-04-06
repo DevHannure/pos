@@ -117,6 +117,7 @@ export default function BookingItinerarySub(props) {
           toast.error("You have exceeded your credit limit. Any new booking made will be on cash basis and rooms allocated might be released if outstanding amount is not settled asap. Check yes to complete booking.",{theme: "colored"});
         }
       }
+
       else{
         convertCartToReservationBtn()
       }
@@ -162,11 +163,15 @@ export default function BookingItinerarySub(props) {
           let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
           let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
           setMainLoader(false);
+          sessionStorage.removeItem('qryTraveller');
           router.push(`/pages/payment/paymentOrder?qry=${encData}`);
         }
         else{
           resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
-            hotelBookBtn(value, index)
+            debugger;
+            if(value.ServiceCode==="1"){
+              hotelBookBtn(value, index)
+            }
           });
         }
       }
@@ -285,6 +290,7 @@ export default function BookingItinerarySub(props) {
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
+      sessionStorage.removeItem('qryTraveller');
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }
@@ -323,6 +329,7 @@ export default function BookingItinerarySub(props) {
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
+      sessionStorage.removeItem('qryTraveller');
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }

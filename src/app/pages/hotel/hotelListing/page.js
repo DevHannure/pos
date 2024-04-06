@@ -1,6 +1,6 @@
 "use client"
-import MainLayout from '@/app/layouts/mainLayout';
 import React, {useEffect, useState } from 'react';
+import MainLayout from '@/app/layouts/mainLayout';
 import ModifySearch from '@/app/components/hotel/ModifySearch'
 import HotelFilter from '@/app/components/hotel/HotelFilter';
 import HotelResult from '@/app/components/hotel/HotelResult';
@@ -120,10 +120,10 @@ export default function HotelListing() {
     setCounter(0);
     setRunTimer(true);
     setRunning(true);
-    const responseLocalHtlResult = HotelService.doLocalHotel(htlSrchObj, qry.correlationId);
     const responseHtlResult = HotelService.doHotelSearch(htlSrchObj, qry.correlationId);
-    let resLocalHtlResult = await responseLocalHtlResult;
+    const responseLocalHtlResult = HotelService.doLocalHotel(htlSrchObj, qry.correlationId);
     let resHtlResult = await responseHtlResult;
+    let resLocalHtlResult = await responseLocalHtlResult;
     setRunTimer(false);
     setRunning(false);
     if(resLocalHtlResult && resHtlResult){

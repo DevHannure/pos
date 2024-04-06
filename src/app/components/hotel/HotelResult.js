@@ -591,14 +591,15 @@ export default function HotelResult(props) {
         noRefundBtn.current?.click();
       }
       else{
-        router.push(`/pages/hotel/hotelBookH2H?qry=${encData}`);
+        sessionStorage.setItem("qryTraveller", encData);
+        router.push('/pages/hotel/hotelTravellerBook');
       }
     }
-    
   }
 
   const nonRfndContinue = () => {
-    router.push(`/pages/hotel/hotelBookH2H?qry=${repriceQry}`);
+    sessionStorage.setItem("qryTraveller", repriceQry);
+    router.push('/pages/hotel/hotelTravellerBook');
   }
 
   const RoomSection = (prop) => {

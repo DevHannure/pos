@@ -9,7 +9,6 @@ import { enc } from 'crypto-js';
 import PaymentService from '@/app/services/payment.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import CommonLoader from '@/app/components/common/CommonLoader';
 
 export default function PaymentOrder() {
   const router = useRouter();

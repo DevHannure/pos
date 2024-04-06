@@ -118,6 +118,27 @@ export default function BookingItinerarySub(props) {
         }
       }
 
+      else if(payMode === "CC"){
+        let cartToReservationObj = {
+          "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
+          "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId
+        }
+        sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
+        let uniqId = getUID();
+        let payObj = {
+          "bookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
+          "pGSupplier": parseFloat(userInfo?.user.pgType),
+          "customerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
+          "domainName": "https://b2b-psi-two.vercel.app",
+          "uID": uniqId,
+          "correlationId": props?.qry.correlationId
+        }
+        let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
+        let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+        setMainLoader(false);
+        router.push(`/pages/payment/paymentOrder?qry=${encData}`);
+      }
+
       else{
         convertCartToReservationBtn()
       }
@@ -149,31 +170,31 @@ export default function BookingItinerarySub(props) {
       else{
         setBkngDetails(resItineraryNew);
         doServiceComb(resItineraryNew);
-        if(payMode === "CC") {
-          sessionStorage.setItem("cartRes", JSON.stringify({resItineraryNew}));
-          let uniqId = getUID();
-          let payObj = {
-            "bookingNo": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
-            "pGSupplier": parseFloat(userInfo?.user.pgType),
-            "customerCode": resItineraryNew?.ReservationDetail?.BookingDetail?.CustomerCode,
-            "domainName": "https://b2b-psi-two.vercel.app",
-            "uID": uniqId,
-            "correlationId": props?.qry.correlationId
-          }
-          let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
-          let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-          setMainLoader(false);
-          sessionStorage.removeItem('qryTraveller');
-          router.push(`/pages/payment/paymentOrder?qry=${encData}`);
-        }
-        else{
+        // if(payMode === "CC") {
+        //   sessionStorage.setItem("cartRes", JSON.stringify({resItineraryNew}));
+        //   let uniqId = getUID();
+        //   let payObj = {
+        //     "bookingNo": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
+        //     "pGSupplier": parseFloat(userInfo?.user.pgType),
+        //     "customerCode": resItineraryNew?.ReservationDetail?.BookingDetail?.CustomerCode,
+        //     "domainName": "https://b2b-psi-two.vercel.app",
+        //     "uID": uniqId,
+        //     "correlationId": props?.qry.correlationId
+        //   }
+        //   let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
+        //   let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+        //   setMainLoader(false);
+        //   sessionStorage.removeItem('qryTraveller');
+        //   router.push(`/pages/payment/paymentOrder?qry=${encData}`);
+        // }
+        // else{
           resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
             debugger;
             if(value.ServiceCode==="1"){
               hotelBookBtn(value, index)
             }
           });
-        }
+        //}
       }
     }
   };

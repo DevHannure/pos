@@ -18,16 +18,17 @@ export default function PaymentReceipt() {
   const qry = searchparams.get('qry');
   console.log("qry", qry);
 
-  const [getPreBookRes, setGetPreBookRes] = useState(null);
+  //const [getPreBookRes, setGetPreBookRes] = useState(null);
+
+  // useEffect(()=>{
+  //   setGetPreBookRes(JSON.parse(sessionStorage.getItem('cartRes')));
+  // }, []);
 
   useEffect(()=>{
-    setGetPreBookRes(JSON.parse(sessionStorage.getItem('cartRes')));
-  }, []);
-
-  useEffect(()=>{
-    if(qry && getPreBookRes){
+    if(qry){
       if(qry.resp==="Success"){
-        doCnfmBookingReq()
+        //doCnfmBookingReq()
+        convertCartToReservationBtn()
       }
       else{
         toast.error("Something Wrong !!",{theme: "colored"});
@@ -37,15 +38,58 @@ export default function PaymentReceipt() {
         }, 9000); 
       }
     }
-  },[getPreBookRes]);
+  },[qry]);
 
-  const doCnfmBookingReq = async () => {
-    getPreBookRes?.resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
-      if(value.ServiceCode==="1"){
-        hotelBookBtn(value, index)
+  //const doCnfmBookingReq = async () => {
+    // getPreBookRes?.resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
+    //   if(value.ServiceCode==="1"){
+    //     hotelBookBtn(value, index)
+    //   }
+    // });
+  //}
+
+  
+  const [getreceiptQry, setGetreceiptQry] = useState(null);
+  useEffect(()=>{
+    setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));
+  }, []);
+
+  const [bkngDetails, setBkngDetails] = useState(null);
+  const [bkngCombDetails, setBkngCombDetails] = useState(null);
+
+  console.log("getreceiptQry", getreceiptQry)
+
+  const convertCartToReservationBtn = async() => {
+    let cartToReservationObj = {
+      "TempBookingNo": getreceiptQry.cartToReservationObj.TempBookingNo,
+      "UserId": getreceiptQry.cartToReservationObj.UserId
+    }
+    const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, props?.qry.correlationId);
+    const resCartToReservation = await responseCartToReservation;
+    
+    if(resCartToReservation){
+      let bookingItineraryObj = {
+        "BookingNo": resCartToReservation.toString(),
+        "BookingType": ""
       }
-    });
-  }
+      const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, props?.qry.correlationId);
+      const resItineraryNew = await responseItineraryNew;
+      
+      if(resItineraryNew?.ErrorInfo){
+        toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
+      }
+      else{
+        setBkngDetails(resItineraryNew);
+        doServiceComb(resItineraryNew);
+        resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
+          debugger;
+          if(value.ServiceCode==="1"){
+            hotelBookBtn(value, index)
+          }
+        });
+      }
+    }
+  };
 
   const hotelBookBtn = async(value, index) => {
     let roomArr = []
@@ -84,7 +128,7 @@ export default function PaymentReceipt() {
     });
 
     let hotelReq = {
-      "CustomerCode": getPreBookRes?.resItineraryNew?.ReservationDetail?.BookingDetail?.CustomerCode,
+      "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
       "DestinationCode": value.ProductCityCode,
       "Nationality": value.RoomDtlNew[0]?.PaxNew[0].Nationality.split(',')?.[0],
       "HotelCode": value.ProductCode,
@@ -97,8 +141,8 @@ export default function PaymentReceipt() {
         "Room": roomArr
       },
       "TassProInfo": {
-        "CustomerCode": getPreBookRes?.resItineraryNew?.ReservationDetail?.BookingDetail?.CustomerCode,
-        "RegionID": getPreBookRes?.resItineraryNew?.ReservationDetail?.BookingDetail?.RegionCode,
+        "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
+        "RegionID": bkngDetails?.ReservationDetail?.BookingDetail?.RegionCode,
         "NoOfRooms": value.RoomDtlNew.length?.toString(),
         "ProductCode": value.ProductCode,
         "SupplierCode": value.SupplierCode,
@@ -115,23 +159,22 @@ export default function PaymentReceipt() {
     }
     
     const resHotelBook = await responseHotelBook;
-
-    if(resHotelBook){
-      confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
-      // if(payMode==='PL'){
-      //   confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
-      // }
-      // if(payMode==='PN'){
-      //   reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
-      // }
-    }
+    confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+    // if(resHotelBook){
+    //   if(payMode==='PL'){
+    //     confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+    //   }
+    //   if(payMode==='PN'){
+    //     reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+    //   }
+    // }
   };
 
   const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
     let cRSAEobj = {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
-      "UserId": getPreBookRes?.resItineraryNew?.ReservationDetail?.BookingDetail?.UserId,
+      "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "BookedFrom": serviceReq.CheckInDate,
       "EmailHtml": "",
       "Service": {
@@ -146,7 +189,7 @@ export default function PaymentReceipt() {
     }
     const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, props?.qry.correlationId);
     const resConfirm = await responseConfirm;
-    if(resConfirm && getPreBookRes?.resItineraryNew?.ReservationDetail?.Services?.length -1 === index){
+    if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
       let bookItnery = {
         "bcode": value.BookingNo,
@@ -167,7 +210,7 @@ export default function PaymentReceipt() {
     let rCRSAEobj = {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
-      "UserId": getPreBookRes?.resItineraryNew?.ReservationDetail?.BookingDetail?.UserId,
+      "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
       "CustomerReferenceNo": agentRefText,
       "BookedFrom": serviceReq.CheckInDate,
       "EmailHtml": "",
@@ -183,7 +226,7 @@ export default function PaymentReceipt() {
     }
     const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, props?.qry.correlationId);
     const resConfirm = await responseConfirm;
-    if(resConfirm && getPreBookRes?.resItineraryNew?.ReservationDetail?.Services?.length -1 === index){
+    if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
       let bookItnery = {
         "bcode": value.BookingNo,

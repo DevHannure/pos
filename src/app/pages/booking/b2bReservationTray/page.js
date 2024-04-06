@@ -1298,9 +1298,6 @@ export default function BBReservationTray() {
         </div>
       }
       
-
-      
-
     </MainLayout>
   )
 }

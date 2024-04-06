@@ -2,7 +2,7 @@
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
-    missingSuspenseWithCSRBailout: false,
+        missingSuspenseWithCSRBailout: false,
     },
     images: {
         unoptimized: true,

@@ -99,12 +99,13 @@ export default function Voucher(prop) {
   }
 
   const payCardBtn = async() => {
+    debugger;
     let cartToReservationObj = {
       "TempBookingNo": prop?.dtl?.bookingId,
       "UserId": prop?.dtl?.userId,
       "AgentRefText": agentRefText,
       "Type": "1",
-      "CorrelationId": props?.dtl?.correlationId
+      "CorrelationId": prop?.dtl?.correlationId
     }
     sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
     let uniqId = getUID();
@@ -114,7 +115,7 @@ export default function Voucher(prop) {
       "customerCode": prop?.dtl?.customerCode,
       "domainName": "https://b2b-psi-two.vercel.app",
       "uID": uniqId,
-      "Type": "1",
+      "type": "1",
       "correlationId": prop?.dtl?.correlationId
     }
     let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();

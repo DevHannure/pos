@@ -34,7 +34,7 @@ export default function PaymentOrder() {
   const getBookingAmountBtn = async () => {
     let bookAmntObj = {
       "BookingNo": qry.bookingNo,
-      "Type": "0",
+      "Type": qry.type,
       "DomainName": qry.domainName
     }
     const responseBookingAmount = PaymentService.doGetBookingAmount(bookAmntObj, qry.correlationId);

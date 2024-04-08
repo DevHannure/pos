@@ -180,6 +180,7 @@ export default function BookingTypeList() {
     "bookingId": "",
     "serviceMasterCode": "",
     "customerCode": "",
+    "userId": "",
     "Services": [],
     "correlationId": qry.correlationId
   });
@@ -189,6 +190,7 @@ export default function BookingTypeList() {
     voucherItems.bookingId = e.BookingNo?.toString();
     voucherItems.serviceMasterCode = e.ServiceMasterCode?.toString();
     voucherItems.customerCode = e.CustomerCode?.toString();
+    voucherItems.userId = e.UserId?.toString();
     voucherItems.Services = [e];
     setVoucherObj(voucherItems);
     setVoucherBellModal(true);

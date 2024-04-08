@@ -124,6 +124,7 @@ export default function BookingItinerarySub(props) {
           "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
           "AgentRefText": agentRefText,
           "PayMode": payMode,
+          "Type": "0",
           "CorrelationId": props?.qry.correlationId
         }
         sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
@@ -134,6 +135,7 @@ export default function BookingItinerarySub(props) {
           "customerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
           "domainName": "https://b2b-psi-two.vercel.app",
           "uID": uniqId,
+          "Type": "0",
           "correlationId": props?.qry.correlationId
         }
         let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();

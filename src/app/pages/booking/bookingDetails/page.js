@@ -303,6 +303,7 @@ export default function BookingDetailsPage() {
     "bookingId": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
     "serviceMasterCode": null,
     "customerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
+    "userId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
     "Services": bkngDetails?.ReservationDetail?.Services,
     "correlationId": qry.correlationId
   };

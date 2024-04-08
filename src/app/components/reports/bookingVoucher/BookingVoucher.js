@@ -25,7 +25,7 @@ export default function Voucher(prop) {
   const voucherModalClose = useRef(null);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
 
-  const [bookingRefText, setBookingRefText] = useState('');
+  const [agentRefText, setAgentRefText] = useState('');
   const [creditLimitError, setCreditLimitError] = useState('');
 
   const voucherBtn = () =>{
@@ -33,7 +33,7 @@ export default function Voucher(prop) {
       voucherModalOpen.current?.click();
     }
     else{
-      if(bookingRefText && bookingRefText !==''){
+      if(agentRefText && agentRefText !==''){
         voucherModalOpen.current?.click();
       }
       else{
@@ -62,7 +62,7 @@ export default function Voucher(prop) {
         "BookingNo": prop?.dtl?.bookingId,
         "ServiceMasterCode": prop?.dtl?.serviceMasterCode,
         "BookingType": "",
-        "CustomerReferenceNo": bookingRefText,
+        "CustomerReferenceNo": agentRefText,
         "UserId": ""
       }
       const responseUpdateBooking = ReservationService.doUpdateBookingReference(updateBookingObj, prop?.dtl?.correlationId);
@@ -99,6 +99,15 @@ export default function Voucher(prop) {
   }
 
   const payCardBtn = async() => {
+    let cartToReservationObj = {
+      "TempBookingNo": prop?.dtl?.bookingId,
+      "UserId": prop?.dtl?.userId,
+      "AgentRefText": agentRefText,
+      "PayMode": payMode,
+      "Type": "1",
+      "CorrelationId": props?.qry.correlationId
+    }
+    sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
     let uniqId = getUID();
     let payObj = {
       "bookingNo": prop?.dtl?.bookingId,
@@ -106,6 +115,7 @@ export default function Voucher(prop) {
       "customerCode": prop?.dtl?.customerCode,
       "domainName": "https://b2b-psi-two.vercel.app",
       "uID": uniqId,
+      "Type": "1",
       "correlationId": prop?.dtl?.correlationId
     }
     let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();
@@ -161,7 +171,7 @@ export default function Voucher(prop) {
             <label className="col-form-label fw-semibold">Booking Voucher<span className='text-danger'>*</span></label>
           </div>
           <div className="col-auto">
-            <input type="text" className="form-control form-control-sm" value={bookingRefText} onChange={(e) => setBookingRefText(e.target.value)} />
+            <input type="text" className="form-control form-control-sm" value={agentRefText} onChange={(e) => setAgentRefText(e.target.value)} />
           </div>
           <div className="col-auto">
             <button onClick={voucherBtn}  type='button' className='btn btn-warning btn-sm'>&nbsp; Voucher &nbsp;</button>

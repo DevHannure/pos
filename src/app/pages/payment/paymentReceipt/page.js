@@ -26,8 +26,13 @@ export default function PaymentReceipt() {
   useEffect(()=>{
     if(qry && getreceiptQry){
       if(qry==="Success"){
-        //doCnfmBookingReq()
-        convertCartToReservationBtn()
+        if(getreceiptQry?.cartToReservationObj.Type==="0"){
+          convertCartToReservationBtn()
+        }
+        else{
+          reDirectBookingDetails()
+        }
+        
       }
       else{
         toast.error("Something Wrong !!",{theme: "colored"});
@@ -256,6 +261,20 @@ export default function PaymentReceipt() {
       sessionStorage.clear();
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
+  }
+
+  const reDirectBookingDetails = () => {
+    let bookItnery = {
+      "bcode": getreceiptQry?.cartToReservationObj.TempBookingNo,
+      "btype": "",
+      "returnurl": null,
+      "emailSend": true,
+      "correlationId": getreceiptQry?.cartToReservationObj.CorrelationId
+    }
+    let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    sessionStorage.clear();
+    router.push(`/pages/booking/bookingDetails?qry=${encData}`);
   }
 
   return (

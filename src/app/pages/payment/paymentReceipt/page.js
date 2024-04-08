@@ -39,10 +39,7 @@ export default function PaymentReceipt() {
     }
   },[qry, getreceiptQry]);
 
-  
-
-  // const [bkngDetails, setBkngDetails] = useState(null);
-  // const [bkngCombDetails, setBkngCombDetails] = useState(null);
+  const [bkngCombDetails, setBkngCombDetails] = useState(null);
 
   console.log("getreceiptQry", getreceiptQry)
 
@@ -66,17 +63,48 @@ export default function PaymentReceipt() {
         toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
       }
       else{
+        doServiceComb(resItineraryNew);
         resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
           debugger;
           if(value.ServiceCode==="1"){
-            hotelBookBtn(resItineraryNew, value, index)
+            hotelBookBtn(value, index, resItineraryNew)
           }
         });
       }
     }
   };
 
-  const hotelBookBtn = async(bkngDetails, value, index) => {
+  const doServiceComb = (resItinerary) => {
+    let serviceComb = []
+    serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
+      if(s.ServiceCode==="1"){
+        let filterDtl = []
+        resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
+          if(s.ServiceMasterCode===d.ServiceMasterCode){
+            filterDtl.push(d)
+          }
+        });
+        let combArr = []
+        combArr = filterDtl.map((dt, i) => {
+          let objPax = resItinerary?.ReservationDetail?.PaxDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objPax){
+            dt.PaxNew = objPax
+          }
+          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objCancellation){
+            dt.CancellationNew = objCancellation
+          }
+          return dt
+        })
+        s.RoomDtlNew = combArr
+      }
+      return s
+    });
+    setBkngCombDetails(serviceComb)
+  }
+
+
+  const hotelBookBtn = async(value, index, bkngDetails) => {
     let roomArr = []
     roomArr = value.RoomDtlNew.map((r, i) => {
       let rateKeyArray = value.XMLRateKey.split('splitter');    
@@ -144,7 +172,7 @@ export default function PaymentReceipt() {
     }
     
     const resHotelBook = await responseHotelBook;
-    reconfirmReservationServiceBtn(bkngDetails,value,hotelReq,resHotelBook, index);
+    reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index, bkngDetails);
     debugger;
     // if(resHotelBook){
     //   if(getreceiptQry?.cartToReservationObj.PayMode==='PL'){
@@ -156,7 +184,7 @@ export default function PaymentReceipt() {
     // }
   };
 
-  const confirmReservationServiceBtn = async(bkngDetails,value,serviceReq,serviceRes, index) => {
+  const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index, bkngDetails) => {
     let cRSAEobj = {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
@@ -176,7 +204,6 @@ export default function PaymentReceipt() {
     const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resConfirm = await responseConfirm;
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
-      bkngDetails = null;
       let bookItnery = {
         "bcode": value.BookingNo,
         "btype": "",
@@ -191,7 +218,7 @@ export default function PaymentReceipt() {
     }
   }
 
-  const reconfirmReservationServiceBtn = async(bkngDetails,value,serviceReq,serviceRes, index) => {
+  const reconfirmReservationServiceBtn = async(value,serviceReq,serviceRes, index, bkngDetails) => {
     let rCRSAEobj = {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
@@ -209,6 +236,7 @@ export default function PaymentReceipt() {
         "VoucherLink": ""
       }
     }
+
     const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resConfirm = await responseConfirm;
     debugger;
@@ -216,7 +244,6 @@ export default function PaymentReceipt() {
     console.log("length", bkngDetails?.ReservationDetail?.Services?.length -1);
     console.log("index", index);
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
-      bkngDetails = null;
       let bookItnery = {
         "bcode": value.BookingNo,
         "btype": "",

@@ -12,21 +12,13 @@ import { enc } from 'crypto-js';
 
 export default function PaymentReceipt() {
   const router = useRouter();
-  //const [searchparams] = useSearchParams();
-  //const qry = Object.fromEntries([...searchparams]);
   const searchparams = useSearchParams();
-  const qry = searchparams.get('qry');
+  const qry = searchparams.get('resp');
   console.log("qry", qry);
-
-  //const [getPreBookRes, setGetPreBookRes] = useState(null);
-
-  // useEffect(()=>{
-  //   setGetPreBookRes(JSON.parse(sessionStorage.getItem('cartRes')));
-  // }, []);
 
   useEffect(()=>{
     if(qry){
-      if(qry.resp==="Success"){
+      if(qry==="Success"){
         //doCnfmBookingReq()
         convertCartToReservationBtn()
       }
@@ -40,15 +32,6 @@ export default function PaymentReceipt() {
     }
   },[qry]);
 
-  //const doCnfmBookingReq = async () => {
-    // getPreBookRes?.resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
-    //   if(value.ServiceCode==="1"){
-    //     hotelBookBtn(value, index)
-    //   }
-    // });
-  //}
-
-  
   const [getreceiptQry, setGetreceiptQry] = useState(null);
   useEffect(()=>{
     setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));

@@ -244,6 +244,10 @@ export default function PaymentReceipt() {
     }
     const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resConfirm = await responseConfirm;
+    debugger;
+    console.log("bkngDetails", bkngDetails);
+    console.log("length", bkngDetails?.ReservationDetail?.Services?.length -1);
+    console.log("index", index);
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
       let bookItnery = {

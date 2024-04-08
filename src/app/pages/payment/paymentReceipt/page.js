@@ -41,8 +41,10 @@ export default function PaymentReceipt() {
 
   
 
-  const [bkngDetails, setBkngDetails] = useState(null);
-  const [bkngCombDetails, setBkngCombDetails] = useState(null);
+  // const [bkngDetails, setBkngDetails] = useState(null);
+  // const [bkngCombDetails, setBkngCombDetails] = useState(null);
+
+  let bkngDetails = null;
 
   console.log("getreceiptQry", getreceiptQry)
 
@@ -66,8 +68,7 @@ export default function PaymentReceipt() {
         toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
       }
       else{
-        setBkngDetails(resItineraryNew);
-        doServiceComb(resItineraryNew);
+        bkngDetails = resItineraryNew
         resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
           debugger;
           if(value.ServiceCode==="1"){
@@ -77,36 +78,6 @@ export default function PaymentReceipt() {
       }
     }
   };
-
-  const doServiceComb = (resItinerary) => {
-    let serviceComb = []
-    serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
-      if(s.ServiceCode==="1"){
-        let filterDtl = []
-        resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
-          if(s.ServiceMasterCode===d.ServiceMasterCode){
-            filterDtl.push(d)
-          }
-        });
-        let combArr = []
-        combArr = filterDtl.map((dt, i) => {
-          let objPax = resItinerary?.ReservationDetail?.PaxDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
-          if(objPax){
-            dt.PaxNew = objPax
-          }
-          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
-          if(objCancellation){
-            dt.CancellationNew = objCancellation
-          }
-          return dt
-        })
-        s.RoomDtlNew = combArr
-      }
-      return s
-    });
-    setBkngCombDetails(serviceComb)
-  }
-
 
   const hotelBookBtn = async(value, index) => {
     let roomArr = []
@@ -208,7 +179,7 @@ export default function PaymentReceipt() {
     const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resConfirm = await responseConfirm;
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
-      setBkngDetails(null);
+      bkngDetails = null;
       let bookItnery = {
         "bcode": value.BookingNo,
         "btype": "",
@@ -248,7 +219,7 @@ export default function PaymentReceipt() {
     console.log("length", bkngDetails?.ReservationDetail?.Services?.length -1);
     console.log("index", index);
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
-      setBkngDetails(null);
+      bkngDetails = null;
       let bookItnery = {
         "bcode": value.BookingNo,
         "btype": "",

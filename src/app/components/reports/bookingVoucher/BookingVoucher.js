@@ -104,7 +104,7 @@ export default function Voucher(prop) {
       "UserId": prop?.dtl?.userId,
       "AgentRefText": agentRefText,
       "Type": "1",
-      "CorrelationId": props?.qry.correlationId
+      "CorrelationId": props?.dtl?.correlationId
     }
     sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
     let uniqId = getUID();

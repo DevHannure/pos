@@ -103,7 +103,6 @@ export default function Voucher(prop) {
       "TempBookingNo": prop?.dtl?.bookingId,
       "UserId": prop?.dtl?.userId,
       "AgentRefText": agentRefText,
-      "PayMode": payMode,
       "Type": "1",
       "CorrelationId": props?.qry.correlationId
     }

@@ -61,7 +61,7 @@ export default function PaymentOrder() {
     if(qry){
       let payObj = {
         "BookingNo": qry.bookingNo,
-        "Type": qry.Type,
+        "Type": qry.type,
         "PGSupplier": qry.pGSupplier,
         "CustomerCode": qry.customerCode,
         "DomainName": qry.domainName,

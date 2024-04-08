@@ -49,7 +49,7 @@ export default function PaymentReceipt() {
       "TempBookingNo": getreceiptQry?.cartToReservationObj.TempBookingNo,
       "UserId": getreceiptQry?.cartToReservationObj.UserId
     }
-    const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, props?.qry.correlationId);
+    const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resCartToReservation = await responseCartToReservation;
     
     if(resCartToReservation){
@@ -57,7 +57,7 @@ export default function PaymentReceipt() {
         "BookingNo": resCartToReservation.toString(),
         "BookingType": ""
       }
-      const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, props?.qry.correlationId);
+      const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, getreceiptQry?.cartToReservationObj.CorrelationId);
       const resItineraryNew = await responseItineraryNew;
       
       if(resItineraryNew?.ErrorInfo){
@@ -137,10 +137,10 @@ export default function PaymentReceipt() {
     }
     let responseHotelBook = null;
     if(value.XMLSupplierCode==="138"){
-      responseHotelBook = HotelService.doLocalBook(hotelReq, props?.qry.correlationId);
+      responseHotelBook = HotelService.doLocalBook(hotelReq, getreceiptQry?.cartToReservationObj.CorrelationId);
     }
     else{
-      responseHotelBook = HotelService.doBook(hotelReq, props?.qry.correlationId);
+      responseHotelBook = HotelService.doBook(hotelReq, getreceiptQry?.cartToReservationObj.CorrelationId);
     }
     
     const resHotelBook = await responseHotelBook;
@@ -172,7 +172,7 @@ export default function PaymentReceipt() {
         "VoucherLink": ""
       }
     }
-    const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, props?.qry.correlationId);
+    const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resConfirm = await responseConfirm;
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
@@ -181,7 +181,7 @@ export default function PaymentReceipt() {
         "btype": "",
         "returnurl": null,
         "emailSend": true,
-        "correlationId": props?.qry.correlationId
+        "correlationId": getreceiptQry?.cartToReservationObj.CorrelationId
       }
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
@@ -209,7 +209,7 @@ export default function PaymentReceipt() {
         "VoucherLink": ""
       }
     }
-    const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, props?.qry.correlationId);
+    const responseConfirm = ReservationService.doReconfirmReservationService(rCRSAEobj, getreceiptQry?.cartToReservationObj.CorrelationId);
     const resConfirm = await responseConfirm;
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       setBkngDetails(null);
@@ -218,7 +218,7 @@ export default function PaymentReceipt() {
         "btype": "",
         "returnurl": null,
         "emailSend": true,
-        "correlationId": props?.qry.correlationId
+        "correlationId": getreceiptQry?.cartToReservationObj.CorrelationId
       }
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));

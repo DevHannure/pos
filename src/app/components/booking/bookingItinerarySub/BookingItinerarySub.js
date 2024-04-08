@@ -121,7 +121,8 @@ export default function BookingItinerarySub(props) {
       else if(payMode === "CC"){
         let cartToReservationObj = {
           "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
-          "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId
+          "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
+          "CorrelationId": props?.qry.correlationId
         }
         sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
         let uniqId = getUID();

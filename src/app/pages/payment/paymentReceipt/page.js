@@ -176,12 +176,13 @@ export default function PaymentReceipt() {
     }
     
     const resHotelBook = await responseHotelBook;
-    confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+    reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+    debugger;
     // if(resHotelBook){
-    //   if(payMode==='PL'){
+    //   if(getreceiptQry?.cartToReservationObj.PayMode==='PL'){
     //     confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
     //   }
-    //   if(payMode==='PN'){
+    //   if(getreceiptQry?.cartToReservationObj.PayMode==='PN' || getreceiptQry?.cartToReservationObj.PayMode==='CC'){
     //     reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
     //   }
     // }
@@ -217,7 +218,6 @@ export default function PaymentReceipt() {
       }
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      setMainLoader(false);
       sessionStorage.removeItem('qryTraveller');
       sessionStorage.removeItem('receiptQry');
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
@@ -255,7 +255,6 @@ export default function PaymentReceipt() {
       }
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      setMainLoader(false);
       sessionStorage.removeItem('qryTraveller');
       sessionStorage.removeItem('receiptQry');
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);

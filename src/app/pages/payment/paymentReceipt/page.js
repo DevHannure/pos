@@ -44,8 +44,6 @@ export default function PaymentReceipt() {
   // const [bkngDetails, setBkngDetails] = useState(null);
   // const [bkngCombDetails, setBkngCombDetails] = useState(null);
 
-  let bkngDetails = null;
-
   console.log("getreceiptQry", getreceiptQry)
 
   const convertCartToReservationBtn = async() => {
@@ -68,18 +66,17 @@ export default function PaymentReceipt() {
         toast.error(resItineraryNew.ErrorInfo,{theme: "colored"});
       }
       else{
-        bkngDetails = resItineraryNew
         resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
           debugger;
           if(value.ServiceCode==="1"){
-            hotelBookBtn(value, index)
+            hotelBookBtn(resItineraryNew, value, index)
           }
         });
       }
     }
   };
 
-  const hotelBookBtn = async(value, index) => {
+  const hotelBookBtn = async(bkngDetails, value, index) => {
     let roomArr = []
     roomArr = value.RoomDtlNew.map((r, i) => {
       let rateKeyArray = value.XMLRateKey.split('splitter');    
@@ -147,7 +144,7 @@ export default function PaymentReceipt() {
     }
     
     const resHotelBook = await responseHotelBook;
-    reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+    reconfirmReservationServiceBtn(bkngDetails,value,hotelReq,resHotelBook, index);
     debugger;
     // if(resHotelBook){
     //   if(getreceiptQry?.cartToReservationObj.PayMode==='PL'){
@@ -159,7 +156,7 @@ export default function PaymentReceipt() {
     // }
   };
 
-  const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
+  const confirmReservationServiceBtn = async(bkngDetails,value,serviceReq,serviceRes, index) => {
     let cRSAEobj = {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
@@ -194,7 +191,7 @@ export default function PaymentReceipt() {
     }
   }
 
-  const reconfirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
+  const reconfirmReservationServiceBtn = async(bkngDetails,value,serviceReq,serviceRes, index) => {
     let rCRSAEobj = {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,

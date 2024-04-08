@@ -77,6 +77,36 @@ export default function PaymentReceipt() {
     }
   };
 
+  const doServiceComb = (resItinerary) => {
+    let serviceComb = []
+    serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
+      if(s.ServiceCode==="1"){
+        let filterDtl = []
+        resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
+          if(s.ServiceMasterCode===d.ServiceMasterCode){
+            filterDtl.push(d)
+          }
+        });
+        let combArr = []
+        combArr = filterDtl.map((dt, i) => {
+          let objPax = resItinerary?.ReservationDetail?.PaxDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objPax){
+            dt.PaxNew = objPax
+          }
+          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objCancellation){
+            dt.CancellationNew = objCancellation
+          }
+          return dt
+        })
+        s.RoomDtlNew = combArr
+      }
+      return s
+    });
+    setBkngCombDetails(serviceComb)
+  }
+
+
   const hotelBookBtn = async(value, index) => {
     let roomArr = []
     roomArr = value.RoomDtlNew.map((r, i) => {

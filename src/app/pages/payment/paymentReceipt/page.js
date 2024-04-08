@@ -1,6 +1,7 @@
 "use client"
 import React, {useEffect, useState } from 'react';
 import {useRouter, useSearchParams} from 'next/navigation';
+import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReservationService from '@/app/services/reservation.service';
@@ -218,6 +219,7 @@ export default function PaymentReceipt() {
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
       sessionStorage.removeItem('qryTraveller');
+      sessionStorage.removeItem('receiptQry');
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }
@@ -227,7 +229,7 @@ export default function PaymentReceipt() {
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
-      "CustomerReferenceNo": agentRefText,
+      "CustomerReferenceNo": getreceiptQry?.cartToReservationObj.AgentRefText,
       "BookedFrom": serviceReq.CheckInDate,
       "EmailHtml": "",
       "Service": {
@@ -255,6 +257,7 @@ export default function PaymentReceipt() {
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
       sessionStorage.removeItem('qryTraveller');
+      sessionStorage.removeItem('receiptQry');
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }

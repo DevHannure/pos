@@ -122,6 +122,8 @@ export default function BookingItinerarySub(props) {
         let cartToReservationObj = {
           "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
           "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
+          "AgentRefText": agentRefText,
+          "PayMode": payMode,
           "CorrelationId": props?.qry.correlationId
         }
         sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));

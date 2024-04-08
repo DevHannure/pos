@@ -218,8 +218,7 @@ export default function PaymentReceipt() {
       }
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      sessionStorage.removeItem('qryTraveller');
-      sessionStorage.removeItem('receiptQry');
+      sessionStorage.clear();
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }
@@ -259,8 +258,7 @@ export default function PaymentReceipt() {
       }
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-      sessionStorage.removeItem('qryTraveller');
-      sessionStorage.removeItem('receiptQry');
+      sessionStorage.clear();
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }

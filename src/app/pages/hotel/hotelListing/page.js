@@ -12,20 +12,31 @@ import { doHotelSearchOnLoad } from '@/app/store/hotelStore/hotel';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useSession } from "next-auth/react";
-import {format, differenceInDays} from 'date-fns';
+import {format} from 'date-fns';
 import Image from 'next/image';
 
 function getUID() {return Date.now().toString(36);}
 
 export default function HotelListing() {
+  const [qry, setQry] = useState(null);
+  useEffect(() => {
+    if(!qry){
+      const searchparams = sessionStorage.getItem('qryListing');
+      let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
+      let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
+      setQry(JSON.parse(bytes))
+    }
+  }, []);
+  console.log("qry", qry)
+
   const { status } = useSession();
-  const searchparams = useSearchParams();
-  const search = searchparams.get('qry');
-  let decData = enc.Base64.parse(search).toString(enc.Utf8);
-  let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
-  const qry = JSON.parse(bytes);
+  // const searchparams = useSearchParams();
+  // const search = searchparams.get('qry');
+  // let decData = enc.Base64.parse(search).toString(enc.Utf8);
+  // let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
+  // const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
-  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  //const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   //const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
 
@@ -35,12 +46,12 @@ export default function HotelListing() {
   const [running, setRunning] = useState(false);
 
   useEffect(()=>{
-    //if(qry){
+    if(qry){
       if(!getHtlRes){
         doHtlResultOnLoad()
       }
-    //}
-  },[search]);
+    }
+  },[qry]);
 
   const doHtlResultOnLoad = async() => {
     let uniqId = getUID();
@@ -234,6 +245,7 @@ export default function HotelListing() {
 
   return (
     <MainLayout>
+      {qry ?
       <div className="middle">
         <ModifySearch Type={'result'} HtlReq={qry} filterOpen={(val) => chooseFilter(val)} />
         <div className="container-fluid">
@@ -261,6 +273,9 @@ export default function HotelListing() {
           }
         </div>  
       </div>
+      :
+      null
+      }
     </MainLayout>
   )
 }

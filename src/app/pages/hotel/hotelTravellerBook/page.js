@@ -348,9 +348,7 @@ export default function HotelTravellerBook() {
         status = false;
       }
     }
-   
     return status
-
   }
 
   const [custRemarks, setCustRemarks] = useState('');

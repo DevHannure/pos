@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
 
 export default function DummyHotelResult(props) {
-  const qry = props.HtlReq
   const [filterCollapse, setFilterCollapse] = useState(true);
   useEffect(() => {
     let w = window.innerWidth;

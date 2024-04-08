@@ -658,7 +658,9 @@ export default function ModifySearch(props) {
       }
       e.nativeEvent.target.disabled = false;
       e.nativeEvent.target.innerHTML = 'Search';
-      router.push(`/pages/hotel/hotelListing?qry=${encData}`);
+      sessionStorage.setItem("qryListing", encData);
+      router.push('/pages/hotel/hotelListing');
+      //router.push(`/pages/hotel/hotelListing?qry=${encData}`);
     }
   }
 

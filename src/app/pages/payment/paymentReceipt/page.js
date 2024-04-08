@@ -16,8 +16,13 @@ export default function PaymentReceipt() {
   const qry = searchparams.get('resp');
   console.log("qry", qry);
 
+  const [getreceiptQry, setGetreceiptQry] = useState(null);
   useEffect(()=>{
-    if(qry){
+    setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));
+  }, []);
+
+  useEffect(()=>{
+    if(qry && getreceiptQry){
       if(qry==="Success"){
         //doCnfmBookingReq()
         convertCartToReservationBtn()
@@ -30,12 +35,9 @@ export default function PaymentReceipt() {
         }, 9000); 
       }
     }
-  },[qry]);
+  },[qry, getreceiptQry]);
 
-  const [getreceiptQry, setGetreceiptQry] = useState(null);
-  useEffect(()=>{
-    setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));
-  }, []);
+  
 
   const [bkngDetails, setBkngDetails] = useState(null);
   const [bkngCombDetails, setBkngCombDetails] = useState(null);
@@ -44,8 +46,8 @@ export default function PaymentReceipt() {
 
   const convertCartToReservationBtn = async() => {
     let cartToReservationObj = {
-      "TempBookingNo": getreceiptQry.cartToReservationObj.TempBookingNo,
-      "UserId": getreceiptQry.cartToReservationObj.UserId
+      "TempBookingNo": getreceiptQry?.cartToReservationObj.TempBookingNo,
+      "UserId": getreceiptQry?.cartToReservationObj.UserId
     }
     const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, props?.qry.correlationId);
     const resCartToReservation = await responseCartToReservation;

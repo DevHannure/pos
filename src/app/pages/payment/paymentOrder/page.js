@@ -15,12 +15,15 @@ export default function PaymentOrder() {
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
+  console.log("decData123", decData)
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
+  console.log("bytes123", bytes)
   const qry = JSON.parse(bytes);
   const divRef = useRef(null);
   const [resHtml, setResHtml] = useState(null);
   const [htmlLoad, setHtmlLoad] = useState();
-  sessionStorage.setItem("receiptQry", JSON.stringify(searchparams.get('qry')));
+
+  sessionStorage.setItem("receiptQry", searchparams.get('qry'));
 
   useEffect(()=>{
     getBookingAmountBtn();
@@ -38,7 +41,7 @@ export default function PaymentOrder() {
     }
     const responseBookingAmount = PaymentService.doGetBookingAmount(bookAmntObj, qry.correlationId);
     const resBookingAmount = await responseBookingAmount;
-    setBookingAmount(resBookingAmount)
+    setBookingAmount(resBookingAmount);
   }
 
   const getBillingInfoBtn = async () => {

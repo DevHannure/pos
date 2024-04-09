@@ -21,11 +21,8 @@ export default function PaymentReceipt() {
 
   useEffect(()=>{
     const search = sessionStorage.getItem('receiptQry');
-    console.log("search", search)
     let decData = enc.Base64.parse(search).toString(enc.Utf8);
-    console.log("decData", decData)
     let bytes = AES.decrypt(decData,'ekey').toString(enc.Utf8);
-    console.log("bytes", JSON.parse(bytes))
     setGetreceiptQry(JSON.parse(bytes));
   }, []);
 
@@ -34,7 +31,7 @@ export default function PaymentReceipt() {
   useEffect(()=>{
     if(qry && getreceiptQry){
       if(qry==="Success"){
-        if(getreceiptQry?.cartToReservationObj.Type==="0"){
+        if(getreceiptQry?.type==="0"){
           convertCartToReservationBtn()
         }
         else{
@@ -56,10 +53,10 @@ export default function PaymentReceipt() {
 
   const convertCartToReservationBtn = async() => {
     let cartToReservationObj = {
-      "TempBookingNo": getreceiptQry?.cartToReservationObj.TempBookingNo,
-      "UserId": getreceiptQry?.cartToReservationObj.UserId
+      "TempBookingNo": getreceiptQry?.bookingNo,
+      "UserId": getreceiptQry?.userId
     }
-    const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, getreceiptQry?.cartToReservationObj.CorrelationId);
+    const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, getreceiptQry?.correlationId);
     const resCartToReservation = await responseCartToReservation;
     
     if(resCartToReservation){
@@ -67,7 +64,7 @@ export default function PaymentReceipt() {
         "BookingNo": resCartToReservation.toString(),
         "BookingType": ""
       }
-      const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, getreceiptQry?.cartToReservationObj.CorrelationId);
+      const responseItineraryNew = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, getreceiptQry?.correlationId);
       const resItineraryNew = await responseItineraryNew;
       
       if(resItineraryNew?.ErrorInfo){
@@ -112,7 +109,6 @@ export default function PaymentReceipt() {
     });
     setBkngCombDetails(serviceComb)
   }
-
 
   const hotelBookBtn = async(value, index, bkngDetails) => {
     let roomArr = []
@@ -175,10 +171,10 @@ export default function PaymentReceipt() {
     }
     let responseHotelBook = null;
     if(value.XMLSupplierCode==="138"){
-      responseHotelBook = HotelService.doLocalBook(hotelReq, getreceiptQry?.cartToReservationObj.CorrelationId);
+      responseHotelBook = HotelService.doLocalBook(hotelReq, getreceiptQry?.correlationId);
     }
     else{
-      responseHotelBook = HotelService.doBook(hotelReq, getreceiptQry?.cartToReservationObj.CorrelationId);
+      responseHotelBook = HotelService.doBook(hotelReq, getreceiptQry?.correlationId);
     }
     
     const resHotelBook = await responseHotelBook;
@@ -191,7 +187,7 @@ export default function PaymentReceipt() {
         "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.TempBookingNo,
         "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo
       }
-      const responseUpdate = ReservationService.doUpdateBookingsContactDetails(reqUpdateBooking, getreceiptQry?.cartToReservationObj.CorrelationId);
+      const responseUpdate = ReservationService.doUpdateBookingsContactDetails(reqUpdateBooking, getreceiptQry?.correlationId);
       const resUpdate = await responseUpdate;
       if(resUpdate=== 'Success'){
         sessionStorage.clear();
@@ -204,11 +200,11 @@ export default function PaymentReceipt() {
   
   const reDirectBookingDetails = () => {
     let bookItnery = {
-      "bcode": getreceiptQry?.cartToReservationObj.TempBookingNo,
+      "bcode": getreceiptQry?.bookingNo,
       "btype": "",
       "returnurl": null,
       "emailSend": true,
-      "correlationId": getreceiptQry?.cartToReservationObj.CorrelationId
+      "correlationId": getreceiptQry?.correlationId
     }
     let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));

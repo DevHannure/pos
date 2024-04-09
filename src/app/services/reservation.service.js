@@ -136,6 +136,17 @@ const ReservationService = {
     } catch (error) {console.log("CancelEmailError", error)}
   },
 
+  doUpdateBookingsContactDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservation/UpdateBookingsContactDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response?.json()
+    } catch (error) {console.log("UpdateBookingError", error)}
+  },
+
   
 
 }

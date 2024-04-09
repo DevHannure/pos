@@ -219,7 +219,7 @@ export default function Header() {
                     <li className="border-bottom"><button onClick={()=> bookingTypeDetailsBtn("1", bookingTypeCountInfo?.[0]?.TotalUnvoucheredBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Unvouchered Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUnvoucheredBkgCount}</span></button></li>
                     <li className="border-bottom"><button onClick={()=> bookingTypeDetailsBtn("2", bookingTypeCountInfo?.[0]?.TotalOnRequestBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">On Request Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalOnRequestBkgCount}</span></button></li>
                     <li className="border-bottom"><button onClick={()=> bookingTypeDetailsBtn("3", bookingTypeCountInfo?.[0]?.TotalFailedBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Failed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalFailedBkgCount}</span></button></li>
-                    <li><button onClick={()=> bookingTypeDetailsBtn("4", bookingTypeCountInfo?.[0]?.TotalUntktBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Unticketed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUntktBkgCount}</span></button></li>
+                    {/* <li><button onClick={()=> bookingTypeDetailsBtn("4", bookingTypeCountInfo?.[0]?.TotalUntktBkgCount)} className="nav-link dropdown-item d-flex justify-content-between">Unticketed Bookings &nbsp; <span className="text-danger">{bookingTypeCountInfo?.[0]?.TotalUntktBkgCount}</span></button></li> */}
                   </ul>
                 </li> 
                 

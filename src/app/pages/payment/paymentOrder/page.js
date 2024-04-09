@@ -14,7 +14,7 @@ export default function PaymentOrder() {
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
-  console.log("search", search)
+  console.log("search", searchparams.get('qry'))
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
@@ -23,7 +23,7 @@ export default function PaymentOrder() {
   const [htmlLoad, setHtmlLoad] = useState();
 
   console.log("qryPaymentOrder", qry)
-  sessionStorage.setItem("receiptQry", JSON.stringify({search}));
+  sessionStorage.setItem("receiptQry", JSON.stringify(searchparams.get('qry')));
 
   useEffect(()=>{
     getBookingAmountBtn();

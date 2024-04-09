@@ -16,7 +16,6 @@ export default function PaymentReceipt() {
   const router = useRouter();
   const searchparams = useSearchParams();
   const qry = searchparams.get('resp');
-  console.log("qry", qry);
 
   const [getreceiptQry, setGetreceiptQry] = useState(null);
   useEffect(()=>{
@@ -46,8 +45,6 @@ export default function PaymentReceipt() {
 
   const [bkngCombDetails, setBkngCombDetails] = useState(null);
 
-  console.log("getreceiptQry", getreceiptQry)
-
   const convertCartToReservationBtn = async() => {
     let cartToReservationObj = {
       "TempBookingNo": getreceiptQry?.cartToReservationObj.TempBookingNo,
@@ -70,7 +67,6 @@ export default function PaymentReceipt() {
       else{
         doServiceComb(resItineraryNew);
         resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
-          debugger;
           if(value.ServiceCode==="1"){
             hotelBookBtn(value, index, resItineraryNew)
           }
@@ -181,7 +177,6 @@ export default function PaymentReceipt() {
   };
 
   const updateBookingsContactDetailsBtn = async(value,resHotelBook, index, bkngDetails) => {
-    debugger;
     if(bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       let reqUpdateBooking = {
         "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.TempBookingNo,
@@ -189,9 +184,9 @@ export default function PaymentReceipt() {
       }
       const responseUpdate = ReservationService.doUpdateBookingsContactDetails(reqUpdateBooking, getreceiptQry?.cartToReservationObj.CorrelationId);
       const resUpdate = await responseUpdate;
-      console.log("resUpdate", resUpdate)
-      if(resUpdate){
+      if(resUpdate=== 'Success'){
         sessionStorage.clear();
+        toast.success("Booking Successfully!",{theme: "colored"});
         reDirectBookingDetails()
       }
     }

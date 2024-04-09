@@ -32,7 +32,7 @@ const PaymentService = {
         body: JSON.stringify(reqObj),
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
-      return response.json()
+      return response.text()
     } catch (error) {console.log("error", error)}
   },
 

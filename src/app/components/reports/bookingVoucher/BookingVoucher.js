@@ -99,7 +99,6 @@ export default function Voucher(prop) {
   }
 
   const payCardBtn = async() => {
-    debugger;
     let cartToReservationObj = {
       "TempBookingNo": prop?.dtl?.bookingId,
       "UserId": prop?.dtl?.userId,

@@ -22,6 +22,8 @@ export default function PaymentOrder() {
   const [resHtml, setResHtml] = useState(null);
   const [htmlLoad, setHtmlLoad] = useState();
 
+  console.log("qryPaymentOrder", qry)
+
 
   useEffect(()=>{
     getBookingAmountBtn();

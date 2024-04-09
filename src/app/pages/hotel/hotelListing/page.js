@@ -27,7 +27,6 @@ export default function HotelListing() {
       setQry(JSON.parse(bytes))
     }
   }, []);
-  console.log("qry", qry)
 
   const { status } = useSession();
   // const searchparams = useSearchParams();

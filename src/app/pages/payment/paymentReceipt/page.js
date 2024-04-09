@@ -22,6 +22,8 @@ export default function PaymentReceipt() {
     setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));
   }, []);
 
+  console.log("getreceiptQry", getreceiptQry)
+
   useEffect(()=>{
     if(qry && getreceiptQry){
       if(qry==="Success"){

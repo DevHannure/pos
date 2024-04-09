@@ -119,23 +119,16 @@ export default function BookingItinerarySub(props) {
       }
 
       else if(payMode === "CC"){
-        let cartToReservationObj = {
-          "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
-          "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
-          "AgentRefText": agentRefText,
-          "PayMode": payMode,
-          "Type": "0",
-          "CorrelationId": props?.qry.correlationId
-        }
-        sessionStorage.setItem("receiptQry", JSON.stringify({cartToReservationObj}));
         let uniqId = getUID();
         let payObj = {
           "bookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
           "pGSupplier": parseFloat(userInfo?.user.pgType),
           "customerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
+          "userId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
+          "agentRefText": agentRefText,
           "domainName": "https://b2b-psi-two.vercel.app",
           "uID": uniqId,
-          "Type": "0",
+          "type": "0",
           "correlationId": props?.qry.correlationId
         }
         let encJson = AES.encrypt(JSON.stringify(payObj), 'ekey').toString();

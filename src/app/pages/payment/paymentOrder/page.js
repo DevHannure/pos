@@ -14,7 +14,7 @@ export default function PaymentOrder() {
   const router = useRouter();
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
-
+  console.log("search", search)
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
@@ -23,7 +23,7 @@ export default function PaymentOrder() {
   const [htmlLoad, setHtmlLoad] = useState();
 
   console.log("qryPaymentOrder", qry)
-
+  sessionStorage.setItem("receiptQry", JSON.stringify({search}));
 
   useEffect(()=>{
     getBookingAmountBtn();
@@ -56,7 +56,6 @@ export default function PaymentOrder() {
     setBillingInfo(resBilling)
   }
   
-
   const doBooking = async (e) => {
     e.nativeEvent.target.disabled = true;
     e.nativeEvent.target.innerHTML = 'Processing...';
@@ -107,7 +106,7 @@ export default function PaymentOrder() {
 
   const subMit = () => {
     if(htmlLoad){
-        document.forms["nonseamless"].submit()
+      document.forms["nonseamless"].submit()
     }
   }
 

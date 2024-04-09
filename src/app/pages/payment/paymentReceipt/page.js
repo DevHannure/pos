@@ -19,7 +19,13 @@ export default function PaymentReceipt() {
 
   const [getreceiptQry, setGetreceiptQry] = useState(null);
   useEffect(()=>{
-    setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));
+    const search = sessionStorage.getItem('receiptQry');
+    console.log("search", search)
+    let decData = enc.Base64.parse(search).toString(enc.Utf8);
+    let bytes = AES.decrypt(decData).toString(enc.Utf8);
+    console.log("bytes", bytes)
+    setGetreceiptQry(JSON.parse(bytes));
+    //setGetreceiptQry(JSON.parse(sessionStorage.getItem('receiptQry')));
   }, []);
 
   console.log("getreceiptQry", getreceiptQry)

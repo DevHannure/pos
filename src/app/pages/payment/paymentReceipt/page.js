@@ -26,8 +26,6 @@ export default function PaymentReceipt() {
     setGetreceiptQry(JSON.parse(bytes));
   }, []);
 
-  console.log("getreceiptQry", getreceiptQry)
-
   useEffect(()=>{
     if(qry && getreceiptQry){
       if(qry==="Success"){
@@ -179,7 +177,6 @@ export default function PaymentReceipt() {
     
     const resHotelBook = await responseHotelBook;
     confirmReservationServiceBtn(value,hotelReq, resHotelBook, index, bkngDetails)
-    //updateBookingsContactDetailsBtn(value,resHotelBook, index, bkngDetails);
   };
 
   const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index, bkngDetails) => {
@@ -202,18 +199,17 @@ export default function PaymentReceipt() {
     const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, getreceiptQry?.correlationId);
     const resConfirm = await responseConfirm;
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
-      updateBookingsContactDetailsBtn(value,serviceReq,serviceRes, index, bkngDetails)
+      updateBookingsContactDetailsBtn(index, bkngDetails)
     }
   }
 
-  const updateBookingsContactDetailsBtn = async(value,serviceReq,serviceRes, index, bkngDetails) => {
-    debugger;
+  const updateBookingsContactDetailsBtn = async(index, bkngDetails) => {
     if(bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       let reqUpdateBooking = {
         "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.TempBookingNo,
         "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo
       }
-      const responseUpdate = ReservationService.doUpdateBookingsContactDetails(reqUpdateBooking, getreceiptQry?.correlationId);
+      const responseUpdate = ReservationService.doUpdateBookingsserviceReqContactDetails(reqUpdateBooking, getreceiptQry?.correlationId);
       const resUpdate = await responseUpdate;
       if(resUpdate=== 'Success'){
         sessionStorage.clear();

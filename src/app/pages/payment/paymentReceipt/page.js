@@ -199,7 +199,7 @@ export default function PaymentReceipt() {
         "VoucherLink": ""
       }
     }
-    const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, props?.qry.correlationId);
+    const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, getreceiptQry?.correlationId);
     const resConfirm = await responseConfirm;
     if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       updateBookingsContactDetailsBtn(value,serviceReq,serviceRes, index, bkngDetails)

@@ -209,7 +209,7 @@ export default function PaymentReceipt() {
         "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.TempBookingNo,
         "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo
       }
-      const responseUpdate = ReservationService.doUpdateBookingsserviceReqContactDetails(reqUpdateBooking, getreceiptQry?.correlationId);
+      const responseUpdate = ReservationService.doUpdateBookingsContactDetails(reqUpdateBooking, getreceiptQry?.correlationId);
       const resUpdate = await responseUpdate;
       if(resUpdate=== 'Success'){
         sessionStorage.clear();

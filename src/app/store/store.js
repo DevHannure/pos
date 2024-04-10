@@ -5,6 +5,7 @@ import reservationReducer from "./reservationStore/reservation";
 import reservationListReducer from "./reservationTrayStore/reservationTray";
 import offlineSerReducer from "./offlineStore/offlineSer";
 import masterListReducer from "./masterStore/master";
+import tourResultReducer from "./tourStore/tour";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     reservationReducer,
     reservationListReducer,
     offlineSerReducer,
-    masterListReducer
+    masterListReducer,
+    tourResultReducer
   },
 });

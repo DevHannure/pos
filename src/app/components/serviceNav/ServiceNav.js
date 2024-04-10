@@ -4,9 +4,11 @@ import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 // import { getServerSession } from "next-auth";
 // import { authOptions } from "../../api/auth/[...nextauth]/route";
 import {useSession} from "next-auth/react";
+import { usePathname } from 'next/navigation';
 
 export default function ServiceNav() {
   const {data} = useSession();
+  const pathname = usePathname();
   // const session = await getServerSession(authOptions);
   //const onlineService = data?.userPermissions.find(onlineService => onlineService.featureName === 'IncludeOnlineService');
   const hotelService = data?.userPermissions.find(hotelService => hotelService.featureName === 'IncludeOnlineHotelService');
@@ -39,9 +41,9 @@ export default function ServiceNav() {
               <li className="liflightservice"><Link href="/">Flight</Link></li>
             }
             {hotelService?.canView &&
-              <li className="lihotelservice active"><Link href="/">Accommodation</Link></li>
+              <li className={`lihotelservice ${pathname == '/' && 'active'}`}><Link href="/">Accommodation</Link></li>
             }
-            {/* <li className="litourservice"><Link href="/pages/tour">Tour &amp; Excursion</Link></li> */}
+            <li className={`litourservice ${pathname == '/pages/tour/tour' && 'active'}`}><Link href="/pages/tour/tour">Tour &amp; Excursion</Link></li>
             {tourService?.canView &&
               <li className="litourservice"><Link href="#">Tour &amp; Excursion</Link></li>
             }

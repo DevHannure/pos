@@ -178,10 +178,36 @@ export default function PaymentReceipt() {
     }
     
     const resHotelBook = await responseHotelBook;
-    updateBookingsContactDetailsBtn(value,resHotelBook, index, bkngDetails);
+    confirmReservationServiceBtn(value,hotelReq, resHotelBook, index, bkngDetails)
+    //updateBookingsContactDetailsBtn(value,resHotelBook, index, bkngDetails);
   };
 
-  const updateBookingsContactDetailsBtn = async(value,resHotelBook, index, bkngDetails) => {
+  const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index, bkngDetails) => {
+    let cRSAEobj = {
+      "BookingNo": value.BookingNo,
+      "ServiceMasterCode": value.ServiceMasterCode,
+      "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
+      "BookedFrom": serviceReq.CheckInDate,
+      "EmailHtml": "",
+      "Service": {
+        "SupplierConfirmationNo": serviceRes.supplierConfirmationNumber,
+        "XMLBookingNo": serviceRes.adsConfirmationNumber,
+        "XMLBookingStatus": serviceRes.status === "2" ? serviceRes.status : serviceRes.status === "10" ? "1" : "0",
+        "XMLBookingRequest": JSON.stringify(serviceReq),
+        "XMLBookingResponse": JSON.stringify(serviceRes),
+        "XMLError": serviceRes.errorInfo ? JSON.stringify(serviceRes.errorInfo) : "",
+        "VoucherLink": ""
+      }
+    }
+    const responseConfirm = ReservationService.doConfirmReservationService(cRSAEobj, props?.qry.correlationId);
+    const resConfirm = await responseConfirm;
+    if(resConfirm && bkngDetails?.ReservationDetail?.Services?.length -1 === index){
+      updateBookingsContactDetailsBtn(value,serviceReq,serviceRes, index, bkngDetails)
+    }
+  }
+
+  const updateBookingsContactDetailsBtn = async(value,serviceReq,serviceRes, index, bkngDetails) => {
+    debugger;
     if(bkngDetails?.ReservationDetail?.Services?.length -1 === index){
       let reqUpdateBooking = {
         "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.TempBookingNo,
@@ -192,7 +218,17 @@ export default function PaymentReceipt() {
       if(resUpdate=== 'Success'){
         sessionStorage.clear();
         toast.success("Booking Successfully!",{theme: "colored"});
-        reDirectBookingDetails()
+        let bookItnery = {
+          "bcode": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
+          "btype": "",
+          "returnurl": null,
+          "emailSend": true,
+          "correlationId": getreceiptQry?.correlationId
+        }
+        let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
+        let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+        sessionStorage.clear();
+        router.push(`/pages/booking/bookingDetails?qry=${encData}`);
       }
     }
 

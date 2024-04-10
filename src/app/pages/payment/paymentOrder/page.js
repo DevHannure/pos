@@ -15,7 +15,6 @@ export default function PaymentOrder() {
   const searchparams = useSearchParams();
   const search = searchparams.get('qry');
   let decData = enc.Base64.parse(search).toString(enc.Utf8);
-  console.log("decData123", decData)
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   console.log("bytes123", bytes)
   const qry = JSON.parse(bytes);

@@ -289,7 +289,7 @@ export default function BookingItinerarySub(props) {
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
-      sessionStorage.removeItem('qryTraveller');
+      sessionStorage.clear();
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }
@@ -328,7 +328,7 @@ export default function BookingItinerarySub(props) {
       let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setMainLoader(false);
-      sessionStorage.removeItem('qryTraveller');
+      sessionStorage.clear();
       router.push(`/pages/booking/bookingDetails?qry=${encData}`);
     }
   }

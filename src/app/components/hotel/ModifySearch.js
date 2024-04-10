@@ -94,33 +94,6 @@ const multiValueContainer = ({ selectProps, data }) => {
 };
 
 export default function ModifySearch(props) {
-  // const users = [
-  //   { id:1, name: 'Nicole', age: 33 },
-  //   { id:1, name: 'Sanne', age: 35 },
-  //   { id:4, name: 'riy', age: 35 },
-  //   { id:2, name: 'Chris', age: 31 },
-  //   { id:3, name: 'Yaatree', age: 32 },
-  //   { id:4, name: 'sam', age: 32 },
-  // ];
-
-  // let fil = users.sort((a, b) => parseFloat(b.age) - parseFloat(a.age));
-
-  // const arr = fil.reduce((result,obj)=> {
-  // let row = result.find(x=>x.id===obj.id);  
-  // if(!row){ 
-  //   obj.local = false;
-  //   result.push({...obj})
-  // }  
-  // else if(row.age > obj.age){
-  //   obj.local = true;
-  //   Object.assign(row,obj)
-  // }
-  
-  // return result
-  // },[]);
-  // console.log("arr", arr)
-
-
   const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const router = useRouter();

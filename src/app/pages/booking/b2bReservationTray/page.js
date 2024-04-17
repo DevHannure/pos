@@ -1219,10 +1219,22 @@ export default function BBReservationTray() {
                       <ul className="pagination pagination-sm justify-content-center m-0">
                         <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
                         <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
-                        {[...Array(pagesCount)].map((page, i) => 
-                        <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
-                        )}
-
+                        {activePage !== 0 &&
+                          <li className="page-item"><button type="button" onClick={() => handleClick(activePage - 1)} className="page-link">{activePage}</button></li>
+                        }
+                        <li className="page-item"><button type="button" onClick={() => handleClick(activePage)} className={"page-link " + (activePage === activePage ? 'active' : '')}>{activePage+1}</button></li>
+                        {Number(activePage) === Number(pagesCount-1) ?
+                        <></>
+                        :
+                        <>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 1)} className="page-link">{activePage + 2}</button></li>
+                        </>
+                        }
+                        {/* {[...Array(pagesCount)].map((page, i) => 
+                        <React.Fragment key={i}>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
+                        </React.Fragment>
+                        )} */}
                         <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
                         <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
                       </ul>

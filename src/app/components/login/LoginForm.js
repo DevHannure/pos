@@ -117,7 +117,7 @@ export default function BookingItinerary() {
   useEffect(() => {
     let timerId;
     if (runTimer) {
-      setCountDown(60 * 15);
+      setCountDown(60 * 10);
       timerId = setInterval(() => {
         setCountDown((countDown) => countDown - 1);
       }, 1000);

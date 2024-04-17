@@ -340,7 +340,9 @@ export default function CCReceipt(props) {
                               <thead>
                                 <tr bgcolor="#f9f9f9" style={{backgroundColor:'#f9f9f9'}}>
                                   <th style={{textAlign:'left'}}>Passenger Name</th>
-                                  <th style={{textAlign:'left'}}>Application Number</th>
+                                  {resDetails.reportDetails.find(s => s.serviceCode === "7") &&
+                                    <th style={{textAlign:'left'}}>Application Number</th>
+                                  }
                                 </tr>
                               </thead>
                               <tbody>
@@ -349,7 +351,9 @@ export default function CCReceipt(props) {
                                 {p.leadPax=='0' &&
                                 <tr>
                                   <td>{p.paxTitle}. {p.paxName}</td>
-                                  <td>{p.visaNumber!=undefined && p.visaNumber!=null && p.visaNumber!='' ? p.visaNumber:'N/A' }</td>   
+                                  {resDetails.reportDetails.find(s => s.serviceCode === "7") &&
+                                    <td>{p.visaNumber!=undefined && p.visaNumber!=null && p.visaNumber!='' ? p.visaNumber:'N/A' }</td>   
+                                  }
                                 </tr>  
                                 }
                               </React.Fragment>

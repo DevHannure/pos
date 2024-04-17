@@ -688,8 +688,8 @@ export default function HotelResult(props) {
                 {[...Array(pagesCount)].map((page, i) => 
                 <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link border-0 " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
                 )}
-                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} className="page-link border-0 text-dark">Next</button></li>
-                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} className="page-link border-0 text-dark">Last</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Next</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Last</button></li>
               </ul>
             </nav>
           </div>
@@ -808,8 +808,8 @@ export default function HotelResult(props) {
               {[...Array(pagesCount)].map((page, i) => 
               <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link border-0 " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
               )}
-              <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} className="page-link border-0 text-dark">Next</button></li>
-              <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} className="page-link border-0 text-dark">Last</button></li>
+              <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Next</button></li>
+              <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Last</button></li>
             </ul>
           </nav>
         </div>

@@ -45,7 +45,7 @@ export default function ServiceNav() {
             }
             {/* <li className={`litourservice ${pathname == '/pages/tour/tour' && 'active'}`}><Link href="/pages/tour/tour">Tour &amp; Excursion</Link></li> */}
             {tourService?.canView &&
-              <li className="litourservice"><Link href="#">Tour &amp; Excursion</Link></li>
+              <li className={`litourservice ${pathname == '/pages/tour/tour' && 'active'}`}><Link href="/pages/tour/tour">Tour &amp; Excursion</Link></li>
             }
             {transferService?.canView &&
               <li className="litransferservice"><Link href="#">Transfer</Link></li>

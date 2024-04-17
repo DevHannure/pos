@@ -381,7 +381,6 @@ export default function Invoice(props) {
                                       {resDetails.reportDetails.find(s => s.serviceCode === "7") &&
                                       <td>{p.visaNumber!=undefined && p.visaNumber!=null && p.visaNumber!='' ? p.visaNumber:'N/A' }</td>   
                                       }
-                                      
                                     </tr>  
                                     }
                                   </React.Fragment>

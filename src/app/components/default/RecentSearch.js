@@ -68,8 +68,8 @@ export default function RecentSearch() {
               <p className="fs-6 mb-3">See if the price has changed since your last search</p>
               <div>
                 <Slider {...settings}>
-                  {recentSearch?.map((r) => (
-                    <div key={r.id}>
+                  {recentSearch?.slice(0, 15).map((r) => (
+                    <React.Fragment key={r.id}>
                       <div className="bg-white text-start shadow-sm p-3 pt-1 pe-2 m-2">
                         <div className='text-end curpointer fs-5 fw-semibold text-body-tertiary position-relative' onClick={() => deleteBtn(r)}>x</div>
                         <Link className='mt-n3 curpointer d-block' href={r.queryString}>
@@ -78,7 +78,7 @@ export default function RecentSearch() {
                           <div className="text-secondary">{r.date}, {r.noGuest}</div>
                         </Link>
                       </div>
-                  </div>
+                  </React.Fragment>
                   ))
                   }
                 </Slider>

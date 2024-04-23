@@ -22,7 +22,6 @@ import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doRecentSearch }
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 
-//function getUID() {return Date.now().toString(36);}
 const starOptions = [
   { value: '5', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
   { value: '4', label: (<><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /><FontAwesomeIcon icon={faStar} className="fs-6 starGold" /></>)},
@@ -169,6 +168,7 @@ export default function ModifySearch(props) {
   }, [chkIn, chkOut]);
 
   const [selectedStarOption, setSelectedStarOption] = useState(starOptions);
+
   const selectedXML = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
   //const [selectedXML, setSelectedXML] = useState(null);
   const [xmlOptions, setXmlOptions] = useState([]);
@@ -438,7 +438,7 @@ export default function ModifySearch(props) {
   }
 
   const nightChange = (valueNum) => {
-    if(valueNum.length <= 2){
+    if(valueNum.length <= 2 && valueNum !== "0"){
       const re = /^[0-9\b]+$/;
       if(valueNum === '' || re.test(valueNum)){
         if(valueNum === ''){
@@ -446,11 +446,13 @@ export default function ModifySearch(props) {
           setNumNights(valueNum)
         }
         else{
-        setChkOut(new Date(new Date().setDate(chkIn.getDate()+Number(valueNum))))
-        setNumNights(valueNum)
+          var myNewDate = new Date(chkIn);
+          myNewDate.setDate(myNewDate.getDate() + Number(valueNum));
+          setChkOut(myNewDate)
+          setNumNights(valueNum)
         }
       }
-   }
+    }
   }
 
   const handleHotel = async (query) => {
@@ -572,8 +574,8 @@ export default function ModifySearch(props) {
     return status
   }
 
-  const [searchLoading, setSearchLoading] = useState(false)
-  //let uniqId = getUID();
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const srchHtl = async(e) => {
     let allowMe = validate();
     if(allowMe){
@@ -581,12 +583,13 @@ export default function ModifySearch(props) {
       e.nativeEvent.target.innerHTML = 'Searching...';
       dispatch(doHotelSearchOnLoad(null));
       dispatch(doRoomDtls({}));
-      setSearchLoading(true)
-      setModifyCollapse(false)
-      let starOpt = []
+      setSearchLoading(true);
+      setModifyCollapse(false);
+      let starOpt = [];
       selectedStarOption.forEach((v) => {
-        starOpt.push(v.value)
-      })
+        starOpt.push(v.value);
+      }); 
+
       let qry = {
         "customerCode": cusCode,
         "destination":selectedDestination,
@@ -637,7 +640,6 @@ export default function ModifySearch(props) {
     }
   }
 
-
   return (
   <>
   <ToastContainer />
@@ -648,143 +650,142 @@ export default function ModifySearch(props) {
       <div className="container">
         <ServiceNav />
         <div className="searchColumn">
-          <div className="row gx-3">
-            <div className="col-lg-4 tFourInput bor-b">
-              <div className="mb-3">
-                <label><FontAwesomeIcon icon={faLocationDot} className="fn12" /> Destination</label>
-                <AsyncTypeahead 
-                  //defaultSelected={selectedDestination}
-                  filterBy={() => true}
-                  id="async-example"
-                  isLoading={isLoading}
-                  labelKey={(option) => option.predictiveText}
-                  minLength={3}
-                  onSearch={handleSearch}
-                  options={options}
-                  placeholder='Please Enter Destination'
-                  className="typeHeadDropdown"
-                  //selected={selectedDestination}
-                  highlightOnlyResult={true}
-                  defaultSelected={options.slice(0, 1)}
-                  onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
-                  //clearButton={true}
-                  onFocus={(event)=> event.target.select()}
-                />
-               
+            <div className="row gx-3">
+              <div className="col-lg-4 tFourInput bor-b">
+                <div className="mb-3">
+                  <label><FontAwesomeIcon icon={faLocationDot} className="fn12" /> Destination</label>
+                  <AsyncTypeahead 
+                    //defaultSelected={selectedDestination}
+                    filterBy={() => true}
+                    id="async-example"
+                    isLoading={isLoading}
+                    labelKey={(option) => option.predictiveText}
+                    minLength={3}
+                    onSearch={handleSearch}
+                    options={options}
+                    placeholder='Please Enter Destination'
+                    className="typeHeadDropdown"
+                    //selected={selectedDestination}
+                    highlightOnlyResult={true}
+                    defaultSelected={options.slice(0, 1)}
+                    onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
+                    //clearButton={true}
+                    onFocus={(event)=> event.target.select()}
+                  />
+                
+                </div>
               </div>
-            </div>
-            <div className="col-lg-4 tFourInput bor-s bor-b">
-              <div className="mb-3">
-                <div className="row gx-3">
-                  <div className="col">
-                    <label><FontAwesomeIcon icon={faCalendarDays} className="fn12" /> Check In - Check Out Date</label>
-                    <div>
-                      <DatePicker className="form-control" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
-                      startDate={chkIn} endDate={chkOut}
-                      onChange={dateChange} 
-                      showMonthDropdown showYearDropdown />
-                      {/* <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" /> */}
+              <div className="col-lg-4 tFourInput bor-s bor-b">
+                <div className="mb-3">
+                  <div className="row gx-3">
+                    <div className="col">
+                      <label><FontAwesomeIcon icon={faCalendarDays} className="fn12" /> Check In - Check Out Date</label>
+                      <div>
+                        <DatePicker className="form-control" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
+                        startDate={chkIn} endDate={chkOut}
+                        onChange={dateChange} 
+                        showMonthDropdown showYearDropdown />
+                        {/* <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" /> */}
+                      </div>
+                    </div>
+                    <div className="col-auto nightCol">
+                      <label>Night(s)</label>
+                      <input className="form-control" type="text" value={numNights} onChange={(e)=> nightChange(e.target.value)} />
                     </div>
                   </div>
-                  <div className="col-auto nightCol">
-                    <label>Night(s)</label>
-                    <input className="form-control" type="text" value={numNights} onChange={(e)=> nightChange(e.target.value)} />
+                </div>
+              </div>
+              <div className="col-lg-4 tFourInput bor-s bor-b">
+                <div className="mb-2">
+                  <label>Room Information</label>
+                  <div className="dropdown">
+                    <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{rmCountArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {rmCountArr.length} Room(s)</button>
+                    <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
+                      <PaxDropdown />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="col-lg-4 tFourInput bor-s bor-b">
-              <div className="mb-2">
-                <label>Room Information</label>
-                <div className="dropdown">
-                  <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{rmCountArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {rmCountArr.length} Room(s)</button>
-                  <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
-                    <PaxDropdown />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="row gx-3">
-            <div className="col-lg-3 tFourInput">
-              <div className="mb-3">
-                <label>Nationality</label>
-                {nationOptions?.length > 0 &&
-                <Select
-                  id="nationality"
-                  instanceId="nationality"
-                  closeMenuOnSelect={true}
-                  onChange={(e) => setCusNationality(e.value)}
-                  options={nationOptions} 
-                  defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
-                  //defaultValue={{ label: "Select Dept", value: '91-IN' }}
-                  classNamePrefix="tFourMulti" />
-                }
-                {/* <select className="form-select" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
-                  {nationalityOptions?.map((n, index) => ( 
-                    <option key={index} value={n.countryCode+'-'+n.isoCode}>{n.nationality}</option>
-                  ))}
-                </select> */}
+            <div className="row gx-3">
+              <div className="col-lg-3 tFourInput">
+                <div className="mb-3">
+                  <label>Nationality</label>
+                  {nationOptions?.length > 0 &&
+                  <Select
+                    id="nationality"
+                    instanceId="nationality"
+                    closeMenuOnSelect={true}
+                    onChange={(e) => setCusNationality(e.value)}
+                    options={nationOptions} 
+                    defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                    //defaultValue={{ label: "Select Dept", value: '91-IN' }}
+                    classNamePrefix="tFourMulti" />
+                  }
+                  {/* <select className="form-select" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
+                    {nationalityOptions?.map((n, index) => ( 
+                      <option key={index} value={n.countryCode+'-'+n.isoCode}>{n.nationality}</option>
+                    ))}
+                  </select> */}
+                </div>
               </div>
+              <div className="col-lg-3 tFourInput bor-s">
+                <div className="mb-3">
+                  <label>Star Rating</label>
+                  <Select
+                    id="selectstar"
+                    instanceId="selectstar"
+                    closeMenuOnSelect={false}
+                    hideSelectedOptions={false}
+                    defaultValue={selectedStarOption}
+                    onChange={setSelectedStarOption}
+                    options={starOptions}
+                    isMulti
+                    components={{
+                      MultiValueContainer: multiValueContainer,
+                      Option: InputOption
+                    }}
+                    classNamePrefix="tFourMulti"  />
+                </div>
+              </div>
+              <div className="col-lg-3 tFourInput bor-s">
+                <div className="mb-3">
+                  <label>Hotel Name</label>
+                  <AsyncTypeahead 
+                    filterBy={() => true}
+                    id="asyncExample"
+                    isLoading={isLoadingHtl}
+                    labelKey={(option) => option.hotelName}
+                    minLength={2}
+                    onSearch={handleHotel}
+                    options={optionsHtl}
+                    placeholder='Enter Hotel Name'
+                    className="typeHeadDropdown"
+                    highlightOnlyResult={true}
+                    defaultSelected={optionsHtl.slice(0, 1)}
+                    onChange={setSelectedHotel}
+                    //clearButton={true}
+                    ref={typeaheadHtlRef}
+                    useCache={false}
+                  />
+                </div>
+              </div>
+              {/* <div className="col-lg-3 tFourInput bor-s">
+                <div className="mb-3">
+                  <label>XML Suppliers</label>
+                  <Select
+                    id="selectxml"
+                    instanceId="selectxml"
+                    closeMenuOnSelect={false}
+                    defaultValue={selectedXML}
+                    onChange={setSelectedXML}
+                    options={xmlOptions}
+                    isMulti
+                    classNamePrefix="tFourMulti" />
+                </div>
+              </div> */}
             </div>
-            <div className="col-lg-3 tFourInput bor-s">
-              <div className="mb-3">
-                <label>Star Rating</label>
-                <Select
-                  id="selectstar"
-                  instanceId="selectstar"
-                  closeMenuOnSelect={false}
-                  hideSelectedOptions={false}
-                  defaultValue={selectedStarOption}
-                  onChange={setSelectedStarOption}
-                  options={starOptions}
-                  isMulti
-                  components={{
-                    MultiValueContainer: multiValueContainer,
-                    Option: InputOption
-                  }}
-                  classNamePrefix="tFourMulti"  />
-              </div>
-            </div>
-            <div className="col-lg-3 tFourInput bor-s">
-              <div className="mb-3">
-                <label>Hotel Name</label>
-                <AsyncTypeahead 
-                  filterBy={() => true}
-                  id="asyncExample"
-                  isLoading={isLoadingHtl}
-                  labelKey={(option) => option.hotelName}
-                  minLength={2}
-                  onSearch={handleHotel}
-                  options={optionsHtl}
-                  placeholder='Enter Hotel Name'
-                  className="typeHeadDropdown"
-                  highlightOnlyResult={true}
-                  defaultSelected={optionsHtl.slice(0, 1)}
-                  onChange={setSelectedHotel}
-                  //clearButton={true}
-                  ref={typeaheadHtlRef}
-                  useCache={false}
-                />
-              </div>
-            </div>
-            {/* <div className="col-lg-3 tFourInput bor-s">
-              <div className="mb-3">
-                <label>XML Suppliers</label>
-                <Select
-                  id="selectxml"
-                  instanceId="selectxml"
-                  closeMenuOnSelect={false}
-                  defaultValue={selectedXML}
-                  onChange={setSelectedXML}
-                  options={xmlOptions}
-                  isMulti
-                  classNamePrefix="tFourMulti" />
-              </div>
-            </div> */}
-          </div>
-          
         </div>
 
         <div className="searchColumn secondSearch">

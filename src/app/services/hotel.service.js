@@ -4,11 +4,16 @@ const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 const HotelService = {
 
   doHotelSearch: async function (reqObj, correlationId) {
+    let controller = new AbortController();
+    setTimeout( () => {
+      controller.abort()
+  }, 300000);    // 300000 means 300 seconds
     try {
       const response = await fetch(`${baseUrl}/hotel/Search`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
-        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId},
+        signal: controller.signal
       });
       return response.json()
     } catch (error) {console.log("error", error)}

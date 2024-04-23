@@ -18,20 +18,20 @@ export default function BookingItinerary() {
     }
   }, [params]);
 
-  const [deviceName, setDeviceName] = useState('');
-  const [browserName, setBrowserName] = useState('');
-  const [ipAddress, setIpAddress] = useState('');
-  const [ipLocation, setIpLocation] = useState('');
+  // const [deviceName, setDeviceName] = useState('');
+  // const [browserName, setBrowserName] = useState('');
+  // const [ipAddress, setIpAddress] = useState('');
+  // const [ipLocation, setIpLocation] = useState('');
 
-  useEffect(() => {
-    let browserInfo = Bowser.parse(window.navigator.userAgent);
-    setDeviceName(toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName);
-    setBrowserName(browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version);
-      fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
-      .then(response => response.json())
-      .then(data => (setIpAddress(data.ip_address), setIpLocation(data.city + ', ' + data.country)))
-      .catch(err => console.error(err));
-  }, []);
+  // useEffect(() => {
+  //   let browserInfo = Bowser.parse(window.navigator.userAgent);
+  //   setDeviceName(toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName);
+  //   setBrowserName(browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version);
+  //     fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+  //     .then(response => response.json())
+  //     .then(data => (setIpAddress(data.ip_address), setIpLocation(data.city + ', ' + data.country)))
+  //     .catch(err => console.error(err));
+  // }, []);
 
 
   const [loginForm, setLoginForm] = useState(true);
@@ -150,6 +150,16 @@ export default function BookingItinerary() {
     else { 
       try {
         setOtpLoading(true);
+        let browserInfo = Bowser.parse(window.navigator.userAgent);
+        let deviceName = toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName;
+        let browserName = browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version;
+        let ipAddress = '';
+        let ipLocation = '';
+        await fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+        .then(response => response.json())
+        .then(data => (ipAddress = data.ip_address, ipLocation= data.city + ', ' + data.country))
+        .catch(err => console.error(err));
+
         const req = {
           UserCode: email,
           AppCode: process.env.NEXT_PUBLIC_APPCODE,
@@ -189,6 +199,16 @@ export default function BookingItinerary() {
 
   const resendOtp = async() => {
     setRunTimer(false)
+    let browserInfo = Bowser.parse(window.navigator.userAgent);
+    let deviceName = toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName;
+    let browserName = browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version;
+    let ipAddress = '';
+    let ipLocation = '';
+    await fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+    .then(response => response.json())
+    .then(data => (ipAddress = data.ip_address, ipLocation= data.city + ', ' + data.country))
+    .catch(err => console.error(err));
+
     const req = {
       UserCode: email,
       AppCode: process.env.NEXT_PUBLIC_APPCODE,
@@ -217,6 +237,15 @@ export default function BookingItinerary() {
     let valid = validateForm();
     if (valid) { 
       setLoginLoading(true);
+      let browserInfo = Bowser.parse(window.navigator.userAgent);
+      let deviceName = toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName;
+      let browserName = browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version;
+      let ipAddress = '';
+      let ipLocation = '';
+      await fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+      .then(response => response.json())
+      .then(data => (ipAddress = data.ip_address, ipLocation= data.city + ', ' + data.country))
+      .catch(err => console.error(err));
       const req = {
         UserCode: email,
         Password: password,
@@ -302,6 +331,15 @@ export default function BookingItinerary() {
     let valid = validResetEmailForm();
     if (valid) { 
       setResetEmailLoading(true);
+      let browserInfo = Bowser.parse(window.navigator.userAgent);
+      let deviceName = toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName;
+      let browserName = browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version;
+      let ipAddress = '';
+      let ipLocation = '';
+      await fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+      .then(response => response.json())
+      .then(data => (ipAddress = data.ip_address, ipLocation= data.city + ', ' + data.country))
+      .catch(err => console.error(err));
       const req = {
         UserCode: resetEmail,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
@@ -408,6 +446,15 @@ export default function BookingItinerary() {
     let valid = validResetForm();
     if (valid) { 
       setResetPassLoading(true);
+      let browserInfo = Bowser.parse(window.navigator.userAgent);
+      let deviceName = toTitleCase(browserInfo?.platform?.type) + ' with '+ browserInfo?.os?.name + ' v' + browserInfo?.os?.versionName;
+      let browserName = browserInfo?.browser?.name + ' v'+ browserInfo?.browser?.version;
+      let ipAddress = '';
+      let ipLocation = '';
+      await fetch('https://ipgeolocation.abstractapi.com/v1/?api_key=174f325643d24376ab7b980607a9f12a')
+      .then(response => response.json())
+      .then(data => (ipAddress = data.ip_address, ipLocation= data.city + ', ' + data.country))
+      .catch(err => console.error(err));
       const req = {
         UserCode: resetEmail,
         Password: resetNewPass,
@@ -442,11 +489,11 @@ export default function BookingItinerary() {
     <div className="loginForm">
       <h3 className="fs-5 mb-3">Agent Login</h3>
       <div className="mb-4">
-        <input type="text" className="form-control" placeholder="Enter your email id" value={email} onChange={(e) => emailChange(e.target.value)}  />
+        <input type="text" className="form-control" autoComplete="off" placeholder="Enter your email id" value={email} onChange={(e) => emailChange(e.target.value)}  />
         {errors.email && <div className='text-danger m-1'>{errors.email}</div>}
       </div>
       <div className="mb-1">
-        <input type="password" className="form-control" placeholder="Enter your password" value={password} onChange={(e) => passChange(e.target.value)} />
+        <input type="password" className="form-control" autoComplete="new-password" placeholder="Enter your password" value={password} onChange={(e) => passChange(e.target.value)} />
         {errors.password && <div className='text-danger m-1'>{errors.password}</div>} 
       </div>
       <div className="mb-2 text-end">
@@ -463,7 +510,7 @@ export default function BookingItinerary() {
       <p className="text-end mb-1 fs-6">OTP expire(s) in <span className='text-danger fw-semibold'>{minutes}:{seconds}</span> minute(s)</p>
       <p className="fs-5 mb-3">OTP has been generated and sent to your email id {email}</p>
       <div>
-        <input type="text" className="form-control" placeholder="Enter OTP" value={otp} onChange={(e) => otpChange(e.target.value)}  />
+        <input type="text" className="form-control" autoComplete="off" placeholder="Enter OTP" value={otp} onChange={(e) => otpChange(e.target.value)}  />
         {errorOtp.otp && <div className='text-danger m-1'>{errorOtp.otp}</div>}
         <div className='text-end'><button className='btn btn-link fn13 px-0' onClick={resendOtp}>Click here to resend OTP</button></div>
       </div>
@@ -478,11 +525,11 @@ export default function BookingItinerary() {
     <div className="loginForm">
       <p className="fs-5 mb-3">Enter your email id and we&#39;ll send you an OTP code to reset your password</p>
       <div className="mb-4">
-        <input type="text" className="form-control" placeholder="Enter your email id" value={resetEmail} onChange={(e) => resetEmailChange(e.target.value)}  />
+        <input type="text" className="form-control" autoComplete="off" placeholder="Enter your email id" value={resetEmail} onChange={(e) => resetEmailChange(e.target.value)}  />
         {errorResetEmail.resetEmail && <div className='text-danger m-1'>{errorResetEmail.resetEmail}</div>}
       </div>
       <div className="mb-1">
-        <button type="button" className="btn btn-warning px-4 fw-semibold" onClick={resetEmailSubmit} disabled={resetEmailLoading}>{resetEmailLoading ? 'Sending' : 'Send'}</button>
+        <button type="button" className="btn btn-warning px-4 fw-semibold" onClick={()=>resetEmailSubmit()} disabled={resetEmailLoading}>{resetEmailLoading ? 'Sending' : 'Send'}</button>
         <button type="button" className="btn btn-light fw-semibold ms-2" onClick={()=> (setResetEmailForm(false), setLoginForm(true) )}>Cancel</button>
       </div>
     </div>
@@ -493,14 +540,14 @@ export default function BookingItinerary() {
       <p className="fs-6 mb-3">Please enter the received OTP and new password</p>
       <div className="mb-4">
         <label>OTP</label>
-        <input type="text" className="form-control" placeholder="Enter OTP" value={resetPassOTP} onChange={(e) => resetPassOtpChange(e.target.value)}  />
+        <input type="text" className="form-control" autoComplete="off" placeholder="Enter OTP" value={resetPassOTP} onChange={(e) => resetPassOtpChange(e.target.value)}  />
         {errorResetPass.otp && <div className='text-danger m-1'>{errorResetPass.otp}</div>}
       </div>
 
       <div className="mb-4">
         <label>New Password</label>
         <div className="input-group">
-        <input type={showPassword ? "text" : "password"} className="form-control border-end-0" placeholder="Enter New Password" value={resetNewPass} onChange={(e) => resetNewPassChange(e.target.value)} />
+        <input type={showPassword ? "text" : "password"} autoComplete="new-password" className="form-control border-end-0" placeholder="Enter New Password" value={resetNewPass} onChange={(e) => resetNewPassChange(e.target.value)} />
         <span className="input-group-text bg-white curpointer" onClick={()=>setShowPassword(!showPassword)}>
           {showPassword ?
             <FontAwesomeIcon icon={faEyeSlash} />:<FontAwesomeIcon icon={faEye} /> 

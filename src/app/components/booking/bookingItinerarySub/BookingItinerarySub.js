@@ -356,15 +356,42 @@ export default function BookingItinerarySub(props) {
                   </div>
 
                   {userInfo?.user.paymentMode==="LOC" &&
-                    <div className="form-check form-check-inline">
-                      <label><input className="form-check-input" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
-                    </div>
+                    <>
+                      {userInfo?.user?.isSubUser ?
+                        <>
+                        {userInfo?.user?.consultantAllowCredit ?
+                          <div className="form-check form-check-inline">
+                            <label><input className="form-check-input" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
+                          </div> : ''
+                        }
+                        </>
+                        :
+                        <div className="form-check form-check-inline">
+                          <label><input className="form-check-input" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
+                        </div>
+                      }
+                    </>
                   }
 
                   {bkngDetails.ReservationDetail.Services.some(o => o.NRF === false) ?
-                  <div className="form-check form-check-inline">
-                    <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
-                  </div>
+                    <div className="form-check form-check-inline">
+                      <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
+                    </div>
+                  // <>
+                  //   {userInfo?.user?.isSubUser ?
+                  //     <>
+                  //       {userInfo?.user?.consultantAllowCredit ?
+                  //         <div className="form-check form-check-inline">
+                  //           <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
+                  //         </div> : ''
+                  //       }
+                  //     </>
+                  //     :
+                  //     <div className="form-check form-check-inline">
+                  //       <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
+                  //     </div>
+                  //   }
+                  // </>
                   : ''
                   }
 

@@ -18,15 +18,15 @@ import Image from 'next/image';
 function getUID() {return Date.now().toString(36);}
 
 export default function TourListing() {
+  const searchparams = typeof window !== 'undefined' ? sessionStorage.getItem('qryTourList') : null;
   const [qry, setQry] = useState(null);
   useEffect(() => {
-    if(!qry){
-      const searchparams = sessionStorage.getItem('qryTourList');
+    //if(!qry){
       let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
       let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
       setQry(JSON.parse(bytes))
-    }
-  }, []);
+    //}
+  }, [searchparams]);
   const { status } = useSession();
   const dispatch = useDispatch();
 
@@ -46,7 +46,6 @@ export default function TourListing() {
   },[qry]);
 
   const doTourResultOnLoad = async() => {
-    //let uniqId = getUID();
     let tourSrchObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
@@ -58,7 +57,6 @@ export default function TourListing() {
         "TassProField": {
           "CustomerCode": qry.customerCode,
           "RegionId": qry.regionCode?.toString(),
-          //"CompanyId": "0"
         }
       }
     }
@@ -109,7 +107,7 @@ export default function TourListing() {
   useEffect(() => {
     let timerId;
     if (runTimer) {
-      setCountDown(60 * 0.75);
+      setCountDown(60 * 0.40);
       timerId = setInterval(() => {
         setCountDown((countDown) => countDown - 1);
       }, 1000);

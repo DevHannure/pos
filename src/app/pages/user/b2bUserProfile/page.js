@@ -4,6 +4,7 @@ import MainLayout from '@/app/layouts/mainLayout';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {faCircle, faCircleDot} from "@fortawesome/free-regular-svg-icons";
 import {faPencil, faTrash, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import {useRouter, useSearchParams} from 'next/navigation';
 import AES from 'crypto-js/aes';
@@ -145,7 +146,6 @@ export default function B2BUserProfile() {
   const [errorPassword, setErrorPassword] = useState({});
   const [showPassword, setShowPassword] = useState(false);
 
-  
   const titleChange = (value) => {
     const usrItems = {...userObj}
     const errUsrItems = {...errUserObj}
@@ -491,9 +491,8 @@ export default function B2BUserProfile() {
     
     if(resConsultantDetails){
       let consultantNameArray = resConsultantDetails[0]?.ConsultantName?.split('_');
-
       setUserObj({
-        consultantCode: resConsultantDetails[0]?.ConsultantCode,
+        consultantCode: resConsultantDetails[0]?.ConsultantCode?.toString(),
         customerOrSupplier: resConsultantDetails[0]?.CustomerOrSupplier ? resConsultantDetails[0]?.CustomerOrSupplier : "C",
         customerCode: resConsultantDetails[0]?.CustomerCode ? resConsultantDetails[0]?.CustomerCode : userInfo?.user?.userCode,
         userId: resConsultantDetails[0]?.UserId ? resConsultantDetails[0]?.UserId : userInfo?.user?.customerConsultantEmail,
@@ -511,25 +510,42 @@ export default function B2BUserProfile() {
         allowCredit : resConsultantDetails[0]?.AllowCredit==="True" ? true : false,
         approver : resConsultantDetails[0]?.IsApprover==="True" ? true : false,
         issueTicket : resConsultantDetails[0]?.IsAccessIssueTicket==="True" ? true : false,
-        makeBooking : resConsultantDetails[0]?.MakeBooking ? resConsultantDetails[0]?.MakeBooking : "0",
-        viewBooking : resConsultantDetails[0]?.ViewBooking ? resConsultantDetails[0]?.ViewBooking : "0",
-        amendBooking: resConsultantDetails[0]?.AmendBooking ? resConsultantDetails[0]?.AmendBooking : "0",
-        cancelBooking : resConsultantDetails[0]?.CancelBooking ? resConsultantDetails[0]?.CancelBooking : "0",
-        printVoucher : resConsultantDetails[0]?.PrintVoucher ? resConsultantDetails[0]?.PrintVoucher : "0",
-        viewOnlineInvoices : resConsultantDetails[0]?.OnlineInvoices ? resConsultantDetails[0]?.OnlineInvoices : "0",
-        viewOutstandingStatements : resConsultantDetails[0]?.OutstandingStatements ? resConsultantDetails[0]?.OutstandingStatements : "0",
-        bookingHistory : resConsultantDetails[0]?.BookingHistory ? resConsultantDetails[0]?.BookingHistory: "0",
-        POSMarkup: resConsultantDetails[0]?.POSMarkup ? resConsultantDetails[0]?.POSMarkup : "0",
+        makeBooking : resConsultantDetails[0]?.MakeBooking ? resConsultantDetails[0]?.MakeBooking?.toString() : "0",
+        viewBooking : resConsultantDetails[0]?.ViewBooking ? resConsultantDetails[0]?.ViewBooking?.toString() : "0",
+        amendBooking: resConsultantDetails[0]?.AmendBooking ? resConsultantDetails[0]?.AmendBooking?.toString() : "0",
+        cancelBooking : resConsultantDetails[0]?.CancelBooking ? resConsultantDetails[0]?.CancelBooking?.toString() : "0",
+        printVoucher : resConsultantDetails[0]?.PrintVoucher ? resConsultantDetails[0]?.PrintVoucher?.toString() : "0",
+        viewOnlineInvoices : resConsultantDetails[0]?.OnlineInvoices ? resConsultantDetails[0]?.OnlineInvoices?.toString() : "0",
+        viewOutstandingStatements : resConsultantDetails[0]?.OutstandingStatements ? resConsultantDetails[0]?.OutstandingStatements?.toString() : "0",
+        bookingHistory : resConsultantDetails[0]?.BookingHistory ? resConsultantDetails[0]?.BookingHistory?.toString() : "0",
+        POSMarkup: resConsultantDetails[0]?.POSMarkup ? resConsultantDetails[0]?.POSMarkup?.toString() : "0",
       });
-      setCommonLoad(false);
-      editModalOpen.current?.click();
+      //setTimeout(() => {
+        setCommonLoad(false);
+        editModalOpen.current?.click();
+      //}, 100)
     }
     else{
       toast.error("Something went wrong! Please try after sometime",{theme: "colored"});
       setCommonLoad(false)
     }
   }
-  
+
+  // const checkSubmit = (service, value) =>{
+  //   let item = {...userObj}
+  //   switch(service){
+  //     case 'access':
+  //     item.access = value;
+  //     setUserObj(item);
+  //     break;
+
+  //     case 'displayCreditDetails':
+  //     item.displayCreditDetails = value;
+  //     setUserObj(item);
+  //     break;
+  //   }
+  // }
+
   return (
     <MainLayout>
       <ToastContainer />
@@ -553,7 +569,7 @@ export default function B2BUserProfile() {
                 {resListRes?.length ?
                 <>
                   <div className="table-responsive">
-                    <table className='table table-sm table-bordered'>
+                    <table className='table fn14 table-bordered'>
                       <thead>
                         <tr className="table-light">
                           <th>S.No</th>
@@ -575,8 +591,20 @@ export default function B2BUserProfile() {
                             <td>{v.Tel}</td>
                             <td>{v.Fax}</td>
                             <td>{v.Email}</td>
-                            <td className='text-center'><button className='btn btn-outline-primary btn-sm py-0' onClick={() => editBtn(v)}><FontAwesomeIcon icon={faPencil} /></button></td>
-                            <td className='text-center'><button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0' onClick={() => setDeleteObj(v)}><FontAwesomeIcon icon={faTrash} /></button></td>
+                            <td className='text-center'>
+                              {userInfo?.user?.customerConsultantCode?.toString() === v.ConsultantCode?.toString() ?
+                                <></>
+                                :
+                                <button className='btn btn-outline-primary btn-sm py-0' onClick={() => editBtn(v)}><FontAwesomeIcon icon={faPencil} /></button>
+                              }
+                            </td>
+                            <td className='text-center'>
+                              {userInfo?.user?.customerConsultantCode?.toString() === v.ConsultantCode?.toString() ?
+                                <></>
+                                :
+                                <button data-bs-toggle="modal" data-bs-target="#deleteUserModal" type="button" className='btn btn-outline-danger btn-sm py-0' onClick={() => setDeleteObj(v)}><FontAwesomeIcon icon={faTrash} /></button>
+                              }
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -638,14 +666,14 @@ export default function B2BUserProfile() {
                         <div className='row gx-3 align-items-center'>
                           <div className='col-md-4 mb-3'>
                             <div><label>Title<span className='text-danger'>*</span></label></div>
-                            <div className="form-check form-check-inline">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="Ms." name="titleRadios" checked={userObj.title==='Ms.'} onChange={(e) => titleChange(e.target.value)} /> Ms.</label>
+                            <div className="d-inline-block me-3">
+                              <label className="m-0 curpointer" onClick={() => titleChange("Ms.")}><FontAwesomeIcon className='dblue' icon={userObj.title?.toLowerCase()==='ms.' ? faCircleDot : faCircle} /> Ms.</label>
                             </div>
-                            <div className="form-check form-check-inline">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="Mr." name="titleRadios" checked={userObj.title==='Mr.'} onChange={(e) => titleChange(e.target.value)} /> Mr.</label>
+                            <div className="d-inline-block">
+                              <label className="m-0 curpointer" onClick={() => titleChange("Mr.")}><FontAwesomeIcon className='dblue' icon={userObj.title?.toLowerCase()==='mr.' ? faCircleDot : faCircle} /> Mr.</label>
                             </div>
                             {errUserObj.title &&
-                            <div className='text-danger fn12'>Title is required</div>
+                            <div className='text-danger fn12 d-block'>Title is required</div>
                             }
                           </div>
 
@@ -752,24 +780,24 @@ export default function B2BUserProfile() {
                         <div className="row gx-3">
                           <div className='col-md-3 mb-3'>
                             <div className="fn15 mb-2"><strong>Access</strong></div>
-                            <div className="form-check">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="accessRadios" checked={userObj.access==='2'} onChange={(e) => setUserObj({ ...userObj, access: e.target.value })} /> Access to Booking Engine</label>
+                            <div className="mb-2">
+                              <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, access: "2"})}><FontAwesomeIcon className='dblue' icon={userObj.access==='2' ? faCircleDot : faCircle} /> Access to Booking Engine</label>
                             </div>
-                            <div className="form-check">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="accessRadios" checked={userObj.access==='1'} onChange={(e) => setUserObj({ ...userObj, access: e.target.value })} /> Access to Tariff</label>
+                            <div className="mb-2">
+                              <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, access: "1"})}><FontAwesomeIcon className='dblue' icon={userObj.access==='1' ? faCircleDot : faCircle} /> Access to Tariff</label>
                             </div>
-                            <div className="form-check">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="accessRadios" checked={userObj.access==='0'} onChange={(e) => setUserObj({ ...userObj, access: e.target.value })} /> Freeze</label>
+                            <div className="mb-2">
+                              <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, access: "0"})}><FontAwesomeIcon className='dblue' icon={userObj.access==='0' ? faCircleDot : faCircle} /> Freeze</label>
                             </div>
                           </div>
 
                           <div className='col-md-3 mb-3'>
                             <div className="fn15 mb-2"><strong>Display Credit Details</strong></div>
-                            <div className="form-check">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="optionsRadios" checked={userObj.displayCreditDetails==='1'} onChange={(e) => setUserObj({ ...userObj, displayCreditDetails: e.target.value })} /> Yes</label>
+                            <div className="mb-2">
+                              <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, displayCreditDetails: "1"})}><FontAwesomeIcon className='dblue' icon={userObj.displayCreditDetails==='1' ? faCircleDot : faCircle} /> Yes</label>
                             </div>
-                            <div className="form-check">
-                              <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="optionsRadios" checked={userObj.displayCreditDetails==='0'} onChange={(e) => setUserObj({ ...userObj, displayCreditDetails: e.target.value })} /> No</label>
+                            <div className="mb-2">
+                              <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, displayCreditDetails: "0"})}><FontAwesomeIcon className='dblue' icon={userObj.displayCreditDetails==='0' ? faCircleDot : faCircle} /> No</label>
                             </div>
                           </div>
 
@@ -800,57 +828,39 @@ export default function B2BUserProfile() {
                               <td>1.</td>
                               <td>Make Booking</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="makeBookingRadios" checked={userObj.makeBooking==='2'} onChange={(e) => setUserObj({ ...userObj, makeBooking: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, makeBooking: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.makeBooking==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="makeBookingRadios" checked={userObj.makeBooking==='1'} onChange={(e) => setUserObj({ ...userObj, makeBooking: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, makeBooking: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.makeBooking==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="makeBookingRadios" checked={userObj.makeBooking==='0'} onChange={(e) => setUserObj({ ...userObj, makeBooking: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, makeBooking: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.makeBooking==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                             <tr>
                               <td>2.</td>
                               <td>View Booking</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="viewBookingRadios" checked={userObj.viewBooking==='2'} onChange={(e) => setUserObj({ ...userObj, viewBooking: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewBooking: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.viewBooking==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="viewBookingRadios" checked={userObj.viewBooking==='1'} onChange={(e) => setUserObj({ ...userObj, viewBooking: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewBooking: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.viewBooking==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="viewBookingRadios" checked={userObj.viewBooking==='0'} onChange={(e) => setUserObj({ ...userObj, viewBooking: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewBooking: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.viewBooking==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                             <tr>
                               <td>3.</td>
                               <td>Cancel Booking</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="cancelBookingRadios" checked={userObj.cancelBooking==='2'} onChange={(e) => setUserObj({ ...userObj, cancelBooking: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, cancelBooking: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.cancelBooking==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="cancelBookingRadios" checked={userObj.cancelBooking==='1'} onChange={(e) => setUserObj({ ...userObj, cancelBooking: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, cancelBooking: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.cancelBooking==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="cancelBookingRadios" checked={userObj.cancelBooking==='0'} onChange={(e) => setUserObj({ ...userObj, cancelBooking: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, cancelBooking: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.cancelBooking==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                             <tr className="table-light">
@@ -860,83 +870,59 @@ export default function B2BUserProfile() {
                               <td>1.</td>
                               <td>Print Voucher</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="printVoucherRadios" checked={userObj.printVoucher==='2'} onChange={(e) => setUserObj({ ...userObj, printVoucher: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, printVoucher: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.printVoucher==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="printVoucherRadios" checked={userObj.printVoucher==='1'} onChange={(e) => setUserObj({ ...userObj, printVoucher: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, printVoucher: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.printVoucher==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="printVoucherRadios" checked={userObj.printVoucher==='0'} onChange={(e) => setUserObj({ ...userObj, printVoucher: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, printVoucher: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.printVoucher==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                             <tr>
                               <td>2.</td>
                               <td>View Online Invoices</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="viewOnlineInvoicesRadios" checked={userObj.viewOnlineInvoices==='2'} onChange={(e) => setUserObj({ ...userObj, viewOnlineInvoices: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewOnlineInvoices: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.viewOnlineInvoices==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="viewOnlineInvoicesRadios" checked={userObj.viewOnlineInvoices==='1'} onChange={(e) => setUserObj({ ...userObj, viewOnlineInvoices: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewOnlineInvoices: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.viewOnlineInvoices==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="viewOnlineInvoicesRadios" checked={userObj.viewOnlineInvoices==='0'} onChange={(e) => setUserObj({ ...userObj, viewOnlineInvoices: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewOnlineInvoices: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.viewOnlineInvoices==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                             <tr>
                               <td>3.</td>
                               <td>View Outstanding Statements</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="outstandingStatementsRadios" checked={userObj.viewOutstandingStatements==='2'} onChange={(e) => setUserObj({ ...userObj, viewOutstandingStatements: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewOutstandingStatements: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.viewOutstandingStatements==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="outstandingStatementsRadios" checked={userObj.viewOutstandingStatements==='1'} onChange={(e) => setUserObj({ ...userObj, viewOutstandingStatements: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewOutstandingStatements: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.viewOutstandingStatements==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="outstandingStatementsRadios" checked={userObj.viewOutstandingStatements==='0'} onChange={(e) => setUserObj({ ...userObj, viewOutstandingStatements: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, viewOutstandingStatements: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.viewOutstandingStatements==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                             <tr>
                               <td>4.</td>
                               <td>Booking History (Minimum Retention Period 2 years) status wise</td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="2" name="bookingHistoryRadios" checked={userObj.bookingHistory==='2'} onChange={(e) => setUserObj({ ...userObj, bookingHistory: e.target.value })} /> All</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, bookingHistory: "2" })}><FontAwesomeIcon className='dblue' icon={userObj.bookingHistory==='2' ? faCircleDot : faCircle} /> All</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="1" name="bookingHistoryRadios" checked={userObj.bookingHistory==='1'} onChange={(e) => setUserObj({ ...userObj, bookingHistory: e.target.value })} /> Distinct</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, bookingHistory: "1" })}><FontAwesomeIcon className='dblue' icon={userObj.bookingHistory==='1' ? faCircleDot : faCircle} /> Distinct</label>
                               </td>
                               <td>
-                                <div className="form-check">
-                                  <label className="m-0 curpointer"><input className="form-check-input" type="radio" value="0" name="bookingHistoryRadios" checked={userObj.bookingHistory==='0'} onChange={(e) => setUserObj({ ...userObj, bookingHistory: e.target.value })} /> None</label>
-                                </div>
+                                <label className="m-0 curpointer" onClick={() => setUserObj({ ...userObj, bookingHistory: "0" })}><FontAwesomeIcon className='dblue' icon={userObj.bookingHistory==='0' ? faCircleDot : faCircle} /> None</label>
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
                       <div className='modal-footer'>
-                        <button type="button" className='btn btn-warning' onClick={doSubmit} disabled={submitLoad}> &nbsp; {submitLoad ? 'Submitting' : 'Submit'}  &nbsp; </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={modalClose} onClick={clearFieldBtn}> &nbsp; Close &nbsp; </button> 
+                        <button type="button" className='btn btn-warning' onClick={()=>doSubmit()} disabled={submitLoad}> &nbsp; {submitLoad ? 'Submitting' : 'Submit'}  &nbsp; </button> &nbsp; <button type="button" className='btn btn-outline-secondary' data-bs-dismiss="modal" ref={modalClose} onClick={()=>clearFieldBtn()}> &nbsp; Close &nbsp; </button> 
                       </div>
                     </div>
                   </div>

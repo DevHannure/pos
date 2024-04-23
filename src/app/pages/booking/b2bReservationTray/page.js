@@ -1,9 +1,8 @@
 "use client"
 import React, {useEffect, useRef, useState} from 'react';
-import Image from 'next/image';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch, faEyeSlash, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faSearch, faEyeSlash, faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
@@ -867,21 +866,29 @@ export default function BBReservationTray() {
                     onChange={dateChange} />
                   </div>
 
-                  <div className='col-lg-4 mb-2 align-self-end'>
+                  <div className='col-lg-auto mb-2 align-self-end'>
                     <button type='button' className='btn btn-sm btn-warning' onClick={() => getReservations()}>Filter Bookings</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-light' onClick={() => resetFilter()}>Reset</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-outline-warning' onClick={() => getExcel()}>Export To Excel</button>
                   </div>
+
+                  <div className='col mb-2 align-self-end'>
+                    <div className="input-group input-group-sm">
+                      <span className="input-group-text bg-white"><FontAwesomeIcon icon={faSearch} /></span>
+                      <input type="text" className="form-control border-start-0 ps-0" placeholder="Booking/ CartId/ Pax/ SuppConfNo/ CustRefNo" value={bookingNo} onChange={(e)=> searchById(e)} onKeyDown={(e) => (e.key === "Enter" ? getReservations() : null)} />
+                    </div>
+                  </div>
+
                 </div>
 
-                <div className='row gx-2 justify-content-end'>
+                {/* <div className='row gx-2 justify-content-end'>
                   <div className='col-md-4 col-6 mt-2 align-self-end'>
                     <div className="input-group input-group-sm">
                       <span className="input-group-text bg-white"><FontAwesomeIcon icon={faSearch} /></span>
                       <input type="text" className="form-control border-start-0 ps-0" placeholder="Booking/ CartId/ Pax/ SuppConfNo/ CustRefNo" value={bookingNo} onChange={(e)=> searchById(e)} onKeyDown={(e) => (e.key === "Enter" ? getReservations() : null)} />
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {resListRes ?
@@ -927,10 +934,10 @@ export default function BBReservationTray() {
                             <span className='text-danger'>{e.status}</span>
                             :
                             ["cust.confirmed"].includes(e.status.toLowerCase()) ?
-                            <><span className="text-success">Confirmed</span> <small>(UnVouchered)</small></>
+                            <><span className="text-success">Confirmed</span> <small>(Vouchered)</small></>
                             :
                             ["supp.confirmed"].includes(e.status.toLowerCase()) ?
-                            <><span className="text-success">Confirmed</span> <small>(Vouchered)</small></>
+                            <><span className="text-success">Confirmed</span> <small>(UnVouchered)</small></>
                             :
                             ["on request", "sent to supp."].includes(e.status.toLowerCase()) ?
                             <span className='starGold'>{e.status}</span>
@@ -943,7 +950,7 @@ export default function BBReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                                <div className='divCell'><button onClick={()=> viewDetails(e.bookingNo)} type="button" className='sqBtn' title="Details" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                                <div className='divCell'><button onClick={()=> viewDetails(e.bookingNo)} type="button" className='sqBtn' title="Details" data-bs-toggle="tooltip"><FontAwesomeIcon icon={faEye} className='blue' /></button></div>
                               }
                             </>
                           }
@@ -1117,10 +1124,10 @@ export default function BBReservationTray() {
                                           <span className='text-danger'>{s.ServiceStatus}</span>
                                           :
                                           ["cust.confirmed"].includes(s.ServiceStatus.toLowerCase()) ?
-                                          <><span className="text-success">Confirmed</span> <small>(UnVouchered)</small></>
+                                          <><span className="text-success">Confirmed</span> <small>(Vouchered)</small></>
                                           :
                                           ["supp.confirmed"].includes(s.ServiceStatus.toLowerCase()) ?
-                                          <><span className="text-success">Confirmed</span> <small>(Vouchered)</small></>
+                                          <><span className="text-success">Confirmed</span> <small>(UnVouchered)</small></>
                                           :
                                           ["on request", "sent to supp."].includes(s.ServiceStatus.toLowerCase()) ?
                                           <span className='starGold'>{s.ServiceStatus}</span>

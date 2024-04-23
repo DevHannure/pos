@@ -41,6 +41,9 @@ export default function HotelResult(props) {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(70);  
   const [pagesCount, setPagesCount] = useState(0);
+  const pageCountToShow = 10;
+  const startPage = Math.max(0, currentPage - Math.floor(pageCountToShow / 2));
+  const endPage = Math.min(pagesCount - 1, startPage + pageCountToShow - 1);
 
   const [roomsVar, setRoomsVar] = useState(null);
   const [childrenAgesVar, setChildrenAgesVar] = useState('');
@@ -251,7 +254,7 @@ export default function HotelResult(props) {
           }
         })
       }
-      const tempArr = newArr.map(item => ({item:item, hotelCode: v.systemId, }))
+      const tempArr = newArr?.map(item => ({item:item, hotelCode: v.systemId, }))
       if (_.isEmpty(roomData)) {
         roomItems = {}
       }
@@ -280,7 +283,7 @@ export default function HotelResult(props) {
           <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(row.item[0], row.item.reduce((totalRc, rc) => totalRc + 'Seprator'+ rc.rateCode, 0))}>Fare Breakup</a> 
           }
           {row.item[0].isCancellationPolicyAvailable &&
-          <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={()=> cancelPolicy(row.item[0], row.item.reduce((totalRc, rc) => totalRc + 'Seprator'+ rc.rateCode, 0))}>Cancellation Policy</a></>
+          <>&nbsp;|&nbsp;  <a href="#showCancelModal" data-bs-toggle="modal" onClick={(e)=> cancelPolicy(e, row.item[0], row.item.reduce((totalRc, rc) => totalRc + 'Seprator'+ rc.rateCode, 0))}>Cancellation Policy</a></>
           }
         </div>
       ),
@@ -304,8 +307,8 @@ export default function HotelResult(props) {
       sortable: true,
       cell:(row)=>(
         <div className="fw-semibold">{row.item[0].shortCodeName}</div>
-      )
-      //omit: process.env.NEXT_PUBLIC_APPCODE==='1',
+      ),
+      omit: process.env.NEXT_PUBLIC_APPCODE==='1',
     },
     {
       name: 'Status',
@@ -440,7 +443,9 @@ export default function HotelResult(props) {
     }
   }
 
-  const cancelPolicy = async(roomVal, rc) => {
+  const cancelPolicy = async(e, roomVal, rc) => {
+    //console.log("e", e)
+    //e.isDefaultPrevented();
     let rateKeyArray = rc.split('Seprator').slice(1);
     setRoomRow(roomVal)
     setCanPolData(null);
@@ -492,10 +497,47 @@ export default function HotelResult(props) {
     else{
       setCanPolData(cancelPolicyData[hotelCode+'_'+roomVal.rateCode]);
     }
+    //window.scroll(0,570)
+    //e.scrollIntoView();
+
+    //e.preventDefault();
+    //console.log("divRef.current", divRef)
+    //debugger;
+    // divRef.current.scroll({
+    //   top: 300,
+    //   behavior: "smooth"
+    // });
+    
+    // const section = e.target;
+    // section.scroll(0,300)
+
+    //const section = e.target;
+    // section.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+    
+    // var y = document.getElementsByClassName('dataScroll');
+    // var aNode = y[0];
+    // debugger;
+    // aNode.scroll({
+    //   top: 150,
+    //   behavior: 'smooth'
+    // });
+
+    //aNode.scrollTop = aNode.scrollHeight;
+
+    // aNode.scrollTo({
+    //   top:e.screenY,
+    //   behavior:"smooth"
+    // });
+  //   section.scrollIntoView({
+  //     behavior: "smooth",
+  //     block: "start",
+  //     inline: "start"
+  //  });
   }
 
   const htlDetail = async(htlCode) => {
     setHtlData(null);
+    setHtlTab('Amenities');
     let htlObj = {
       "systemId": htlCode
     }
@@ -518,18 +560,6 @@ export default function HotelResult(props) {
   }
 
   const [htlTab, setHtlTab] = useState('Amenities');
-  const getImages = (imgValue) => {
-    const images = [];
-    if(imgValue){
-      for (let i = 0; i <= imgValue.length; i++) {
-        images.push({
-          original: 'https://static.giinfotech.ae/medianew'+imgValue[i],
-          thumbnail: 'https://static.giinfotech.ae/medianew'+imgValue[i]
-        });
-      }
-    }
-    return images;
-  };
 
   const [repriceQry, setRepriceQry] = useState('');
 
@@ -608,7 +638,7 @@ export default function HotelResult(props) {
     const [selRoomStatus, setSelRoomStatus] = useState('');
     const filteredItems = roomDataFilter.filter(
       v => {
-        let kk = v.item[0]?.roomTypeName.toLowerCase().includes(fltrRoomTxt.toLowerCase());
+        let kk = (v.item[0]?.roomBasisName.toLowerCase().includes(fltrRoomTxt.toLowerCase()) || v.item[0]?.roomTypeName.toLowerCase().includes(fltrRoomTxt.toLowerCase()) );
         return kk
       },
     );
@@ -652,14 +682,44 @@ export default function HotelResult(props) {
             />
           </div>
           <div className="col-md-3 col-6">
-            <input type="text" className="form-control form-control-sm fn13" placeholder="Search by Room Name" value={fltrRoomTxt} onChange={(e) => setFltrRoomTxt(e.target.value)} />
+            <input type="text" className="form-control form-control-sm fn13" placeholder="Search" value={fltrRoomTxt} onChange={(e) => setFltrRoomTxt(e.target.value)} />
           </div>
         </div>
       </div>
-      <DataTable columns={columns} data={fltrResSupplier} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  />
+      <DataTable columns={columns} data={fltrResSupplier} fixedHeader fixedHeaderScrollHeight="320px" className="dataScroll" highlightOnHover  />
       </>
     )
   }
+
+  const GalleryComp = (prop) => {
+    const imgGallery = prop?.imgVal ? prop.imgVal.map((item) => ({ 
+      original: 'https://static.giinfotech.ae/medianew'+item, 
+      thumbnail: 'https://static.giinfotech.ae/medianew'+item
+    })) : [];
+    return(
+      <>
+        {imgGallery ?
+          <>
+            {imgGallery.length ?
+              <ImageGallery items={imgGallery} />
+              :
+              <div className='fw-semibold fs-6 mt-2'>Images Not Available</div>
+            }
+          </>
+          :
+          <div className='text-center blue my-3'>
+            <span className="fs-5 align-middle d-inline-block"><strong>Images Loading..</strong></span>&nbsp; 
+            <div className="dumwave align-middle">
+              <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+              <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+              <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+            </div>
+          </div>
+        }
+      </>
+    )
+  }
+
   return (
     <>
     {getHtlRes?.hotels.b2BHotel.length ?  
@@ -680,16 +740,23 @@ export default function HotelResult(props) {
               <option value="trpadvsrmax">Trip Adavisor Rating High to Low</option>
             </select>
           </div>
-          <div className="col-lg-8 d-none d-lg-block">
+          <div className="col-lg-8">
             <nav>
               <ul className="pagination pagination-sm justify-content-center m-0">
-                <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={currentPage <= 0} className="page-link border-0 text-dark">First</button></li>
-                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage - 1)} disabled={currentPage <= 0} className="page-link border-0 text-dark">Previous</button></li>
-                {[...Array(pagesCount)].map((page, i) => 
-                <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link border-0 " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
-                )}
-                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Next</button></li>
-                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Last</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={currentPage <= 0} className="page-link text-dark">First</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage - 1)} disabled={currentPage <= 0} className="page-link text-dark">Previous</button></li>
+                {/* {[...Array(pagesCount)].map((page, i) => 
+                <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
+                )} */}
+                {[...Array(endPage - startPage + 1)].map((_, i) => (
+                  <li key={startPage + i} className="page-item">
+                    <button type="button" onClick={() => handleClick(startPage + i)} className={"page-link " + (startPage + i === currentPage ? 'active' : '')}>
+                      {startPage + i + 1}
+                    </button>
+                  </li>
+                ))}
+                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link text-dark">Next</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link text-dark">Last</button></li>
               </ul>
             </nav>
           </div>
@@ -739,8 +806,10 @@ export default function HotelResult(props) {
                 <div className="col-lg-2 align-self-center">
                   <div className='d-flex d-lg-block justify-content-between text-center px-lg-0 px-1'>
                     <div>
+                      {process.env.NEXT_PUBLIC_APPCODE === "0" &&
                       <div className='fn12 text-danger'>Cheapest with {v.supplierName}</div>
-                      <div className="blue fw-semibold fs-6 mt-n1">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
+                      }
+                      <div className="blue fw-semibold fs-6 mt-n1 mb-1">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
                     </div>
                     <div>
                       <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => roomDetail(v)}>&nbsp;Select</button>
@@ -759,23 +828,6 @@ export default function HotelResult(props) {
                     {roomData?.[v.systemId]?.length ?
                     <div className="mt-n1">
                       <RoomSection roomData={roomData?.[v.systemId]} />
-                      {/* <div className="px-2">
-                        <div className="row gx-2 justify-content-end">
-                          <div className="col-md-3">
-                            <Select
-                              isMulti
-                              name="selectFltr"
-                              options={roomOptions}
-                              classNamePrefix="selectSm"
-                            />
-                          </div>
-                          <div className="col-md-3">
-                            <input type="text" className="form-control form-control-sm fn13" placeholder="Search by Room Name" value={fltrRoomTxt} onChange={(e) => fltrRoomTxtBtn(e.target.value, v.systemId)} />
-                          </div>
-                        </div>
-                      </div>
-                      <DataTable columns={columns} data={roomData?.[v.systemId]} fixedHeader fixedHeaderScrollHeight="320px" className='dataScroll' highlightOnHover  /> */}
-
                     </div>
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>
@@ -803,13 +855,20 @@ export default function HotelResult(props) {
         <div className="mt-4">
           <nav>
             <ul className="pagination pagination-sm justify-content-center m-0">
-              <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={currentPage <= 0} className="page-link border-0 text-dark">First</button></li>
-              <li className="page-item"><button type="button" onClick={() => handleClick(currentPage - 1)} disabled={currentPage <= 0} className="page-link border-0 text-dark">Previous</button></li>
-              {[...Array(pagesCount)].map((page, i) => 
-              <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link border-0 " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
-              )}
-              <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Next</button></li>
-              <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark">Last</button></li>
+              <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={currentPage <= 0} className="page-link text-dark">First</button></li>
+              <li className="page-item"><button type="button" onClick={() => handleClick(currentPage - 1)} disabled={currentPage <= 0} className="page-link text-dark">Previous</button></li>
+              {/* {[...Array(pagesCount)].map((page, i) => 
+              <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
+              )} */}
+              {[...Array(endPage - startPage + 1)].map((_, i) => (
+                <li key={startPage + i} className="page-item">
+                  <button type="button" onClick={() => handleClick(startPage + i)} className={"page-link " + (startPage + i === currentPage ? 'active' : '')}>
+                    {startPage + i + 1}
+                  </button>
+                </li>
+              ))}
+              <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link text-dark">Next</button></li>
+              <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link text-dark">Last</button></li>
             </ul>
           </nav>
         </div>
@@ -896,13 +955,9 @@ export default function HotelResult(props) {
                     </>
                     }
                   </div>
-
+                 
                   <div className={`tab-pane fade py-3 ${htlTab ==='Photos' && 'show active'}`}>
-                    {htlData.hotelDetail?.imageUrls.length ?
-                      <ImageGallery items={getImages(htlData.hotelDetail?.imageUrls)} />
-                      :
-                      <div className='fw-semibold fs-6 mt-2'>Images Not Available</div>
-                    }
+                    <GalleryComp imgVal={htlData.hotelDetail?.imageUrls} />
                   </div>
 
                   <div className={`tab-pane fade py-3 ${htlTab ==='Map' && 'show active'}`}>

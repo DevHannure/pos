@@ -18,25 +18,18 @@ import Image from 'next/image';
 function getUID() {return Date.now().toString(36);}
 
 export default function HotelListing() {
+  const searchparams = typeof window !== 'undefined' ? sessionStorage.getItem('qryListing') : null;
   const [qry, setQry] = useState(null);
   useEffect(() => {
-    if(!qry){
-      const searchparams = sessionStorage.getItem('qryListing');
+    //if(!qry){
       let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
       let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
       setQry(JSON.parse(bytes))
-    }
-  }, []);
+    //}
+  }, [searchparams]);
 
   const { status } = useSession();
-  // const searchparams = useSearchParams();
-  // const search = searchparams.get('qry');
-  // let decData = enc.Base64.parse(search).toString(enc.Utf8);
-  // let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
-  // const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
-  //const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
-  //const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
 
   const [countDown, setCountDown] = useState(0);
@@ -52,6 +45,8 @@ export default function HotelListing() {
     }
   },[qry]);
 
+  //console.log("axc",qry?.starRating?.toString())
+
   const doHtlResultOnLoad = async() => {
     let uniqId = getUID();
     let htlSrchObj = {
@@ -66,6 +61,7 @@ export default function HotelListing() {
         "Currency": qry.currency,
         "Nationality": qry.nationality.split('-')[1],
         "Rooms":{},
+        //"StarRating": qry?.starRating?.toString(),
         "TassProInfo": {
           "CustomerCode": qry.customerCode,
           "RegionID": qry.regionCode?.toString(),
@@ -141,19 +137,6 @@ export default function HotelListing() {
       var localB2BHotel = resLocalHtlResult?.hotels?.b2BHotel;
       var mixB2BHotel = [...xmlB2BHotel, ...localB2BHotel];
       let maxValHotel = mixB2BHotel.sort((a, b) => parseFloat(b.minPrice) - parseFloat(a.minPrice));
-      
-      // const arr = maxValHotel.reduce((result,obj)=> {
-      // let row = result.find(x=>x.systemId===obj.systemId);
-      // if(!row){ 
-      //   obj.matchBoth = false;
-      //   result.push({...obj})
-      // }  
-      // else if(parseFloat(row.minPrice) > parseFloat(obj.minPrice)){
-      //   obj.matchBoth = true
-      //   Object.assign(row,obj)
-      // } 
-      // return result
-      // },[]);
 
       const arr = maxValHotel.reduce((result,obj)=> {
       let row = result.find(x=>x.systemId===obj.systemId);
@@ -200,13 +183,13 @@ export default function HotelListing() {
 
   const [filterChoose, setFilterChoose] = useState(false);
   const chooseFilter = (val) => {
-      setFilterChoose(val)
+    setFilterChoose(val)
   };
   
   useEffect(() => {
     let timerId;
     if (runTimer) {
-      setCountDown(60 * 0.75);
+      setCountDown(60 * 1);
       timerId = setInterval(() => {
         setCountDown((countDown) => countDown - 1);
       }, 1000);
@@ -227,7 +210,6 @@ export default function HotelListing() {
 
   const seconds = String(countDown % 60).padStart(2, 0);
   const minutes = String(Math.floor(countDown / 60)).padStart(2, 0);
-
   
   useEffect(() => {
     let interval;
@@ -261,7 +243,7 @@ export default function HotelListing() {
             <div className="mainloader1">
               <div className="loadingImg text-center rounded m-2">
                 <div className='bg-black bg-opacity-50 text-white p-2 rounded-top'>{qry?.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(qry?.chkIn), 'dd MMM yyyy')} to {format(new Date(qry?.chkOut), 'dd MMM yyyy')}</div>
-                <div className='py-3'>
+                <div className='p-3'>
                   <div className='wonderImg'><Image src='/images/wonder.png' alt='loadin' width={290} height={290} priority={true} /></div>
                 </div>
                 <div className='text-end p-2 pt-0'>Results Anticipated In: {minutes}:{seconds}</div>

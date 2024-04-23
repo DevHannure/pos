@@ -5,11 +5,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faCaretRight, faCheck, faArrowRightLong } from "@fortawesome/free-solid-svg-icons";
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
-import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
-import DataTable from 'react-data-table-component';
 import { useSelector, useDispatch } from "react-redux";
 import { doTourOptDtls } from '@/app/store/tourStore/tour';
-import HotelService from '@/app/services/hotel.service';
+import { doFilterSort } from '@/app/store/tourStore/tour';
 import {format, addDays} from 'date-fns';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
@@ -24,13 +22,14 @@ export default function TourResult(props) {
   const dispatch = useDispatch();
   const getTourRes = useSelector((state) => state.tourResultReducer?.tourResObj);
   const getOrgTourResult = useSelector((state) => state.tourResultReducer?.tourResOrgObj);
+  const tourFilterVar = useSelector((state) => state.tourResultReducer?.tourFltr);
 
   const srtVal = (val) =>{
-    // let htlFilterSort = {
-    //   srtVal: val
-    // }
-    // let obj = {'htlFilters': htlFilterVar, 'htlFilterSort': htlFilterSort}
-    // dispatch(doFilterSort(obj));
+    let tourFilterSort = {
+      srtVal: val
+    }
+    let obj = {'tourFilters': tourFilterVar, 'tourFilterSort': tourFilterSort}
+    dispatch(doFilterSort(obj));
   };
 
   const [currentPage, setCurrentPage] = useState(0);
@@ -48,6 +47,7 @@ export default function TourResult(props) {
 
   const tourOptData = useSelector((state) => state.tourResultReducer?.tourOptDtls);
   const [tourCollapse, setTourCollapse] = useState('');
+  //console.log("tourOptData", tourOptData)
 
   const tourOption = async(v) => {
     let tourCollapseCode = '#tour'+v.code;
@@ -73,7 +73,7 @@ export default function TourResult(props) {
         }
       }
     }
-
+    
     if (parseInt(qry.children) > 0) {
       let childrenObj = {}
       let arrChildAges = []
@@ -108,6 +108,39 @@ export default function TourResult(props) {
         responseOptions = TourService.doOptions(tourOptionObj, qry.correlationId);
       }
       let resOptions = await responseOptions;
+
+      if(resOptions){
+        resOptions?.tourOptions?.map((item) =>{
+          let adultPrice = 0;
+          let childPrice = 0;
+
+          item.paxPrices.forEach((p) => {
+            if(p.paxType === 'ADULT'){
+              adultPrice = (Number(p.net) * Number(qry.adults))
+            }
+            if(qry.children !==0){
+              let chdAgesArr = qry.ca.split(',');
+              let subChildPrc = 0;
+              chdAgesArr.forEach((c) => {
+                let arrAges = p.age.split('-');
+                let fromAge = Number(arrAges[0]);
+                let toAge = Number(arrAges[1]);
+                let current = Number(c);
+                if (current >= fromAge && current <= toAge){
+                  subChildPrc = subChildPrc + (Number(p.net))
+                }
+              })
+              childPrice += subChildPrc;
+            }
+          })
+          
+          item.totalAdult = adultPrice;
+          item.totalChild = childPrice;
+          item.totalPaxPrice = adultPrice+childPrice;
+        })
+        resOptions?.tourOptions?.sort((a, b) => parseFloat(a.totalPaxPrice) - parseFloat(b.totalPaxPrice));
+      }
+
       if (_.isEmpty(tourOptData)) {
         tourOptItems = {}
       }
@@ -116,49 +149,83 @@ export default function TourResult(props) {
     }
   }
 
-  const fareBreakkup = async(v) => {
-    const fareBrkupObj = {
-      "CustomerCode": qry.customerCode,
-      "SearchParameter": {
-        "DestinationCode": qry.destination[0].destinationCode,
-        "CountryCode": qry.destination[0].countryCode,
-        "GroupCode": v.groupCode,
-        "ServiceDate": qry.chkIn,
-        "Currency": qry.currency,
-        "Adult": qry.adults?.toString(),
-        "TourCode": v.tourCode,
-        "TassProField": {
-          "CustomerCode": qry.customerCode,
-          "RegionId": qry.regionCode?.toString()
-        }
-      }
-    }
+  const [policyDtl, setPolicyDtl] = useState(null);
+  //console.log("policyDtl", policyDtl)
+  // const [fareBrkupData, setFareBrkupData] = useState({});
+  // const [fareBrkData, setFareBrkData] = useState(null);
+  // console.log("fareBrkData", fareBrkData)
 
-    if (parseInt(qry.children) > 0) {
-      let childrenObj = {}
-      let arrChildAges = []
-      let indx = 0
-      let chdAgesArr = qry.ca.split(',');
-      for (var k = 0; k < chdAgesArr.length; k++) {
-        indx = indx + 1
-        let ageObj = {}
-        ageObj.Identifier = indx
-        ageObj.Text = chdAgesArr[k]
-        arrChildAges.push(ageObj)
-      }
-      childrenObj.Count = parseInt(qry.children)
-      childrenObj.ChildAge = arrChildAges;
-      fareBrkupObj.SearchParameter.Children = childrenObj
-    }
+  // const fareBreakkup = async(cat, v) => {
+  //   console.log("cat", cat)
+  //   setFareBrkData(null);
+  //   const fareBrkupObj = {
+  //     "CustomerCode": qry.customerCode,
+  //     "SearchParameter": {
+  //       "DestinationCode": qry.destination[0].destinationCode,
+  //       "CountryCode": qry.destination[0].countryCode,
+  //       "GroupCode": v.groupCode,
+  //       "ServiceDate": qry.chkIn,
+  //       "Currency": qry.currency,
+  //       "Adult": qry.adults?.toString(),
+  //       "TourCode": cat.rateKey,
+  //       "TassProField": {
+  //         "CustomerCode": qry.customerCode,
+  //         "RegionId": qry.regionCode?.toString()
+  //       }
+  //     }
+  //   }
 
-    if(v.supplierShortCode?.toLowerCase() === 'local'){
-      tourOptionObj.SessionId = getTourRes?.generalInfo?.localSessionId
-    }
-    else{
-      tourOptionObj.SessionId = getTourRes?.generalInfo?.sessionId
-    }
+  //   if (parseInt(qry.children) > 0) {
+  //     let childrenObj = {}
+  //     let arrChildAges = []
+  //     let indx = 0
+  //     let chdAgesArr = qry.ca.split(',');
+  //     for (var k = 0; k < chdAgesArr.length; k++) {
+  //       indx = indx + 1
+  //       let ageObj = {}
+  //       ageObj.Identifier = indx
+  //       ageObj.Text = chdAgesArr[k]
+  //       arrChildAges.push(ageObj)
+  //     }
+  //     childrenObj.Count = parseInt(qry.children)
+  //     childrenObj.ChildAge = arrChildAges;
+  //     fareBrkupObj.SearchParameter.Children = childrenObj
+  //   }
 
-  }
+  //   if(v.supplierShortCode?.toLowerCase() === 'local'){
+  //     fareBrkupObj.SessionId = getTourRes?.generalInfo?.localSessionId
+  //   }
+  //   else{
+  //     fareBrkupObj.SessionId = getTourRes?.generalInfo?.sessionId
+  //   }
+
+  //   console.log("fareBrkupObj", fareBrkupObj)
+
+  //   let fbRes = {}
+  //   let fbItems = {...fareBrkupData}
+  //   if (_.isEmpty(fareBrkupData[cat.tourOptionCode])) {
+  //     let responseFarebrkup = null;
+  //     if(v.supplierShortCode?.toLowerCase() === 'local'){
+  //       responseFarebrkup = TourService.doLocalPriceBreakup(fareBrkupObj, qry.correlationId);
+  //     }
+  //     else{
+  //       responseFarebrkup = TourService.doPriceBreakup(fareBrkupObj, qry.correlationId);
+  //     }
+  //     const resFarebrkup = await responseFarebrkup;
+  //     setFareBrkData(resFarebrkup);
+  //     fbRes = resFarebrkup;
+  //     if (_.isEmpty(fareBrkupData)) {
+  //       fbItems = {}
+  //     }
+  //     fbItems[cat.tourOptionCode] = fbRes;
+  //     setFareBrkupData(fbItems);
+  //   }
+  //   else{
+  //     setFareBrkData(fareBrkupData[cat.tourOptionCode]);
+  //   }
+    
+
+  // }
   
   
   return (
@@ -185,8 +252,8 @@ export default function TourResult(props) {
                 {[...Array(pagesCount)].map((page, i) => 
                   <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link border-0 rounded " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
                 )}
-                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} className="page-link border-0 text-dark rounded">Next</button></li>
-                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} className="page-link border-0 text-dark rounded">Last</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark rounded">Next</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark rounded">Last</button></li>
               </ul>
             </nav>
           </div>
@@ -239,79 +306,70 @@ export default function TourResult(props) {
                   <div className="row gx-2 text-center h-100">
                     <div className="col-auto col-lg-12">
                       <div className='mb-1'><span className='bg-success-subtle rounded fn10 px-2 py-1'>Cheapest with {v.supplierShortCode}</span></div>
-                      <div className="blue fw-semibold fs-5">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
+                      <div className="blue fw-semibold fs-5"><small className='fn14'>From</small> {qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
                     </div>
                     <div className="col-auto col-lg-12">
                       <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => tourOption(v)}> &nbsp; Select &nbsp; </button>
                     </div>
                   </div>
-                  
-                  {/* <div className="d-flex d-lg-block justify-content-between text-center px-lg-0 px-1">
-                    <div>
-                      <div className='mb-1'><span className='bg-success-subtle rounded fn10 px-2 py-1'>Cheapest with HotelRack</span></div>
-                      <div className="blue fw-semibold fs-6">AED 86.90</div>
-                    </div>
-                    <div>
-                      <button className="btn btn-success togglePlus px-3 py-1" type="button"> &nbsp; Select &nbsp; </button>
-                    </div>
-                  </div> */}
-
                 </div>
                
               </div>
 
               <div className={"collapse "+(tourCollapse==='#tour'+v.code ? 'show':'')}>
                 <div>
-                {tourOptData?.[v.code] ?
+                  {tourOptData?.[v.code] ?
                     <>
                     {tourOptData?.[v.code]?.tourOptions?.length ?
                     <div className="mt-2">
                       <div className="table-responsive">
                         <table className="table table-hover mb-0 border fn13 fw-semibold">
-                            <thead className="table-light fn14">
-                                <tr>
-                                    <th className="text-nowrap"><strong>Excursion Option</strong></th>
-                                    <th className="text-nowrap"><strong>Transfer Option</strong></th>
-                                    {/* <th className="text-center"><strong>Policy</strong></th> */}
-                                    <th><strong>Status</strong></th>
-                                    <th><strong>Price</strong></th>
-                                    <th className="text-end">&nbsp;</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tourOptData?.[v.code]?.tourOptions.map((cat, i) => (
-                                  <tr key={i}>
-                                      <td className="align-middle">
-                                        <div className='text-capitalize mb-1'>{cat.tourOptionName?.toLowerCase()}</div>
-                                        <div className='fw-normal fn12'>
-                                          <a href="#fareBrkupModal" data-bs-toggle="modal" onClick={()=> fareBreakkup(v)}>Fare Breakup</a>&nbsp;|&nbsp;  
-                                          <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a>
-                                        </div>
-                                      </td>
-                                      <td className="align-middle">{cat.transferName}</td>
-                                      {/* <td className="align-middle text-center"><button type="button" className="btn fn13 fw-semibold btn-link p-0 text-warning">View <FontAwesomeIcon icon={faCaretRight} /></button> </td> */}
-                                      <td className="align-middle text-success">{cat.status}</td>
-                                      <td className="align-middle fs-6 bg-primary bg-opacity-10">AED 86.90</td>
-                                      <td className="align-middle fs-6 bg-warning text-white text-center curpointer">Book Now</td>
-                                      {/* {cat.localField ?
-                                      <td className="align-middle text-nowrap">{getCurrency.currency} {parseFloat(cat.localField.totalNet).toFixed(2)}</td>
-                                      :
-                                      <td className="align-middle text-nowrap">{getCurrency.currency} {parseFloat(cat.finalAmount).toFixed(2)}</td>
-                                      }
-                                      <td className="align-middle text-end">
-                                          {cat.isSlot ? 
-                                          <Button variant="warning" size="sm" onClick={()=> timeSlot(cat)}>&nbsp;{t("Select")}&nbsp;</Button>
-                                          :
-                                          <Button variant="warning" size="sm" onClick={()=> avlbTour(cat)} className="text-nowrap">&nbsp;{t("BookNow")}&nbsp;</Button>
-                                          }
-                                      </td> */}
-                                  </tr>
-                                ))
+                          <thead className="table-light fn14">
+                            <tr>
+                              <th className="text-nowrap"><strong>Excursion Option</strong></th>
+                              <th className="text-nowrap"><strong>Transfer Option</strong></th>
+                              <th className="text-center"><strong>Policy</strong></th>
+                              <th><strong>Status</strong></th>
+                              <th><strong>Price</strong></th>
+                              <th className="text-end">&nbsp;</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tourOptData?.[v.code]?.tourOptions.map((cat, i) => (
+                              <tr key={i}>
+                                <td className="align-middle">
+                                  <div className='text-capitalize'>{cat.tourOptionName?.toLowerCase()}</div>
+                                  {/* <div className='fw-normal fn12'>
+                                    <a href="#showCancelModal" data-bs-toggle="modal">Fare Breakup</a>&nbsp;|&nbsp;  
+                                    <a href="#showCancelModal" data-bs-toggle="modal">Cancellation Policy</a>
+                                  </div> */}
+                                </td>
+                                <td className="align-middle">{cat.transferName}</td>
+                                <td className="align-middle text-center"><button type="button" data-bs-toggle="modal" data-bs-target="#policyModal" onClick={()=> setPolicyDtl(cat)} className="btn fn13 fw-semibold btn-link p-0 text-warning">View <FontAwesomeIcon icon={faCaretRight} /></button> </td>
+                                <td className="align-middle text-success">{cat.status}</td>
+                                <td className="align-middle fs-6 bg-primary bg-opacity-10">{qry.currency} {Number(cat.totalPaxPrice).toFixed(2)}</td>
+                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer">Book Now</td>
+                                {/* {cat.localField ?
+                                <td className="align-middle text-nowrap">{getCurrency.currency} {parseFloat(cat.localField.totalNet).toFixed(2)}</td>
+                                :
+                                <td className="align-middle text-nowrap">{getCurrency.currency} {parseFloat(cat.finalAmount).toFixed(2)}</td>
                                 }
-                            </tbody>
+                                <td className="align-middle text-end">
+                                    {cat.isSlot ? 
+                                    <Button variant="warning" size="sm" onClick={()=> timeSlot(cat)}>&nbsp;{t("Select")}&nbsp;</Button>
+                                    :
+                                    <Button variant="warning" size="sm" onClick={()=> avlbTour(cat)} className="text-nowrap">&nbsp;{t("BookNow")}&nbsp;</Button>
+                                    }
+                                </td> */}
+                              </tr>
+                            ))
+                            }
+                          </tbody>
                         </table>
-                    </div>
+                      </div>  
+
                       
+
                     </div>
                     :
                     <div className='fs-5 text-center mt-2'>No Tour Option Found</div>
@@ -326,7 +384,7 @@ export default function TourResult(props) {
                         <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
                       </div>
                     </div>
-                    }
+                  }
                 </div>
               </div>
     
@@ -336,6 +394,86 @@ export default function TourResult(props) {
         </div>
         
 
+      </div>
+
+      <div className="modal fade" id="policyModal" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title text-capitalize">{policyDtl?.tourOptionName?.toLowerCase()} ({policyDtl?.transferName?.toLowerCase()})</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              {/* <div>
+                <div className="fs-6 fw-semibold mb-2">Fare Summary</div>
+                <table className="table table-sm table-bordered">
+                  <thead className="table-secondary">
+                    <tr>
+                      <th>Pax Type</th>
+                      <th>Quantity</th>
+                      <th>Age</th>
+                      <th>Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Adult</td>
+                      <td>{qry.adults}</td>
+                      <td>{policyDtl?.paxPrices?.[0].age}</td>
+                      <td>{policyDtl?.totalAdult}</td>
+                    </tr>
+                    {policyDtl?.paxPrices?.[0].age
+
+                    }
+                    <tr>
+                      <td>Child</td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                    
+                  </tbody>
+
+                </table>
+              </div> */}
+
+              {policyDtl?.transferTime &&
+                <div>
+                  <div className="fs-6 fw-semibold mb-2">Timings & Duration</div>
+                  <table className="table table-sm table-borderless">
+                    <thead className="table-secondary">
+                      <tr>
+                        <th>Transfers Type</th>
+                        <th>Pickup Timings</th>
+                        <th>Duration Approx</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>{policyDtl?.transferTime?.transferType}</td>
+                        <td>{policyDtl?.transferTime?.description}</td>
+                        <td>{policyDtl?.transferTime?.duration}</td>
+                      </tr>
+                    </tbody>
+
+                  </table>
+                </div>
+              }
+              {policyDtl?.tourOptionInfo?.cancellationPolicyDescription &&
+                <>
+                  <div className="fs-6 fw-semibold mb-1">Cancellation Policy</div>
+                  <div className='mb-1' dangerouslySetInnerHTML={{ __html:policyDtl?.tourOptionInfo?.cancellationPolicyDescription}}></div>
+                </>
+              }
+              {policyDtl?.tourOptionInfo?.childPolicyDescription &&
+              <>
+                <div className="fs-6 fw-semibold mb-1">Child Policy</div>
+                <div className='mb-1' dangerouslySetInnerHTML={{ __html:policyDtl?.tourOptionInfo?.childPolicyDescription}}></div>
+              </>
+              }
+            </div> 
+          </div>
+        </div>
       </div>
 
     </>

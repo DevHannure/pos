@@ -1,11 +1,11 @@
 "use client"
-import React, {useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleXmark, faStar, faFilter, faMagnifyingGlass, faLocationDot} from "@fortawesome/free-solid-svg-icons";
+import { faCircleXmark, faFilter, faMagnifyingGlass, faLocationDot} from "@fortawesome/free-solid-svg-icons";
 import { faCalendarDays, faTimesCircle, faMap} from "@fortawesome/free-regular-svg-icons";
 import { ToastContainer, toast } from 'react-toastify';
 import DatePicker from "react-datepicker";
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import Image from 'next/image';
 import { AsyncTypeahead } from 'react-bootstrap-typeahead';
 import Select, { components } from 'react-select';
@@ -315,29 +315,28 @@ export default function ModifySearch(props) {
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setSearchLoading(false);
-
-      // let saveActivity = {
-      //   "ActivityType": 2,
-      //   "Domain": `${window.location.origin}`,
-      //   "IPAddr": deviceInfo?.ipAddress,
-      //   "IPLocation": deviceInfo?.ipLocation,
-      //   "Browser": deviceInfo?.browserName,
-      //   "Device": deviceInfo?.deviceName,
-      //   "UserId": userInfo?.user?.userId,
-      //   "Location": qry?.destination[0]?.predictiveText,
-      //   "Date": format(new Date(qry.chkIn), 'dd MMM yyyy'),
-      //   "NoGuest": qry?.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)+ ' Guest(s)',
-      //   "TypeId": 1, //Service Id
-      //   "Type": "Hotel",
-      //   "QueryString": `${window.location.origin}/pages/hotel/hotelListing?qry=${encData}`,
-      //   "CustomerCode": qry.customerCode,
-      //   "UniqueId": ""
-      // }
-      // const responseSaveRecent = await MasterService.doSaveActivityDetail(saveActivity, qry.correlationId);
-      // const resSaveRecent = responseSaveRecent;
-      // if(resSaveRecent?.isSuccess){
-      //   dispatch(doRecentSearch(null));
-      // }
+      let saveActivity = {
+        "ActivityType": 2,
+        "Domain": `${window.location.origin}`,
+        "IPAddr": deviceInfo?.ipAddress,
+        "IPLocation": deviceInfo?.ipLocation,
+        "Browser": deviceInfo?.browserName,
+        "Device": deviceInfo?.deviceName,
+        "UserId": userInfo?.user?.userId,
+        "Location": qry?.destination[0]?.predictiveText,
+        "Date": format(new Date(qry.chkIn), 'dd MMM yyyy'),
+        "NoGuest": (qry?.adults + qry?.children) + ' Guest(s)',
+        "TypeId": 4, //Service Id
+        "Type": "Tour",
+        "QueryString": `${window.location.origin}/pages/tour/tourListing?qry=${encData}`,
+        "CustomerCode": qry.customerCode,
+        "UniqueId": ""
+      }
+      const responseSaveRecent = await MasterService.doSaveActivityDetail(saveActivity, qry.correlationId);
+      const resSaveRecent = responseSaveRecent;
+      if(resSaveRecent?.isSuccess){
+        dispatch(doRecentSearch(null));
+      }
 
       e.nativeEvent.target.disabled = false;
       e.nativeEvent.target.innerHTML = 'Search';
@@ -441,7 +440,108 @@ export default function ModifySearch(props) {
         </div>
         :
         <div className="modifycol">
-          
+          <div className="container-fluid">
+            {modifyCollapse ? 
+              ''
+              : 
+              <>
+                <div className="fn15 d-lg-flex justify-content-between align-items-center d-none">
+                  <div className="py-2">{props.TurReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.TurReq.chkIn), 'dd MMM yyyy')} &nbsp;|&nbsp;  {props.TurReq.adults} Adult(s) {props.TurReq.children !== 0 && <>, {props.TurReq.children} Child(ren)</>} &nbsp; <button type="button" className="btn btn-light btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6 blue" /> Modify Search</button></div>
+                </div>
+
+                <div className="btn-group btn-group-sm w-100 py-2 d-lg-none d-inline-flex">
+                  <button type="button" className="btn btn-outline-light" onClick={() => props?.filterOpen(true)}><FontAwesomeIcon icon={faFilter} className="fs-6" /> Filter</button>
+                  <button type="button" className="btn btn-outline-light" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6" /> Modify</button>
+                </div>
+              </>
+            }
+
+            <div className={`position-relative pt-4 pb-3 collapse ${modifyCollapse && 'show'}`}>
+              <button type="button" className="btn btn-link crossBtn p-0" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faTimesCircle} className="text-white" /></button>
+              <div>
+                <div className="row gx-3">
+                  <div className="col-lg-5">
+                    <div className="mb-3">
+                      <label>Destination</label>
+                      <AsyncTypeahead 
+                        filterBy={() => true}
+                        id="async-example"
+                        isLoading={isLoading}
+                        labelKey={(option) => option.predictiveText}
+                        minLength={3}
+                        onSearch={handleSearch}
+                        options={options}
+                        placeholder='Please Enter Destination'
+                        className="typeHeadDropdown"
+                        highlightOnlyResult={true}
+                        defaultSelected={options.slice(0, 1)}
+                        onChange={(e)=> setSelectedDestination(e)}
+                        onFocus={(event)=> event.target.select()}
+                        inputProps={{className: 'border-0 fn14'}}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="col-lg-3">
+                    <div className="mb-3">
+                      <label>Date</label>
+                      <div>
+                        <DatePicker className="form-control border-0 fn14" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))}  
+                          //onChange={dateChange} 
+                          selected={chkIn} onChange={(date) => setChkIn(date)}
+                          showMonthDropdown showYearDropdown />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-4">
+                    <div className="mb-2">
+                      <label>No. of Guest(s)</label>
+                      <div className="dropdown">
+                        <button className="form-control paxMainBtn dropdown-toggle border-0 fn14" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{Number(adtVal+chdVal)} Traveller(s)</button>
+                        <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
+                          <PaxDropdown />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className="row gx-3">
+                  <div className="col-lg-3">
+                    <div className="mb-3">
+                      <label>Nationality</label>
+                      {nationOptions?.length > 0 &&
+                      <Select
+                        id="nationality"
+                        instanceId="nationality"
+                        closeMenuOnSelect={true}
+                        onChange={(e) => setCusNationality(e.value)}
+                        options={nationOptions} 
+                        defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                        classNamePrefix="tFourMulti" />
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div className="row gx-3">
+                  <DefaultCustomer customerDetails={customerDetails} Type={'result'} />
+                </div>
+                
+                <div className="row gx-3">
+                  <div className="col text-end">
+                    <div className="mb-3 mt-lg-0 mt-3">
+                      <button type="button" className="btn btn-light px-4 py-2 fw-semibold" onClick={(e) => srchTour(e)}>Search</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
         </div>
       }
     </>

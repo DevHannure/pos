@@ -47,6 +47,28 @@ const TourService = {
     } catch (error) {console.log("error", error)}
   },
 
+  // doPriceBreakup: async function (reqObj, correlationId) {
+  //   try {
+  //     const response = await fetch(`${baseUrl}/excursion/PriceBreakup`, {
+  //       method: 'POST',
+  //       body: JSON.stringify(reqObj),
+  //       headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+  //     });
+  //     return response.json()
+  //   } catch (error) {console.log("error", error)}
+  // },
+
+  // doLocalPriceBreakup: async function (reqObj, correlationId) {
+  //   try {
+  //     const response = await fetch(`${baseUrl}/localexcursion/PriceBreakup`, {
+  //       method: 'POST',
+  //       body: JSON.stringify(reqObj),
+  //       headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+  //     });
+  //     return response.json()
+  //   } catch (error) {console.log("error", error)}
+  // },
+
 }
 
 export default TourService

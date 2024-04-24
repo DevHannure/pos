@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef} from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCaretRight, faCheck, faArrowRightLong } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faCaretRight, faCheck, faArrowRightLong, faCircle } from "@fortawesome/free-solid-svg-icons";
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { useSelector, useDispatch } from "react-redux";
@@ -14,10 +14,13 @@ import { enc } from 'crypto-js';
 import { useRouter } from 'next/navigation';
 import Select from 'react-select';
 import TourService from '@/app/services/tour.service';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function TourResult(props) {
   const router = useRouter();
   const qry = props.TurReq;
+  console.log("qry", qry)
   const _ = require("lodash");
   const dispatch = useDispatch();
   const getTourRes = useSelector((state) => state.tourResultReducer?.tourResObj);
@@ -47,7 +50,6 @@ export default function TourResult(props) {
 
   const tourOptData = useSelector((state) => state.tourResultReducer?.tourOptDtls);
   const [tourCollapse, setTourCollapse] = useState('');
-  //console.log("tourOptData", tourOptData)
 
   const tourOption = async(v) => {
     let tourCollapseCode = '#tour'+v.code;
@@ -108,8 +110,8 @@ export default function TourResult(props) {
         responseOptions = TourService.doOptions(tourOptionObj, qry.correlationId);
       }
       let resOptions = await responseOptions;
-
       if(resOptions){
+        resOptions.generalInfo.supplierShortCode = v.supplierShortCode
         resOptions?.tourOptions?.map((item) =>{
           let adultPrice = 0;
           let childPrice = 0;
@@ -150,86 +152,103 @@ export default function TourResult(props) {
   }
 
   const [policyDtl, setPolicyDtl] = useState(null);
-  //console.log("policyDtl", policyDtl)
-  // const [fareBrkupData, setFareBrkupData] = useState({});
-  // const [fareBrkData, setFareBrkData] = useState(null);
-  // console.log("fareBrkData", fareBrkData)
-
-  // const fareBreakkup = async(cat, v) => {
-  //   console.log("cat", cat)
-  //   setFareBrkData(null);
-  //   const fareBrkupObj = {
-  //     "CustomerCode": qry.customerCode,
-  //     "SearchParameter": {
-  //       "DestinationCode": qry.destination[0].destinationCode,
-  //       "CountryCode": qry.destination[0].countryCode,
-  //       "GroupCode": v.groupCode,
-  //       "ServiceDate": qry.chkIn,
-  //       "Currency": qry.currency,
-  //       "Adult": qry.adults?.toString(),
-  //       "TourCode": cat.rateKey,
-  //       "TassProField": {
-  //         "CustomerCode": qry.customerCode,
-  //         "RegionId": qry.regionCode?.toString()
-  //       }
-  //     }
-  //   }
-
-  //   if (parseInt(qry.children) > 0) {
-  //     let childrenObj = {}
-  //     let arrChildAges = []
-  //     let indx = 0
-  //     let chdAgesArr = qry.ca.split(',');
-  //     for (var k = 0; k < chdAgesArr.length; k++) {
-  //       indx = indx + 1
-  //       let ageObj = {}
-  //       ageObj.Identifier = indx
-  //       ageObj.Text = chdAgesArr[k]
-  //       arrChildAges.push(ageObj)
-  //     }
-  //     childrenObj.Count = parseInt(qry.children)
-  //     childrenObj.ChildAge = arrChildAges;
-  //     fareBrkupObj.SearchParameter.Children = childrenObj
-  //   }
-
-  //   if(v.supplierShortCode?.toLowerCase() === 'local'){
-  //     fareBrkupObj.SessionId = getTourRes?.generalInfo?.localSessionId
-  //   }
-  //   else{
-  //     fareBrkupObj.SessionId = getTourRes?.generalInfo?.sessionId
-  //   }
-
-  //   console.log("fareBrkupObj", fareBrkupObj)
-
-  //   let fbRes = {}
-  //   let fbItems = {...fareBrkupData}
-  //   if (_.isEmpty(fareBrkupData[cat.tourOptionCode])) {
-  //     let responseFarebrkup = null;
-  //     if(v.supplierShortCode?.toLowerCase() === 'local'){
-  //       responseFarebrkup = TourService.doLocalPriceBreakup(fareBrkupObj, qry.correlationId);
-  //     }
-  //     else{
-  //       responseFarebrkup = TourService.doPriceBreakup(fareBrkupObj, qry.correlationId);
-  //     }
-  //     const resFarebrkup = await responseFarebrkup;
-  //     setFareBrkData(resFarebrkup);
-  //     fbRes = resFarebrkup;
-  //     if (_.isEmpty(fareBrkupData)) {
-  //       fbItems = {}
-  //     }
-  //     fbItems[cat.tourOptionCode] = fbRes;
-  //     setFareBrkupData(fbItems);
-  //   }
-  //   else{
-  //     setFareBrkData(fareBrkupData[cat.tourOptionCode]);
-  //   }
-    
-
-  // }
   
+  const [respTimeSlot, setRespTimeSlot] = useState(null);
+    
+  const timeSlot = async (req, info) => {
+    setRespTimeSlot(null);
+    let tourTimeSlotObj = {
+      "CustomerCode": qry.customerCode,
+      "SearchParameter": {
+        "DestinationCode": qry.destination[0].destinationCode,
+        "CountryCode": qry.destination[0].countryCode,
+        "GroupCode": req.groupCode,
+        "ServiceDate": qry.chkIn,
+        "Currency": qry.currency,
+        "Adult": qry.adults?.toString(),
+        "TourCode": req.rateKey,
+        "TassProField": {
+          "CustomerCode": qry.customerCode,
+          "RegionId": qry.regionCode?.toString()
+        }
+      },
+      "SessionId": info.sessionId
+    }
+
+    if (parseInt(qry.children) > 0) {
+      let childrenObj = {}
+      let arrChildAges = []
+      let indx = 0
+      let chdAgesArr = qry.ca.split(',');
+      for (var k = 0; k < chdAgesArr.length; k++) {
+        indx = indx + 1
+        let ageObj = {}
+        ageObj.Identifier = indx
+        ageObj.Text = chdAgesArr[k]
+        arrChildAges.push(ageObj)
+      }
+      childrenObj.Count = parseInt(qry.children)
+      childrenObj.ChildAge = arrChildAges;
+      tourTimeSlotObj.SearchParameter.Children = childrenObj
+    }
+
+    let responseTimeSlot = null;
+    if(info.supplierShortCode?.toLowerCase() === 'local'){
+      responseTimeSlot = TourService.doLocalTimeSlots(tourTimeSlotObj, qry.correlationId);
+    }
+    else{
+      responseTimeSlot = TourService.doTimeSlots(tourTimeSlotObj, qry.correlationId);
+    }
+    let resTimeSlot = await responseTimeSlot;
+    if(resTimeSlot){
+      resTimeSlot.generalInfo.supplierShortCode = info.supplierShortCode
+      setRespTimeSlot(resTimeSlot);
+    }
+  }
+
+  const avlbTour = async (e, req, info) => {
+    e.nativeEvent.target.disabled = true;
+    e.nativeEvent.target.innerHTML = 'Processing...';
+    let tourAvlbObj = {
+      "customerCode": qry.customerCode,
+      "destination": qry.destination,
+      "groupCode": req.groupCode,
+      "serviceDate": qry.chkIn,
+      "currency": qry.currency,
+      "adults": qry.adults,
+      "children":qry.children,
+      "ca": qry.ca,
+      "rateKey": req.rateKey,
+      "regionCode": qry.regionCode,
+      "sessionId": info.sessionId,
+      "supplierShortCode": info.supplierShortCode,
+      "nationality": qry.nationality,
+      "correlationId": qry.correlationId
+    }
+    debugger
+    console.log("tourAvlbObj", tourAvlbObj)
+    const responseReprice = TourService.doAvailability(tourAvlbObj);
+    const resReprice = await responseReprice;
+
+    if(resReprice?.isBookable){
+      
+    }
+    else{
+      e.nativeEvent.target.disabled = true;
+    }
+
+    console.log("resReprice", resReprice);
+
+    // const responseHtlDtl = HotelService.doHotelDetail(htlObj, qry.correlationId);
+    
+    // const resHtlDtl = await responseHtlDtl;
+    // dispatch(doHotelReprice(resReprice));
+    // dispatch(doHotelDtl(resHtlDtl));
+}
   
   return (
     <>
+    <ToastContainer />
     {getTourRes?.tours.length ?  
     <>
       <div className="d-lg-table-cell align-top rightResult border-start">
@@ -348,28 +367,17 @@ export default function TourResult(props) {
                                 <td className="align-middle text-center"><button type="button" data-bs-toggle="modal" data-bs-target="#policyModal" onClick={()=> setPolicyDtl(cat)} className="btn fn13 fw-semibold btn-link p-0 text-warning">View <FontAwesomeIcon icon={faCaretRight} /></button> </td>
                                 <td className="align-middle text-success">{cat.status}</td>
                                 <td className="align-middle fs-6 bg-primary bg-opacity-10">{qry.currency} {Number(cat.totalPaxPrice).toFixed(2)}</td>
-                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer">Book Now</td>
-                                {/* {cat.localField ?
-                                <td className="align-middle text-nowrap">{getCurrency.currency} {parseFloat(cat.localField.totalNet).toFixed(2)}</td>
+                                {cat.isSlot ? 
+                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer" onClick={()=> timeSlot(cat, tourOptData?.[v.code]?.generalInfo)} data-bs-toggle="modal" data-bs-target="#timeSlotModal">&nbsp; Select &nbsp;</td>
                                 :
-                                <td className="align-middle text-nowrap">{getCurrency.currency} {parseFloat(cat.finalAmount).toFixed(2)}</td>
+                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer" onClick={(e)=> avlbTour(e, cat, tourOptData?.[v.code]?.generalInfo)}>Book Now</td>
                                 }
-                                <td className="align-middle text-end">
-                                    {cat.isSlot ? 
-                                    <Button variant="warning" size="sm" onClick={()=> timeSlot(cat)}>&nbsp;{t("Select")}&nbsp;</Button>
-                                    :
-                                    <Button variant="warning" size="sm" onClick={()=> avlbTour(cat)} className="text-nowrap">&nbsp;{t("BookNow")}&nbsp;</Button>
-                                    }
-                                </td> */}
                               </tr>
                             ))
                             }
                           </tbody>
                         </table>
                       </div>  
-
-                      
-
                     </div>
                     :
                     <div className='fs-5 text-center mt-2'>No Tour Option Found</div>
@@ -475,6 +483,74 @@ export default function TourResult(props) {
           </div>
         </div>
       </div>
+
+      {/* <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#timeSlotModal">Launch demo modal</button> */}
+
+      <div className="modal fade" id="timeSlotModal">
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div className="modal-content">
+              <div className="modal-header">
+                <div>
+                  {respTimeSlot?.tourOptionName ?
+                  <>
+                    <h1 className="modal-title fs-5 text-capitalize mb-2">{respTimeSlot?.tourOptionName?.toLowerCase()}</h1>
+                    <div className="row">
+                      <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 text-success" /> Available</div>
+                      <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 starGold" /> Limited Availability</div>
+                      <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 text-danger" /> Sold Out</div>
+                    </div>
+                  </> : null
+                  }
+                </div>
+                <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div className="modal-body">
+                {respTimeSlot ?
+                  <div className='fw-semibold'>
+                    <div className="fs-5 mb-3">Select Time Options</div>
+                    <div className='row'>
+                      {respTimeSlot?.timeSlots?.map((k, i) => ( 
+                        <div className='col-md-3' key={i}>
+                          <div className={"bggray my-3 rounded shadow overflow-hidden border " + (k.available > 10 ? 'border-success':'' ||  k.available > 0 && k.available < 10 ? 'border-yellow':'' ||  k.available == 0 ? 'border-danger':'')}>
+                            <div className={"px-3 py-2 text-white " + (k.available > 10 ? 'bg-success':'' ||  k.available > 0 && k.available < 10 ? 'bg-yellow':'' ||  k.available == 0 ? 'bg-danger':'')}>
+                              <div className="d-flex justify-content-between">
+                                  <div>Time: {k.timing}</div>
+                                  <div>(Avl: {k.available})</div>
+                              </div>
+                            </div>
+                            <div className="p-3 text-center">
+                                <div className="mb-1"><strong>Adult:</strong> {qry.currency} {k.paxPrices[0].gross}</div>
+                                {qry.children ?
+                                <div className="mb-1">
+                                    <strong>Child [Age: {k.paxPrices[1].age}]:</strong> {qry.currency} {k.paxPrices[1].gross}
+                                </div> : null
+                                }
+                                {k.available !== 0 &&
+                                <div className='mt-3'><button className='btn btn-warning' onClick={(e)=> avlbTour(e, k, respTimeSlot?.generalInfo)}> &nbsp; Book &nbsp; </button></div>
+                                // <Button className="fn12 mt-2" variant="warning" size="sm" onClick={()=> avlbTour(v)}>&nbsp;Book&nbsp;</Button>
+                                }
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                  </div>
+                  :
+                  <div className='text-center blue py-5'>
+                    <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
+                    <div className="dumwave align-middle">
+                      <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                      <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                      <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                    </div>
+                  </div>
+                }
+              </div>
+              
+            </div>
+          </div>
+        </div>
 
     </>
     :

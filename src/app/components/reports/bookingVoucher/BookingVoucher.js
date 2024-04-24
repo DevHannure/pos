@@ -106,7 +106,7 @@ export default function Voucher(prop) {
       "customerCode": prop?.dtl?.customerCode,
       "userId": prop?.dtl?.userId,
       "agentRefText": agentRefText,
-      "domainName": "https://b2b-psi-two.vercel.app",
+      "domainName": process.env.NEXT_PUBLIC_PAYDOMAIN,
       "uID": uniqId,
       "type": "1",
       "correlationId": prop?.dtl?.correlationId
@@ -185,7 +185,16 @@ export default function Voucher(prop) {
             </div>
             <div className='modal-footer'>
               <div className='text-danger w-100 text-center m-0'>{creditLimitError}</div>
-              <button type="button" className='btn btn-sm btn-warning px-3' onClick={(e) => creditLimitBtn(e)}>Pay by Credit Limit</button> &nbsp; 
+              {userInfo?.user?.isSubUser ?
+              <>
+                {userInfo?.user?.consultantAllowCredit ?
+                <><button type="button" className='btn btn-sm btn-warning px-3' onClick={(e) => creditLimitBtn(e)}>Pay by Credit Limit</button> &nbsp;</>
+                :'' 
+                }
+              </>
+              :
+              <><button type="button" className='btn btn-sm btn-warning px-3' onClick={(e) => creditLimitBtn(e)}>Pay by Credit Limit</button> &nbsp;</> 
+              }
               <button type="button" className='btn btn-sm btn-outline-warning px-3' onClick={(e) => payCardBtn()}>Pay By Card</button>
             </div>
           </div>

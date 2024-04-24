@@ -20,10 +20,12 @@ export default function PaymentReceipt() {
   const [getreceiptQry, setGetreceiptQry] = useState(null);
 
   useEffect(()=>{
-    const search = sessionStorage.getItem('receiptQry');
-    let decData = enc.Base64.parse(search).toString(enc.Utf8);
-    let bytes = AES.decrypt(decData,'ekey').toString(enc.Utf8);
-    setGetreceiptQry(JSON.parse(bytes));
+    const search = typeof window !== 'undefined' ? sessionStorage.getItem('receiptQry') : null;
+    if(search){
+      let decData = enc.Base64.parse(search).toString(enc.Utf8);
+      let bytes = AES.decrypt(decData,'ekey').toString(enc.Utf8);
+      setGetreceiptQry(JSON.parse(bytes));
+    }
   }, []);
 
   useEffect(()=>{
@@ -35,7 +37,6 @@ export default function PaymentReceipt() {
         else{
           reDirectBookingDetails()
         }
-        
       }
       else{
         toast.error("Something Wrong !!",{theme: "colored"});
@@ -45,6 +46,7 @@ export default function PaymentReceipt() {
         }, 9000); 
       }
     }
+    
   },[qry, getreceiptQry]);
 
   const [bkngCombDetails, setBkngCombDetails] = useState(null);

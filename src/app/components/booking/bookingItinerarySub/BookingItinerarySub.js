@@ -126,7 +126,7 @@ export default function BookingItinerarySub(props) {
           "customerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
           "userId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
           "agentRefText": agentRefText,
-          "domainName": "https://b2b-psi-two.vercel.app",
+          "domainName": process.env.NEXT_PUBLIC_PAYDOMAIN,
           "uID": uniqId,
           "type": "0",
           "correlationId": props?.qry.correlationId

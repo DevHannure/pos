@@ -301,7 +301,7 @@ export default function ReservationTray() {
             "bookingNo": resItineraryNew?.ReservationDetail?.BookingDetail?.BookingNo,
             "pGSupplier": parseFloat(userInfo?.user.pgType),
             "customerCode": resItineraryNew?.ReservationDetail?.BookingDetail?.CustomerCode,
-            "domainName": "https://b2b-psi-two.vercel.app",
+            "domainName": process.env.NEXT_PUBLIC_PAYDOMAIN,
             "uID": uniqId,
             "correlationId": qry.correlationId
           }

@@ -57,6 +57,8 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .starGold{color:#FFA822;}
 .starBlank{color:#e0e0e0;}
 .txtred{color:#ea2330;}
+.bg-yellow{background-color:#FFA822 !important;}
+.border-yellow{border-color:#FFA822 !important;}
 .curpointer{cursor:pointer;}
 .tablePad0>tbody>tr>td,.tablePad0>tbody>tr>th,.tablePad0>tfoot>tr>td,.tablePad0>tfoot>tr>th,.tablePad0>thead>tr>td,.tablePad0>thead>tr>th{padding:0}
 .nav-underline .nav-link.active, .nav-underline .show > .nav-link{font-weight:normal;}

@@ -71,19 +71,19 @@ export default function PaymentOrder() {
       setResHtml(resPay)
       if(resPay && resPay?.pgResponseType ===1){
         
-        if(qry.pGSupplier===3){
+        if(qry.pGSupplier===3 || qry.pGSupplier===6){
           //Total Process
           const fragment = document.createRange().createContextualFragment(resPay.responseDetail);
           divRef.current.append(fragment);
         }
-        else if(qry.pGSupplier===4){
-           //Pay Fort
+        else if(qry.pGSupplier===4 || qry.pGSupplier===2 || qry.pGSupplier===5){
+           //Pay Fort, CC Avenue
           setHtmlLoad(resPay.responseDetail)
         }
-        else if(qry.pGSupplier===2 || qry.pGSupplier===5){
+        //else if(qry.pGSupplier===2 || qry.pGSupplier===5){
           //CC Avenue
-          
-        }
+          //setHtmlLoad(resPay.responseDetail)
+        //}
         
       }
       else{
@@ -154,7 +154,7 @@ export default function PaymentOrder() {
                             <div className='col-7'><strong>{bookingAmount?.sysCurrency} {parseFloat(parseFloat(bookingAmount?.sysNetAmount)+parseFloat(bookingAmount?.serviceCharge)).toFixed(2)}</strong></div>
                           </div>
 
-                          {qry.pGSupplier === 2 &&
+                          {qry.pGSupplier === 2 || qry.pGSupplier === 5 ?
                             <>
                               <h4 className="fs-5">Billing information(optional)</h4>
                               <hr />
@@ -198,7 +198,7 @@ export default function PaymentOrder() {
                                 <div className='col-5'>Email :</div>
                                 <div className='col-7'><strong>{billingInfo?.email}</strong></div>
                               </div>
-                            </>
+                            </> : ''
                           }
                           <hr />
                           <div className="row gx-2 mb-3">

@@ -61,12 +61,12 @@ export default function RecentSearch() {
   }
 
   const recentSubmit = (r) =>{
-    if(r.type=='Hotel'){
+    if(r.typeId=='1'){
       dispatch(doHotelSearchOnLoad(null));
       dispatch(doRoomDtls({}));
       sessionStorage.setItem("qryListing", r?.queryString?.split('?qry=')[1]);
     }
-    if(r.type=='Tour'){
+    if(r.typeId=='4'){
       dispatch(doTourSearchOnLoad(null));
       dispatch(doTourOptDtls({}));
       sessionStorage.setItem("qryTourList", r?.queryString?.split('?qry=')[1]);

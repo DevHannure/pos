@@ -14,12 +14,14 @@ import { enc } from 'crypto-js';
 import { useSession } from "next-auth/react";
 import {format} from 'date-fns';
 import Image from 'next/image';
+import cloneDeep from 'lodash/cloneDeep';
 
 function getUID() {return Date.now().toString(36);}
 
 export default function HotelListing() {
   const searchparams = typeof window !== 'undefined' ? sessionStorage.getItem('qryListing') : null;
   const [qry, setQry] = useState(null);
+  
   useEffect(() => {
     //if(!qry){
       let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
@@ -30,7 +32,9 @@ export default function HotelListing() {
 
   const { status } = useSession();
   const dispatch = useDispatch();
+  
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
+  
 
   const [countDown, setCountDown] = useState(0);
   const [runTimer, setRunTimer] = useState(false);
@@ -45,10 +49,8 @@ export default function HotelListing() {
     }
   },[qry]);
 
-  //console.log("axc",qry?.starRating?.toString())
-
   const doHtlResultOnLoad = async() => {
-    let uniqId = getUID();
+    let uniqId = getUID();  
     let htlSrchObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
@@ -56,12 +58,15 @@ export default function HotelListing() {
         "CountryName": qry.destination[0].countryName,
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
-        "CheckInDate": qry.chkIn,
-        "CheckOutDate": qry.chkOut,
+        // "CheckInDate": qry.chkIn,
+        // "CheckOutDate": qry.chkOut,
+        "CheckInDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+        "CheckOutDate": format(new Date(qry.chkOut), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Nationality": qry.nationality.split('-')[1],
         "Rooms":{},
-        //"StarRating": qry?.starRating?.toString(),
+        //"StarRating": starValue.length === 11 ? "" : starValue?.toString(),
+        "StarRating": qry?.starRating.includes("0","1","2","3","4","5") ? "" : qry?.starRating?.toString(),
         "TassProInfo": {
           "CustomerCode": qry.customerCode,
           "RegionID": qry.regionCode?.toString(),
@@ -69,12 +74,14 @@ export default function HotelListing() {
           "Children": qry.paxInfoArr.reduce((totalChld, v) => totalChld + parseInt(v.chdVal), 0)?.toString(),
           "ChildrenAges": "",
           "NoOfRooms": qry.num_rooms?.toString(),
-          "ClassificationCode": qry.starRating?.toString(),
+          // "ClassificationCode": starValue?.toString(),
+          "ClassificationCode": qry?.starRating.includes("0","1","2","3","4","5") ? "" : qry?.starRating?.toString(),
           "ProductCode": qry.hotelName[0]?.hotelCode,
           "ProductName": qry.hotelName[0]?.hotelName,
           "UniqueId": uniqId,
           "OccupancyStr": "",
           "ActiveSuppliers": qry.activeSuppliers
+          //"ActiveSuppliers": "DerbySoft,DOTW,EANRapid,HotelRack,IWTX,Jumeirah,MIKI,RateHawk,RoomsXml,TBO"
         }
       }
     }
@@ -118,16 +125,39 @@ export default function HotelListing() {
     htlSrchObj.SearchParameter.Rooms.Room = room;
     htlSrchObj.SearchParameter.TassProInfo.ChildrenAges = childrenAgesArray?.toString();
     htlSrchObj.SearchParameter.TassProInfo.OccupancyStr = OccupancyStrArray.map(item => item).join('*');
-
+    var localHtlSrchObj =  cloneDeep(htlSrchObj);
+    var xmlHtlSrchObj = cloneDeep(htlSrchObj);
     if(qry.hotelName[0]?.hotelCode){
-      htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode
+      localHtlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.localCode;
+      localHtlSrchObj.SearchParameter.TassProInfo.ProductCode = qry.hotelName[0]?.localCode;
+      xmlHtlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode;
+      xmlHtlSrchObj.SearchParameter.TassProInfo.ProductCode = qry.hotelName[0]?.hotelCode;
+      //htlSrchObj.SearchParameter.HotelCode = qry.hotelName[0]?.hotelCode;
     }
     setCountDown(0);
     setCounter(0);
     setRunTimer(true);
     setRunning(true);
-    const responseHtlResult = HotelService.doHotelSearch(htlSrchObj, qry.correlationId);
-    const responseLocalHtlResult = HotelService.doLocalHotel(htlSrchObj, qry.correlationId);
+
+    let responseHtlResult = null;
+    let responseLocalHtlResult = HotelService.doLocalHotel(localHtlSrchObj, qry.correlationId);
+    if(qry?.h2hCheck === 1){
+      responseHtlResult = HotelService.doHotelSearch(xmlHtlSrchObj, qry.correlationId);
+    }
+    else{
+      responseHtlResult = {
+        "generalInfo": {
+          "customerCode": null,
+        },
+        "hotels": {
+            "b2BHotel": []
+        },
+        "searchAnalytics": {
+          "searchAnalytics": []
+        }
+      }
+    }
+
     let resHtlResult = await responseHtlResult;
     let resLocalHtlResult = await responseLocalHtlResult;
     setRunTimer(false);

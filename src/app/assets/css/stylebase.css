@@ -119,8 +119,8 @@ button:disabled, button[disabled]{cursor:not-allowed;}
 .secondSearch{margin-top:0.9rem;}
 .nightCol{border-left:1px dotted #ccc;;}
 .nightCol .form-control{width:60px; text-align:center;}
-.tFourMulti__control{color:#212529;}
-.tFourMulti__menu{color:#212529;}
+.tFourMulti__control{color:#212529; text-transform: capitalize;}
+.tFourMulti__menu{color:#212529; text-transform: capitalize;}
 .modifycol .tFourMulti__control{border:none; font-size:14px;min-height:inherit;}
 .modifycol .tFourMulti__indicator{padding:7px;}
 .calendarIconMain{position: relative;}
@@ -303,6 +303,11 @@ svg.stepTick {color:#09982a; vertical-align:middle; margin-right:2px;font-size:2
 .offlineNav .navbar-nav .nav-link.collapsed{background:transparent; color:#000;}
 
 .travellerRight .cmpltBookBtn{width:100%;}
+.PhoneInput input[type="tel"]{border:0px; outline:0px !important; margin:0px;}
+
+.roomColumn .rdt_Pagination{font-weight:600; color:#0d6efd;}
+.rdt_Pagination button{fill:rgba(13,110,253,1); width:36px; height:36px; margin:0 2px; padding:4px; background-color:#f2f2f2;}
+.rdt_Pagination button:disabled{fill:rgba(13,110,253,0.4);}
 
 @media only screen and (min-width: 240px) and (max-width:960px) {
 .cusnav{position: inherit;}

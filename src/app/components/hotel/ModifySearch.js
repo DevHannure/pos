@@ -16,6 +16,7 @@ import ServiceNav from '@/app/components/serviceNav/ServiceNav';
 import { useRouter } from 'next/navigation';
 import {useDispatch, useSelector } from "react-redux";
 import MasterService from '@/app/services/master.service';
+import HotelService from '@/app/services/hotel.service';
 import DefaultCustomer from '@/app/components/default/DefaultCustomer';
 import { doHotelSearchOnLoad, doRoomDtls } from '@/app/store/hotelStore/hotel';
 import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doRecentSearch } from '@/app/store/commonStore/common';
@@ -163,7 +164,7 @@ export default function ModifySearch(props) {
       setNumNights(differenceInDays(chkOut,chkIn))
     } 
     else{
-      setNumNights(0)
+      setNumNights(1)
     }
   }, [chkIn, chkOut]);
 
@@ -172,16 +173,19 @@ export default function ModifySearch(props) {
   const selectedXML = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
   //const [selectedXML, setSelectedXML] = useState(null);
   const [xmlOptions, setXmlOptions] = useState([]);
-  const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
+  //const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
+  const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : userInfo?.user?.countryCode);
   //const [nationalityOptions, setNationalityOptions] = useState([]);
   const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
   const regionCodeSav = useSelector((state) => state.commonResultReducer?.regionCodeSaver);
   const [regionCode, setRegionCode] = useState(regionCodeSav ? regionCodeSav : '');
   const [cusCurrency, setCusCurrency] = useState(props.HtlReq ? props.HtlReq.currency : '');
   const [cusCode, setCusCode] = useState(props.HtlReq ? props.HtlReq.customerCode : null);
+  
+  const [waitLoad, setWaitLoad] = useState(false);
   const [isLoadingHtl, setIsLoadingHtl] = useState(false);
   const [optionsHtl, setOptionsHtl] = useState(props.HtlReq ? props.HtlReq.hotelName : []);
-  const [selectedHotel, setSelectedHotel] = useState(optionsHtl);
+  const [selectedHotel, setSelectedHotel] = useState([]);
   const typeaheadHtlRef = useRef(null);
 
   const [nationOptions, setNationOptions] =  useState([]);
@@ -196,35 +200,44 @@ export default function ModifySearch(props) {
   }, [nationalityOptions]);
   
   const handleSearch = async (query) => {
-    setIsLoading(true);
     setOptions([]);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/DestinationsPrediction`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
-      body: JSON.stringify({
-      "text": query,
-      "customercode":process.env.NEXT_PUBLIC_SHORTCODE,
+    if(query?.length > 2){
+      setIsLoading(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/DestinationsPrediction`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+        body: JSON.stringify({
+        "text": query,
+        "customercode":process.env.NEXT_PUBLIC_SHORTCODE,
+        })
       })
-    })
-    const repo = await res.json();
-    if(repo?.destinationPredictions !==null){
-      setOptions(repo.destinationPredictions);
+      const repo = await res.json();
+      if(repo?.destinationPredictions !==null){
+        setOptions(repo.destinationPredictions);
+      }
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
   
   const dateChange = (dates) => {
     if(dates[0]){
       const [start, end] = dates;
       setChkIn(start)
+      const today = format(new Date(), 'yyyy-MM-dd');
       const date1 = format(start, 'yyyy-MM-dd')
-      const date2 = format(end ? end : new Date(), 'yyyy-MM-dd')
-      if(date1 === date2){
+      const date2 = format(end ? end : new Date(), 'yyyy-MM-dd');
+      const lastDate = format(new Date(dates[1]), 'yyyy-MM-dd');
+      
+      if(today !== date1 && date1 === date2){
+        setChkOut(new Date(new Date(chkIn).setDate(new Date(chkIn).getDate() + 1)))
+      }
+      else if(today === lastDate){
         setChkOut(new Date(new Date(chkIn).setDate(new Date(chkIn).getDate() + 1)))
       }
       else{
         setChkOut(end)
       }
+
     }
   };
 
@@ -442,7 +455,7 @@ export default function ModifySearch(props) {
       const re = /^[0-9\b]+$/;
       if(valueNum === '' || re.test(valueNum)){
         if(valueNum === ''){
-          setChkOut(new Date(new Date().setDate(chkIn.getDate()+1)))
+          //setChkOut(new Date(new Date().setDate(chkIn.getDate()+1)))
           setNumNights(valueNum)
         }
         else{
@@ -484,11 +497,20 @@ export default function ModifySearch(props) {
       if(!nationalityOptions){
         nationalityReq();
       }
+      if(!cusNationality){
+        setCusNationality(props.HtlReq ? props.HtlReq.nationality : userInfo?.user?.countryCode);
+      }
       if(process.env.NEXT_PUBLIC_APPCODE==='1' && !selectedXML){
         b2bXmlReq()
       }
     }
   }, [userInfo]);
+
+  useEffect(() => {
+    if(cusNationality && cusCode){
+      regionReq()
+    }
+  }, [cusNationality, cusCode]);
 
   const nationalityReq = async()=> {
     const responseCoutry = await MasterService.doGetCountries(props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
@@ -496,13 +518,13 @@ export default function ModifySearch(props) {
     dispatch(doCountryOnLoad(resCoutry));
   }
 
-  useEffect(() => {
-    regionReq()
-  }, [cusCode]);
+  // useEffect(() => {
+  //   regionReq()
+  // }, [cusCode]);
 
-  
   const regionReq = async()=> {
     if(cusCode){
+      setWaitLoad(true);
       const regionObj= {
         "NationalityCode": cusNationality.split('-')[0],
         "CustomerCode": cusCode
@@ -510,13 +532,14 @@ export default function ModifySearch(props) {
       const responseRegion = await MasterService.doGetRegionBasedOnCustomerNationality(regionObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
       const resRegion = responseRegion;
       dispatch(doRegionCode(resRegion));
-      setRegionCode(resRegion)
+      setRegionCode(resRegion);
+      setWaitLoad(false);
     }
   }
 
   const b2bXmlReq = async()=> {
     const xmlObj= {
-      "Flag": 0,
+      "Flag": 1,
       "ServiceCode": 1,
       "CustomerCode": userInfo.user.userCode
     }
@@ -576,15 +599,42 @@ export default function ModifySearch(props) {
 
   const [searchLoading, setSearchLoading] = useState(false);
 
+  const selectedHotelBtn = async(e) => {
+    let valueObj = e;
+    if(e[0]?.hotelCode){
+      setWaitLoad(true);
+      let localCodeObj = {
+        "systemId": e[0].hotelCode
+      }
+      const responseHtlDtl = HotelService.doHotelDetail(localCodeObj, userInfo.correlationId);
+      const resHtlDtl = await responseHtlDtl;
+
+      if(resHtlDtl?.hotelDetail){
+        var nameKey = 'ArabianOryx';
+        var newD = Object.values(resHtlDtl?.hotelDetail?.mappings).find((obj) => {
+          if (obj.key === nameKey){
+            return (obj.key === nameKey);
+          }
+        });
+        valueObj[0].localCode = newD?.value ? newD?.value : "";
+      }
+      setWaitLoad(false);
+      setSelectedHotel(valueObj);
+    }
+    else{
+      setSelectedHotel(valueObj); 
+    }
+  }
+
   const srchHtl = async(e) => {
+    dispatch(doHotelSearchOnLoad(null));
+    dispatch(doRoomDtls({}));
     let allowMe = validate();
     if(allowMe){
       e.nativeEvent.target.disabled = true;
       e.nativeEvent.target.innerHTML = 'Searching...';
-      dispatch(doHotelSearchOnLoad(null));
-      dispatch(doRoomDtls({}));
+      
       setSearchLoading(true);
-      setModifyCollapse(false);
       let starOpt = [];
       selectedStarOption.forEach((v) => {
         starOpt.push(v.value);
@@ -593,8 +643,10 @@ export default function ModifySearch(props) {
       let qry = {
         "customerCode": cusCode,
         "destination":selectedDestination,
-        "chkIn": format(chkIn, 'yyyy-MM-dd'),
-        "chkOut": format(chkOut, 'yyyy-MM-dd'),
+        // "chkIn": format(chkIn, 'yyyy-MM-dd'),
+        // "chkOut": format(chkOut, 'yyyy-MM-dd'),
+        "chkIn": chkIn.toString(),
+        "chkOut": chkOut.toString(),
         "currency": cusCurrency,
         "nationality": cusNationality,
         "regionCode": regionCode,
@@ -603,12 +655,17 @@ export default function ModifySearch(props) {
         "starRating": starOpt,
         "hotelName": selectedHotel,
         "num_rooms": parseInt(rmCountArr.length),
+        "h2hCheck" : userInfo?.user?.h2H,
         //"uniqId": uniqId,
         "paxInfoArr": rmCountArr
       }
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       setSearchLoading(false);
+      setModifyCollapse(false);
+      e.nativeEvent.target.disabled = false;
+      e.nativeEvent.target.innerHTML = 'Search';
+      sessionStorage.setItem("qryListing", encData);
 
       let saveActivity = {
         "ActivityType": 2,
@@ -619,7 +676,7 @@ export default function ModifySearch(props) {
         "Device": deviceInfo?.deviceName,
         "UserId": userInfo?.user?.userId,
         "Location": qry?.destination[0]?.predictiveText,
-        "Date": format(new Date(qry.chkIn), 'dd MMM yyyy')+' - '+format(new Date(qry.chkOut), 'dd MMM yyyy')+', '+differenceInDays(new Date(qry.chkOut),new Date(qry.chkIn))+' Night(s)',
+        "Date": format(chkIn, 'dd MMM yyyy')+' - '+format(chkOut, 'dd MMM yyyy')+', '+differenceInDays(chkOut,chkIn)+' Night(s)',
         "NoGuest": qry?.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)+ ' Guest(s)',
         "TypeId": 1, //Service Id
         "Type": "Hotel",
@@ -627,14 +684,11 @@ export default function ModifySearch(props) {
         "CustomerCode": qry.customerCode,
         "UniqueId": ""
       }
-      const responseSaveRecent = await MasterService.doSaveActivityDetail(saveActivity, qry.correlationId);
+      const responseSaveRecent = await MasterService.doSaveActivityDetail(saveActivity, userInfo.correlationId);
       const resSaveRecent = responseSaveRecent;
       if(resSaveRecent?.isSuccess){
         dispatch(doRecentSearch(null));
       }
-      e.nativeEvent.target.disabled = false;
-      e.nativeEvent.target.innerHTML = 'Search';
-      sessionStorage.setItem("qryListing", encData);
       router.push('/pages/hotel/hotelListing');
       //router.push(`/pages/hotel/hotelListing?qry=${encData}`);
     }
@@ -660,7 +714,7 @@ export default function ModifySearch(props) {
                     id="async-example"
                     isLoading={isLoading}
                     labelKey={(option) => option.predictiveText}
-                    minLength={3}
+                    //minLength={3}
                     onSearch={handleSearch}
                     options={options}
                     placeholder='Please Enter Destination'
@@ -723,11 +777,6 @@ export default function ModifySearch(props) {
                     //defaultValue={{ label: "Select Dept", value: '91-IN' }}
                     classNamePrefix="tFourMulti" />
                   }
-                  {/* <select className="form-select" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
-                    {nationalityOptions?.map((n, index) => ( 
-                      <option key={index} value={n.countryCode+'-'+n.isoCode}>{n.nationality}</option>
-                    ))}
-                  </select> */}
                 </div>
               </div>
               <div className="col-lg-3 tFourInput bor-s">
@@ -764,7 +813,8 @@ export default function ModifySearch(props) {
                     className="typeHeadDropdown"
                     highlightOnlyResult={true}
                     defaultSelected={optionsHtl.slice(0, 1)}
-                    onChange={setSelectedHotel}
+                    //onChange={setSelectedHotel}
+                    onChange={(e)=> selectedHotelBtn(e)}
                     //clearButton={true}
                     ref={typeaheadHtlRef}
                     useCache={false}
@@ -795,7 +845,11 @@ export default function ModifySearch(props) {
           <div className="row gx-3">
             <div className="col text-end">
               <div className="mb-3 mt-lg-0 mt-3">
-                <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)} disabled={searchLoading}>{searchLoading ? 'Searching' : 'Search'}</button>
+                {waitLoad ?
+                  <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" disabled>Wait...</button>
+                  :
+                  <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)} disabled={searchLoading}>{searchLoading ? 'Searching' : 'Search'}</button>
+                }
               </div>
             </div>
           </div>
@@ -838,7 +892,7 @@ export default function ModifySearch(props) {
                     id="async-example"
                     isLoading={isLoading}
                     labelKey={(option) => option.predictiveText}
-                    minLength={3}
+                    //minLength={3}
                     onSearch={handleSearch}
                     options={options}
                     placeholder='Please Enter Destination'
@@ -899,11 +953,6 @@ export default function ModifySearch(props) {
                       //defaultValue={{ label: "Select Dept", value: '91-IN' }}
                       classNamePrefix="tFourMulti" />
                   }
-                  {/* <select className="form-select border-0 fn14" value={cusNationality} onChange={event => setCusNationality(event.target.value)}>
-                    {nationalityOptions?.map((n, index) => ( 
-                      <option key={index} value={n.countryCode+'-'+n.isoCode}>{n.nationality}</option>
-                    ))}
-                  </select> */}
                 </div>
               </div>
               <div className="col-lg-3">
@@ -940,7 +989,8 @@ export default function ModifySearch(props) {
                     className="typeHeadDropdown"
                     highlightOnlyResult={true}
                     defaultSelected={optionsHtl.slice(0, 1)}
-                    onChange={setSelectedHotel}
+                    //onChange={setSelectedHotel}
+                    onChange={(e)=> selectedHotelBtn(e)}
                     //clearButton={true}
                     ref={typeaheadHtlRef}
                     useCache={false}

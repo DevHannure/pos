@@ -3,7 +3,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch, faEyeSlash, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faList, faTag, faShuffle, faCircleInfo, faPencil, faSliders, faFloppyDisk, faSearch, faEyeSlash, faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
@@ -11,13 +11,17 @@ import {useRouter, useSearchParams} from 'next/navigation';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
+import HotelService from '@/app/services/hotel.service';
+import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import MasterService from '@/app/services/master.service';
-import { doReserveListOnLoad, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
+import { doReserveListOnLoad, doReserveListQry, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
 import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {useSession} from "next-auth/react";
+import BookingDetails from '@/app/components/reports/bookingDtl/BookingDetails';
+import CommonLoader from '@/app/components/common/CommonLoader';
 
 const selBookingOptions = [
   { value: 'On Request', label:'On Request'},
@@ -211,7 +215,7 @@ export default function ReservationTray() {
         "DateTo": dateTo? format(dateTo, 'yyyy-MM-dd') : "",
         "BookingType": bookingType,
         "BookingChannel": bookingChannel,
-        "CustomerCode": customerCode,
+        "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode,
         "SupplierCode": supplierCode,
         "RateType": rateType,
         "TicketType": ticketType,
@@ -220,6 +224,7 @@ export default function ReservationTray() {
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
       let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
       dispatch(doReserveListOnLoad(null));
+      dispatch(doReserveListQry(`/pages/booking/reservationTray?qry=${encData}`));
       router.push(`/pages/booking/reservationTray?qry=${encData}`);
     // }
     // else{
@@ -241,7 +246,7 @@ export default function ReservationTray() {
       "CancellationStartDate": dateType==='6' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
       "CancellationEndDate": dateType==='6' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "SupplierType": supplierCode?.value,
-      "CustomerCode": customerCode?.value,
+      "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode?.value,
       "BookingName": "",
       "CartId": "",
       "RateType": rateType,
@@ -252,8 +257,8 @@ export default function ReservationTray() {
       "CheckoutTo": dateType==='4' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
       "DuedateFrom": dateType==='5' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
       "DuedateTo": dateType==='5' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
-      "UserId": userInfo.user.userId,
-      "SubUserType": "0"
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+      "SubUserType": userInfo?.user?.isSubUser ? "1" : "0"
     }
     const responseReservList = ReservationtrayService.doGetReservations(reservationObj, userInfo.correlationId);
     const resReservList = await responseReservList;
@@ -262,7 +267,7 @@ export default function ReservationTray() {
     setCurrentPage("0");
     dispatch(doReserveListOnLoad(resReservList));
   }
-  
+
   const resetFilter = () => {
     setSelBookingStatus(null);
     setDateType("0");
@@ -278,6 +283,45 @@ export default function ReservationTray() {
     setCustomerCode(null);
     setCurrentPageObj(true);
     setCurrentPage("0");
+  }
+
+  const getExcel = async() =>{
+    let excelObj = {
+      "Skip": (pageSize * currentPage)?.toString(),
+      "Take": pageSize,
+      "BookingStatus": bookingStatus?.toString(),
+      "BookingType": bookingType,
+      "BookingNo": bookingNo,
+      "FromDate": dateType==='0' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "ToDate": dateType==='0' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "CreatedBy": userCode?.value,
+      "BookingChannel": bookingChannel,
+      "CancellationStartDate": dateType==='6' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CancellationEndDate": dateType==='6' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "SupplierType": supplierCode?.value,
+      "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode?.value,
+      "BookingName": "",
+      "CartId": "",
+      "RateType": rateType,
+      "TicketType": Number(ticketType),
+      "CheckinFrom": dateType==='3' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CheckinTo": dateType==='3' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "CheckoutFrom": dateType==='4' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "CheckoutTo": dateType==='4' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : "",
+      "DuedateFrom": dateType==='5' ? (dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "") : "",
+      "DuedateTo": dateType==='5' ? (dateTo ? format(dateTo, 'yyyy-MM-dd') : "") : ""
+    }
+    const responseExcel = ReservationtrayService.doExportReservationsToExcel(excelObj, userInfo.correlationId);
+    const resExcel = await responseExcel;
+    if(resExcel){
+      const urlVar = (new URL(process.env.NEXT_PUBLIC_ROOT_API).origin) + '/logs/'+process.env.NEXT_PUBLIC_SHORTCODE+'/Excel/'+resExcel;
+      if (typeof window !== "undefined"){
+        window.location.href = urlVar
+      }
+    }
+    else{
+      toast.error("Something went wrong! Please try after sometime.",{theme: "colored"});
+    }
   }
 
   const dtlData = useSelector((state) => state.reservationListReducer?.subDtlsList);
@@ -328,7 +372,7 @@ export default function ReservationTray() {
     }
     let getDtlObj = {
       "BookingNo": dtlCode,
-      "UserId": userInfo?.user?.userId
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId
     }
 
     let dtlItems = {...dtlData}
@@ -343,7 +387,7 @@ export default function ReservationTray() {
     }
   }
 
-  const viewBooking = (id) => {
+  const viewDetails = (id) => {
     let bookItnery = {
       "bcode": id,
       "btype": "",
@@ -352,7 +396,7 @@ export default function ReservationTray() {
     }
     let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    router.push(`/pages/booking/bookingDetails?qry=${encData}`);
   }
 
   const viewSalesReport = (id) => {
@@ -363,37 +407,6 @@ export default function ReservationTray() {
     let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     router.push(`/pages/rpt/salesRpt?qry=${encData}`);
-  }
-
-  const viewItineraryRpt = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/rpt/itineraryRpt?qry=${encData}`);
-  }
-
-  const viewVoucher = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "serviceMasterCode": "0",
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingVoucher?qry=${encData}`);
-  }
-
-  const viewInvoice = (id) => {
-    let reqRptObj = {
-      "bookingNo": id,
-      "correlationId": userInfo.correlationId
-    }
-    let encJson = AES.encrypt(JSON.stringify(reqRptObj), 'ekey').toString();
-    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingInvoice?qry=${encData}`);
   }
 
   const viewServiceLpo = (bkgNo, masterCode, suppCode, lpo) => {
@@ -479,9 +492,9 @@ export default function ReservationTray() {
     if (bServiceStatus == "on request" || bServiceStatus == "sent to supp.") {serviceFlag = 1;} 
     else if (bServiceStatus == "supp.confirmed") {serviceFlag = 2;} 
     else if (bServiceStatus == "cust.confirmed") {serviceFlag = 3;} 
-    else if (bServiceStatus == "cancelled" || bServiceStatus == "cancelled(p)") {serviceFlag = 4;} 
+    else if (bServiceStatus == "cancelled" || bServiceStatus == "cancelled(p)", "on cancellation") {serviceFlag = 4;} 
     else if (bServiceStatus == "not available") {serviceFlag = 5;} 
-    else if (bServiceStatus == "on cancellation") {serviceFlag = 6;} 
+    //else if (bServiceStatus == "on cancellation") {serviceFlag = 6;} 
     else if (bServiceStatus == "posted") {serviceFlag = 7;} 
     else if (bServiceStatus == "failed" || bServiceStatus == "not available") {serviceFlag = 12;} 
     else if (bServiceStatus == "not confirm") {serviceFlag = 13;}
@@ -538,6 +551,21 @@ export default function ReservationTray() {
         }
         else{return true;}
         break;
+        
+      //Cancel Service
+      case 'cs':
+        // if(IfUserHasreadWriteAccess('ReservationEditCancellation')){
+        //   return true;
+        // }
+        if((process.env.NEXT_PUBLIC_SHORTCODE=="ZAM" || serviceFlag == 1 || serviceFlag == 2 || serviceFlag == 3 || serviceFlag == 5 || serviceFlag == 6 || serviceFlag == 7 || serviceFlag == 12 || serviceFlag == 14) && !(serviceFlagNew == "h" && bServiceStatus == "on request")){
+          //return false;
+          if (IfUserHasreadWriteAccess('ReservationEditCancellation')) {return true;} 
+          else {return false;}
+        }
+        else{
+          return false;
+        }
+        break;
 
       //Reprice
       case 'reprice':
@@ -580,10 +608,294 @@ export default function ReservationTray() {
 
   }
 
+  const [cancelServiceDtl, setCancelServiceDtl] = useState(null);
+  const [cancelPolicy, setCancelPolicy] = useState(null);
+  const [refundReason, setRefundReason] = useState(null);
+  const [supplierCanCharge, setSupplierCanCharge] = useState(0);
+  const [sysCanCharge, setSysCanCharge] = useState(0);
+  const [customerCanCharge, setCustomerCanCharge] = useState(0);
+
+  const cancelBtn = async(s) => {
+    setCancelLoad(false);
+    setCancelPolicy(null);
+    setRefundReason(null);
+    setCancelServiceDtl(s);
+    let reqObj = {
+      "ServiceMasterCode": s.ServiceMasterCode?.toString()
+    }
+
+    if(s.ServiceCode?.toString()==="1"){
+      const responseCancelPolicyHtl = ReservationtrayService.doGetHotelCancellationPolicyDetails(reqObj, userInfo.correlationId);
+      const resCancelPolicyHtl = await responseCancelPolicyHtl;
+      if(resCancelPolicyHtl){
+        setCancelPolicy(resCancelPolicyHtl)
+        let cancelPolicyData = JSON.parse(resCancelPolicyHtl[1]);
+        cancelPolicyData?.sort((a, b) => new Date(b.FromDate) - new Date(a.FromDate));
+
+        var supplierCancelCharge = 0;
+        var customerCancelCharge = 0;
+        var sysCancelCharge = 0;
+        var markUpAmount = 0;
+        var unique = [];
+        var distinct = [];
+        for (var i = 0; i < cancelPolicyData.length; i++) {
+          if (!unique[cancelPolicyData[i].SDCode]) {
+            distinct.push(cancelPolicyData[i].SDCode);
+            unique[cancelPolicyData[i].SDCode] = 1;
+          }
+        }
+
+        for (var j = 0; j < distinct.length; j++) {
+          var bFound = false;
+          //var cpData = JSLINQ(cancelPolicyData).Where(function (item) { return item.SDCode == distinct[j] }).ToArray();
+          let cpData = []
+          cancelPolicyData.map((item) => {
+            if(item.SDCode == distinct[j]){
+              cpData.push(item)
+            }
+          })
+
+          for (var i = 0; i < cpData.length; i++) {
+            var fromDate = new Date(cpData[i].FromDate);
+            var todaydate = new Date();
+            if (i == cpData.length - 1) {
+              if (todaydate >= fromDate) {
+                supplierCancelCharge += cpData[i].SupplierCancelCharges;
+                customerCancelCharge += cpData[i].CustomerCancelCharges;
+                sysCancelCharge += cpData[i].SystemCancelCharges;
+                markUpAmount += cpData[i].MarkUpAmt;
+                bFound = true;
+              }
+            } 
+            else {
+              if (todaydate >= fromDate) {
+                supplierCancelCharge += cpData[i].SupplierCancelCharges;
+                customerCancelCharge += cpData[i].CustomerCancelCharges;
+                sysCancelCharge += cpData[i].SystemCancelCharges;
+                markUpAmount += cpData[i].MarkUpAmt;
+                bFound = true;
+              }
+            }
+            if (bFound) break;
+          }
+
+          if (supplierCancelCharge > 0) {
+            setSupplierCanCharge(parseFloat(supplierCancelCharge).toFixed(2))
+          }
+          if (sysCancelCharge > 0) {
+            setSysCanCharge(parseFloat(sysCancelCharge).toFixed(2))
+          }
+          if (customerCancelCharge > 0) {
+            setCustomerCanCharge(parseFloat(customerCancelCharge).toFixed(2))
+          }
+        }
+      }
+    }
+
+    const responseRfndRsn = ReservationtrayService.doGetRefundReasons(reqObj, userInfo.correlationId);
+    const resRfndRsn = await responseRfndRsn;
+    setRefundReason(resRfndRsn)
+  }
+
+  const cancelModalClose = useRef(null);
+  const [cancelLoad, setCancelLoad] = useState(false);
+  const [cancelReason, setCancelReason] = useState("0");
+  
+  const validate = () => {
+    let status = true;
+    if (cancelReason === '0') {
+      status = false;
+      toast.error("Please Select Cancellation Reasons",{theme: "colored"});
+      return false
+    }
+    return status
+  }
+
+  const cancelServiceBtn = async() => {
+    let allowMe = validate();
+    if(allowMe){
+      setCancelLoad(true);
+      if(cancelServiceDtl?.ServiceCode?.toString()==="1"){
+        if(cancelServiceDtl?.SupplierType==="Xml"){
+          let cancelObj = {
+            "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
+            "Currency": cancelServiceDtl?.Currency,
+            "ADSConfirmationNumber": cancelServiceDtl?.H2HBookingNo,
+            "CancelRooms": {
+              "CancelRoom": []
+            },
+            "SessionId": cancelServiceDtl?.H2HSessionId
+          }
+          cancelServiceDtl.H2HRatekey?.split('splitter')?.map((k, ind) => {cancelObj.CancelRooms.CancelRoom.push({"RoomIdentifier": (ind+1).toString()})});
+          const responseCancel = HotelService.doCancel(cancelObj, userInfo.correlationId);
+          const resCancel = await responseCancel;
+          if(resCancel?.errorInfo){
+            toast.error(resCancel?.errorInfo?.description,{theme: "colored"});
+            cancelModalClose.current?.click();
+            setCancelLoad(false);
+          }
+          else{
+            if(resCancel?.status==="4"){
+              CancelReservationServiceBtn()
+            }
+            else{
+              toast.error("Cancellation unsuccessful",{theme: "colored"});
+              cancelModalClose.current?.click();
+              setCancelLoad(false);
+              dispatch(doReserveListOnLoad(null));
+              dispatch(doSubDtlsList({}));
+              router.push('/pages/booking/reservationTray');
+            }
+          }
+        }
+
+        else{
+          let cancelLocalObj = {
+            "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
+            "Currency": cancelServiceDtl?.Currency,
+            "CustomerRefNumber": (cancelServiceDtl?.BookingNo).toString()+'-'+(cancelServiceDtl.ServiceMasterCode).toString(),
+            "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+            "TassProInfo": {
+                "CustomerCode": cancelServiceDtl?.CustomerCode?.toString(),
+                "NoOfRooms": cancelServiceDtl.H2HRatekey?.split('splitter').length.toString(),
+                "CancelledDate": format(new Date(), 'yyyy-MM-dd'),
+                "SysCancellationCharge": sysCanCharge.toString(),
+                "ActCancellationCharge": customerCanCharge.toString(),
+                "PurchaseCancellationCharge": supplierCanCharge.toString(),
+                "AccWalkInCancelCharge": "0"
+            },
+            //"SessionId": cancelServiceDtl?.UniqueId?.split('-')[1] 
+            "SessionId": cancelServiceDtl?.H2HSessionId
+          }
+          const responseCancel = HotelService.doLocalCancel(cancelLocalObj, userInfo.correlationId);
+          const resCancel = await responseCancel;
+          if(resCancel?.errorInfo){
+            toast.error(resCancel?.errorInfo?.description,{theme: "colored"});
+            cancelModalClose.current?.click();
+            setCancelLoad(false);
+          }
+          else{
+            toast.success("Cancellation Successfully!",{theme: "colored"});
+            cancelModalClose.current?.click();
+            setCancelLoad(false);
+            dispatch(doReserveListOnLoad(null));
+            dispatch(doSubDtlsList({}));
+            detailsBtn(`#detailsub${cancelServiceDtl?.BookingNo?.toString()}`,cancelServiceDtl?.BookingNo?.toString());
+            router.push('/pages/booking/reservationTray');
+          }
+
+        }
+      }
+      setCancelLoad(false);
+    }
+
+  }
+
+  const CancelReservationServiceBtn = async() => {
+    setCancelLoad(true);
+    let reqObj  = {
+      "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
+      "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+      "BookedFrom": format(new Date(cancelServiceDtl?.BookedFrom), 'yyyy-MM-dd'),
+      "EmailHtml": "",
+      "Service": {
+        "SupplierRemarks": "",
+        "ActualCancellationCharges": customerCanCharge.toString(),
+        "SysCancellationCharges": sysCanCharge.toString(),
+        "FCPurchCancelCharges": supplierCanCharge.toString()
+      }
+    }
+    const responseCancelService = ReservationService.doCancelReservationService(reqObj, userInfo.correlationId);
+    const resCancelService = await responseCancelService;
+    if(resCancelService){
+      bookingDetailBtn();
+      toast.success("Cancellation Successfully!",{theme: "colored"});
+    }
+    cancelModalClose.current?.click();
+    setCancelLoad(false);
+    dispatch(doReserveListOnLoad(null));
+    dispatch(doSubDtlsList({}));
+    detailsBtn(`#detailsub${cancelServiceDtl?.BookingNo?.toString()}`,cancelServiceDtl?.BookingNo?.toString());
+    router.push('/pages/booking/reservationTray');
+  }
+
+  const [sMasterCode, setSMasterCode] = useState("");
+  const [emailBookingRes, setEmailBookingRes] = useState(null);
+  const [sQry, setSQry] = useState(null);
+  
+  const bookingDetailBtn = async() => {
+    setSQry(null);
+    setSMasterCode("");
+    setEmailBookingRes(null);
+    let bookingItineraryObj = {
+      "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
+      "BookingType": ""
+    }
+    const responseItinerary = ReservationtrayService.doBookingItineraryData(bookingItineraryObj, userInfo.correlationId);
+    const resItinerary = await responseItinerary;
+    let serviceComb = []
+    serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
+      if(s.ServiceCode==="1"){
+        let filterDtl = []
+        resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
+          if(s.ServiceMasterCode===d.ServiceMasterCode){
+            filterDtl.push(d)
+          }
+        });
+        let combArr = []
+        combArr = filterDtl.map((dt, i) => {
+          let objPax = resItinerary?.ReservationDetail?.PaxDetails.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objPax){
+            dt.PaxNew = objPax
+          }
+          let objCancellation = resItinerary?.ReservationDetail?.CancellationPolicyDetails?.filter(o => o.ServiceMasterCode === dt.ServiceMasterCode && o.ServiceDetailCode === dt.ServiceDetailCode);
+          if(objCancellation){
+            dt.CancellationNew = objCancellation
+          }
+          return dt
+        })
+        s.RoomDtlNew = combArr
+      }
+      return s
+    });
+    setSQry({"bcode": cancelServiceDtl?.BookingNo?.toString(), "btype":""});
+    setSMasterCode(cancelServiceDtl?.ServiceMasterCode?.toString())
+    setEmailBookingRes(resItinerary);
+  }
+
+  useEffect(()=>{
+    if(emailBookingRes){
+      emailBookingBtn();
+    }
+  },[emailBookingRes]);
+
+  const emailBookingBtn = async() => {
+    let emailHtml = document.getElementById("emailArea").innerHTML;
+    let emailReq = {
+      "BookingNo": cancelServiceDtl?.BookingNo?.toString(),
+      "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+      "BookedFrom": format(new Date(cancelServiceDtl?.BookedFrom), 'yyyy-MM-dd'),
+      "EmailHtml": emailHtml,
+      "Service": {
+        "SupplierRemarks": "",
+        "ActualCancellationCharges": customerCanCharge.toString(),
+        "SysCancellationCharges": sysCanCharge.toString(),
+        "FCPurchCancelCharges": supplierCanCharge.toString()
+      }
+    }
+    const responseCancelEmail = ReservationService.doSendReservationCancelledEmail(emailReq, userInfo.correlationId);
+    const resCancelEmail = await responseCancelEmail;
+    setEmailBookingRes(null);
+  }
   
   return (
     <MainLayout>
       <ToastContainer />
+      {cancelLoad &&
+        <CommonLoader Type="3" />
+      }
       <div className="middle">
         <div className="container-fluid">
           <div className='pt-3'>
@@ -720,7 +1032,7 @@ export default function ReservationTray() {
                   <div className='col-lg-4 mb-2 align-self-end'>
                     <button type='button' className='btn btn-sm btn-warning' onClick={() => getReservations()}>Filter Bookings</button> &nbsp;
                     <button type='button' className='btn btn-sm btn-light' onClick={() => resetFilter()}>Reset</button> &nbsp;
-                    <button type='button' className='btn btn-sm btn-primary'>Export To Excel</button>
+                    <button type='button' className='btn btn-sm btn-primary' onClick={() => getExcel()}>Export To Excel</button>
                   </div>
 
                   {/* <div className='col-md-3 col-6 mb-2 align-self-end'>
@@ -759,7 +1071,7 @@ export default function ReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                                <div className='divCell text-nowrap'>View</div>
+                              <div className='divCell text-nowrap'>Details</div>
                               }
                             </>
                           }
@@ -779,29 +1091,6 @@ export default function ReservationTray() {
                                 }
                               </>
                             }
-                            {ifMenuExist('ViewItineraryReport') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
-                                  <div className='divCell text-nowrap'>IR</div>
-                                }
-                              </>
-                            }
-                            {ifMenuExist('ViewVoucher') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewVoucher') &&
-                                  <div className='divCell text-nowrap'>VR</div>
-                                }
-                              </>
-                            }
-                            {ifMenuExist('ViewInvoice') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewInvoice') &&
-                                  <div className='divCell text-nowrap'>PI</div>
-                                }
-                              </>
-                            }
-
-                            <div className='divCell text-nowrap'>PR</div>
                           </>
                           } 
                           
@@ -824,7 +1113,7 @@ export default function ReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                                <div className='divCell'><button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button></div>
+                                <div className='divCell'><button onClick={()=> viewDetails(e.bookingNo)} type="button" className='sqBtn' title="Details" data-bs-toggle="tooltip"><FontAwesomeIcon icon={faEye} className='blue' /></button></div>
                               }
                             </>
                           }
@@ -857,54 +1146,6 @@ export default function ReservationTray() {
                                   <div className='divCell'><button onClick={()=> viewSalesReport(e.bookingNo)} type="button" className='sqBtn' title="Sales Report" data-bs-toggle="tooltip"><Image src='/images/icon3.png' alt='icon' width={14} height={14} /></button></div>
                                 }
                               </>
-                            }
-
-                            {ifMenuExist('ViewItineraryReport') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
-                                  <div className='divCell'>
-                                    {e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
-                                    <><button type="button" className='sqBtn disabledBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></>
-                                    :
-                                    <><button onClick={()=> viewItineraryRpt(e.bookingNo)} type="button" className='sqBtn' title="Itinerary Report" data-bs-toggle="tooltip"><Image src='/images/icon4.png' alt='icon' width={14} height={14} /></button></>
-                                    }
-                                  </div>
-                                }
-                              </>
-                            }
-
-                            {ifMenuExist('ViewVoucher') &&
-                              <>
-                              {IfUserHasreadWriteAccess('ViewVoucher') &&
-                                <div className='divCell'>
-                                  {e.status?.toLowerCase() == "supp.confirmed" || e.status?.toLowerCase() == "on request" || e.status?.toLowerCase() == "on request(p-allc)" || e.status?.toLowerCase() == "sent to supp." || e.status?.toLowerCase() == "not available" || e.status?.toLowerCase() == "on cancellation" || e.status?.toLowerCase() == "cancelled" || e.status?.toLowerCase() == "cancelled(p)" ?
-                                  <><button className='sqBtn disabledBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></>
-                                  :
-                                  <><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='sqBtn' title="Voucher" data-bs-toggle="tooltip"><Image src='/images/icon5.png' alt='icon' width={14} height={14} /></button></>
-                                  }
-                                </div>
-                              }
-                              </>
-                            }
-
-                            {ifMenuExist('ViewInvoice') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewInvoice') &&
-                                  <div className='divCell'>
-                                  {e.status?.toLowerCase() !== "on cancellation" || e.status?.toLowerCase() !== "open" ?
-                                  <><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='sqBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></>
-                                  :
-                                  <><button type="button" className='sqBtn disabledBtn' title="Invoice" data-bs-toggle="tooltip"><Image src='/images/icon6.png' alt='icon' width={14} height={14} /></button></>
-                                  }
-                                </div>
-                                }
-                              </>
-                            }
-
-                            {e.isCCBkg == "True" ?
-                            <div className='divCell'><button type="button" className='sqBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
-                            :
-                            <div className='divCell'><button type="button" className='sqBtn disabledBtn'><Image src='/images/icon7.png' alt='icon' width={14} height={14} /></button></div>
                             }
                           </>
                           : null
@@ -1181,17 +1422,6 @@ export default function ReservationTray() {
                                           <li><a href="#" className="dropdown-item disabled"><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;LPO</a></li>
                                         }
 
-                                        {DisablePopupMenu(s, 'sv') ?
-                                          <li><button onClick={()=> viewVoucher(e.bookingNo)} type="button" className='dropdown-item'><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Service Voucher</button></li>
-                                          : 
-                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;Service Voucher</button></li>
-                                        }
-
-                                        {DisablePopupMenu(s, 'pi') ?
-                                          <li><button onClick={()=> viewInvoice(e.bookingNo)} type="button" className='dropdown-item'><FontAwesomeIcon icon={faList} className='fn12 blue' /> &nbsp;Invoice Report</button></li>
-                                          : 
-                                          <li><button type="button" className='dropdown-item disabled'><FontAwesomeIcon icon={faList} className='fn12' /> &nbsp;Invoice Report</button></li>
-                                        }
                                         <li><hr className="dropdown-divider my-1" /></li>
                                         {DisablePopupMenu(s, 'reprice') ?
                                           <li><button type="button" className='dropdown-item'><FontAwesomeIcon icon={faTag} className='fn12 blue' /> &nbsp;Reprice</button></li>

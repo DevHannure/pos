@@ -1,3 +1,4 @@
+import {format} from 'date-fns';
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API;
 const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
@@ -130,8 +131,8 @@ const HotelService = {
           "Nationality": reqObj.nationality.split('-')[1],
           "HotelCode": reqObj.hotelCode,
           "GroupCode": reqObj.groupCode,
-          "CheckInDate": reqObj.chkIn,
-          "CheckOutDate": reqObj.chkOut,
+          "CheckInDate": format(new Date(reqObj.chkIn), 'yyyy-MM-dd'),
+          "CheckOutDate": format(new Date(reqObj.chkOut), 'yyyy-MM-dd'),
           "Currency": reqObj.currency,
           "RateKeys": {
             "RateKey": reqObj.rateKey

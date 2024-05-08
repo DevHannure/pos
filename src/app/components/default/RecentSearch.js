@@ -90,7 +90,7 @@ export default function RecentSearch() {
                       <div className="bg-white text-start shadow-sm p-3 pt-1 pe-2 m-2">
                         <div className='text-end curpointer fs-5 fw-semibold text-body-tertiary position-relative' onClick={() => deleteBtn(r)}>x</div>
                         <div className='mt-n3 curpointer d-block' onClick={()=>recentSubmit(r)}>
-                          <div className='fw-semibold'>Reacent Search {r.type}</div>
+                          <div className='fw-semibold'>Recent Search {r.type}</div>
                           <div className="fs-6 fw-semibold blue">{r.location}</div>
                           <div className="text-secondary">{r.date}, {r.noGuest}</div>
                         </div>

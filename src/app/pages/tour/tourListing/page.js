@@ -51,7 +51,8 @@ export default function TourListing() {
       "SearchParameter": {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
-        "ServiceDate": qry.chkIn,
+        //"ServiceDate": qry.chkIn,
+        "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Adults": qry.adults?.toString(),
         "TassProField": {

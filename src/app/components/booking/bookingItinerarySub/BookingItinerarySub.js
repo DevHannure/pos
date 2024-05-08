@@ -100,9 +100,11 @@ export default function BookingItinerarySub(props) {
     return status
   };
 
+  
   const completeBtn = async() => {
     let allowMe = validate();
     if(allowMe){
+      setMainLoader(true);
       if(payMode === "PN") {
         let customerHasCreditObj={
           "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
@@ -114,7 +116,8 @@ export default function BookingItinerarySub(props) {
           convertCartToReservationBtn()
         }
         else{
-          toast.error("You have exceeded your credit limit. Any new booking made will be on cash basis and rooms allocated might be released if outstanding amount is not settled asap. Check yes to complete booking.",{theme: "colored"});
+          setMainLoader(false);
+          toast.error("You have exceeded your credit limit. Any new booking made will be on cash basis and rooms allocated might be released if outstanding amount is not settled asap.",{theme: "colored"});
         }
       }
 
@@ -145,7 +148,6 @@ export default function BookingItinerarySub(props) {
   };
 
   const convertCartToReservationBtn = async() => {
-    setMainLoader(true);
     let cartToReservationObj = {
       "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
       //"UserId": userInfo?.user?.userId
@@ -232,7 +234,8 @@ export default function BookingItinerarySub(props) {
         "NoOfRooms": value.RoomDtlNew.length?.toString(),
         "ProductCode": value.ProductCode,
         "SupplierCode": value.SupplierCode,
-        "RateKey": value.XMLRateKey
+        "RateKey": value.XMLRateKey,
+        "BookingStatus": payMode==='PL' ? "2" : "3"
       },
       "SessionId": value.XMLSessionId,
     }
@@ -412,7 +415,7 @@ export default function BookingItinerarySub(props) {
                 }
 
                 <div className="mb-2">
-                  <button type='button' className='btn btn-warning btn-lg cmpltBookBtn' onClick={completeBtn}>&nbsp; Complete Booking &nbsp;</button>
+                  <button type='button' className='btn btn-warning btn-lg cmpltBookBtn' onClick={completeBtn} disabled={mainLoader}>&nbsp; Complete Booking &nbsp;</button>
                 </div>
 
               </div>

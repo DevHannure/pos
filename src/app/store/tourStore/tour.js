@@ -13,7 +13,8 @@ const initialState = {
   tourFilterSort : {
     srtVal: '0'
   },
-  tourOptDtls: {}
+  tourOptDtls: {},
+  repriceDtls:null,
 };
 
 export const tourResult = createSlice({
@@ -96,6 +97,10 @@ export const tourResult = createSlice({
     doTourOptDtls:  (state, action) => {
       state.tourOptDtls = action.payload
     },
+
+    doTourReprice: (state, action) => {
+      state.repriceDtls = action.payload;
+    },
     
     
     
@@ -103,6 +108,6 @@ export const tourResult = createSlice({
 
 });
 
-export const {doTourSearchOnLoad, doFilterSort, doTourOptDtls} = tourResult.actions
+export const {doTourSearchOnLoad, doFilterSort, doTourOptDtls, doTourReprice} = tourResult.actions
 
 export default tourResult.reducer;

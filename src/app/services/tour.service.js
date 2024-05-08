@@ -114,11 +114,32 @@ const TourService = {
         urlApis = baseUrl+'/excursion/Availability'
       }
 
-      debugger;
       const response = await fetch(urlApis, {
         method: 'POST',
         body: JSON.stringify(repriceObj),
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': reqObj.correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doTourDetail: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/excursion/Detail`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doLocalTourDetail: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/localexcursion/Detail`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
     } catch (error) {console.log("error", error)}

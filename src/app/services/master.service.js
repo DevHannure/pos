@@ -79,6 +79,16 @@ const MasterService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetCustomersForUserCode: async function (reqObj,correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/customer/GetCustomersForUserCode?userCode=${reqObj}`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
   doGetCustomers: async function (correlationId) {
     try {
       const response = await fetch(`${baseUrl}/customer/GetCustomers`, {

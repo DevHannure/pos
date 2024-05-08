@@ -65,15 +65,19 @@ export default function HotelTravellerBook() {
   },[qry]);
 
   const [supplierNet, setSupplierNet] = useState(null);
+  const [supplierGross, setSupplierGross] = useState(null);
   const [net, setNet] = useState(null);
   const [markUpAmount, setMarkUpAmount] = useState(null);
   const [dueDateStart, setDueDateStart] = useState(null);
   const [exchangeRate, setExchangeRate] = useState(null);
 
+  const [roomObj, setRoomObj] = useState(null);
+
   useEffect(()=> {
     if(resReprice && resReprice.hotel && room1){
       exchangerateBtn(resReprice?.hotel?.rooms?.room[0]?.price?.supplierCurrency);
       setSupplierNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierNet, 0)).toFixed(2));
+      setSupplierGross(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.supplierGross, 0)).toFixed(2));
       setNet(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.net, 0)).toFixed(2));
       setMarkUpAmount(Number(resReprice?.hotel?.rooms?.room.reduce((totalAmnt, a) => totalAmnt + a.price.markUpValue, 0)).toFixed(2));
       
@@ -81,8 +85,11 @@ export default function HotelTravellerBook() {
       resReprice?.hotel?.rooms?.room[0]?.policies?.policy?.map((k, i) => {
         if(k?.type ==='CAN'){
           k?.condition?.map((m) => {
-            if(m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0"){}
-            else{dueDateStartVar.push(m)}
+            // if(m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0"){}
+            // else{dueDateStartVar.push(m)}
+            if(m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0){
+              dueDateStartVar.push(m)
+            }
           })
         }
       });
@@ -91,7 +98,7 @@ export default function HotelTravellerBook() {
   },[resReprice, room1]);
 
   useEffect(()=> {
-    if(exchangeRate && userInfo){
+    if(exchangeRate && userInfo && !roomObj){
       createRoomObj();
     }
   },[exchangeRate && userInfo]);
@@ -162,21 +169,24 @@ export default function HotelTravellerBook() {
     }
   }
 
-  const [roomObj, setRoomObj] = useState(null);
+  
   
   const createRoomObj = () => {
     let roomPax = []
     qry.paxInfoArr.map((r, i) => {
       let roomNet = resReprice.hotel?.rooms?.room[i]?.price.net;
       let roomSupplierNet = resReprice.hotel?.rooms?.room[i]?.price.supplierNet;
+      let roomSupplierGross = resReprice.hotel?.rooms?.room[i]?.price.supplierGross;
       let roomMarkUpAmount = resReprice.hotel?.rooms?.room[i]?.price.markUpValue;
       //let roomTax = resReprice.hotel?.rooms?.room[i]?.price.tax;
       let roomSingle = {
         "NoOfUnits": "1",
         "AdultNoOfUnits": r.adtVal.toString(),
         "ChildNoOfUnits": r.chdVal.toString(),
-        "Rate": Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
-        "Payable": Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
+        //"Rate": Number(roomSupplierGross * exchangeRate).toFixed(2).toString(),
+        "Rate": qry?.supplierName?.toLowerCase()==="local" ? Number(roomSupplierGross * exchangeRate).toFixed(2).toString() : Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
+        //"Payable": Number(roomSupplierGross * exchangeRate).toFixed(2).toString(),
+        "Payable": qry?.supplierName?.toLowerCase()==="local" ? Number(roomSupplierGross * exchangeRate).toFixed(2).toString() : Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
         "MarkupAmount": Number(roomMarkUpAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
         "MarkupPercentage": "0",
         //"Tax": Number(roomTax).toString(),
@@ -185,7 +195,7 @@ export default function HotelTravellerBook() {
         "VATInputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
         "VATOutputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
         "RoomTypeName": resReprice.hotel?.rooms?.room[i]?.roomName,
-        "RateBasisName": resReprice.hotel?.rooms?.room[i]?.meal,
+        "RateBasisName": resReprice.hotel?.rooms?.room[i]?.meal ? resReprice.hotel?.rooms?.room[i]?.meal : 'Room Only',
         "RateTypeCode": i===0 && room1[0]?.rateTypeCode || i===1 && room2[0]?.rateTypeCode || i===2 && room3[0]?.rateTypeCode,
         "RateTypeName": i===0 && room1[0]?.rateTypeName || i===1 && room2[0]?.rateTypeName || i===2 && room3[0]?.rateTypeName,
         "RateCategoryCode": qry?.supplierName?.toLowerCase()==="local" ? "1" : "0",
@@ -330,6 +340,13 @@ export default function HotelTravellerBook() {
           toast.error("Special character's are not allowed in last name",{theme: "colored"});
           break;
         }
+
+        if(roomObj[k].PaxDetails[i].FName === roomObj[k].PaxDetails[i].LName){
+          status = false;
+          document.getElementById("lastName"+k+i).focus();
+          toast.error("First name and Last name can not be same",{theme: "colored"})
+          break;
+        }
       }
       if(!status){
         break;
@@ -418,9 +435,9 @@ export default function HotelTravellerBook() {
             "RoomTypeCode": resReprice.hotel?.rooms?.room[0]?.roomTypeCode ? resReprice.hotel?.rooms?.room[0]?.roomTypeCode : "0",
             "RoomTypeName": resReprice.hotel?.rooms?.room[0]?.roomName,
             "RateBasisCode": resReprice.hotel?.rooms?.room[0]?.rateBasisCode ? resReprice.hotel?.rooms?.room[0]?.rateBasisCode : "0",
-            "RateBasisName": resReprice.hotel?.rooms?.room[0]?.meal,
-            "BookedFrom": qry?.chkIn,
-            "BookedTo": qry?.chkOut,
+            "RateBasisName": resReprice.hotel?.rooms?.room[0]?.meal ? resReprice.hotel?.rooms?.room[0]?.meal : 'Room Only',
+            "BookedFrom": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+            "BookedTo": format(new Date(qry.chkOut), 'yyyy-MM-dd'),
             "BookedNights": differenceInDays(new Date(qry?.chkOut),new Date(qry?.chkIn)).toString(),
             "PickupDetails": 'https://static.giinfotech.ae/medianew'+htlDetails?.hotelDetail?.imageUrl,
             "DropoffDetails": "",
@@ -433,7 +450,7 @@ export default function HotelTravellerBook() {
             "ProductContactNo": htlDetails?.hotelDetail?.contactTelephone,
             "ProductFaxNo": htlDetails?.hotelDetail?.contactFax,
             "ProductWebSite": htlDetails?.hotelDetail?.contactWebUrl,
-            "ClassificationCode": htlDetails?.hotelDetail?.rating,
+            "ClassificationCode": parseInt(htlDetails?.hotelDetail?.rating).toString(),
             "ClassificationName": htlDetails?.hotelDetail?.rating + ' Star',
             "SupplierCode": qry.supplierCode,
             "ReservationCode": qry?.supplierName?.toLowerCase()==="local" ? qry.supplierCode : resReprice.hotel?.rooms?.room[0]?.price.supplierCode,
@@ -442,9 +459,12 @@ export default function HotelTravellerBook() {
             "SupplierRemarks": "",
             "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
             "SupplierExchangeRate":exchangeRate.toString(),
-            "SupplierPayableAmount": Number(supplierNet).toFixed(2).toString(),
-            "Rate":  Number(supplierNet * exchangeRate).toFixed(2).toString(),
-            "PayableAmount": Number(supplierNet * exchangeRate).toFixed(2).toString(),
+            //"SupplierPayableAmount": Number(supplierNet).toFixed(2).toString(),
+            "SupplierPayableAmount": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross).toFixed(2).toString() : Number(supplierNet).toFixed(2).toString(),
+            //"Rate":  Number(supplierGross * exchangeRate).toFixed(2).toString(),
+            "Rate": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross * exchangeRate).toFixed(2).toString() : Number(supplierNet * exchangeRate).toFixed(2).toString(),
+            //"PayableAmount": Number(supplierGross * exchangeRate).toFixed(2).toString(),
+            "PayableAmount": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross * exchangeRate).toFixed(2).toString() : Number(supplierNet * exchangeRate).toFixed(2).toString(),
             "MarkupAmount": Number(markUpAmount*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
             "NetAmount": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
             "SellPrice": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
@@ -459,7 +479,8 @@ export default function HotelTravellerBook() {
             "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
             "CustomerNetAmount": Number(net).toFixed(2).toString(),
             "XMLSupplierCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
-            "XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
+            //"XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
+            "XMLRateKey": resReprice.hotel?.rooms?.room.map(item => item.rateKey).join('splitter'),
             "XMLSessionId": qry?.sessionId,
             "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
             "NoOfAdults": Number(qry.paxInfoArr.reduce((totalAdlt, a) => totalAdlt + a.adtVal, 0)).toString(),
@@ -713,7 +734,7 @@ export default function HotelTravellerBook() {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  <>
+                                  {/* <>
                                   {k?.condition?.map((m, i) => (
                                   <tr key={i}>
                                     <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
@@ -722,6 +743,22 @@ export default function HotelTravellerBook() {
                                     <td className="text-center">{m.nights}</td>
                                     <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
                                   </tr>
+                                  ))}
+                                  </> */}
+                                  <>
+                                  {k?.condition?.map((m, i) => (
+                                    <React.Fragment key={i}>
+                                      {m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0 ?
+                                        <tr key={i}>
+                                          <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                          <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                          <td style={{textAlign:'center'}}>{m.percentage}</td>
+                                          <td style={{textAlign:'center'}}>{m.nights}</td>
+                                          <td style={{textAlign:'center'}}>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                        </tr>
+                                      : null
+                                      }
+                                    </React.Fragment>
                                   ))}
                                   </>
                                 </tbody>
@@ -749,13 +786,18 @@ export default function HotelTravellerBook() {
                                   <tbody>
                                     <>
                                     {k?.condition?.map((m, i) => (
-                                    <tr key={i}>
-                                      <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                                      <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
-                                      <td className="text-center">{m.percentage}</td>
-                                      <td className="text-center">{m.nights}</td>
-                                      <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
-                                    </tr>
+                                      <React.Fragment key={i}>
+                                      {m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0 ?
+                                        <tr>
+                                          <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                          <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                          <td className="text-center">{m.percentage}</td>
+                                          <td className="text-center">{m.nights}</td>
+                                          <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                        </tr>
+                                        : null
+                                      }
+                                      </React.Fragment>             
                                     ))}
                                     </>
                                   </tbody>
@@ -784,13 +826,18 @@ export default function HotelTravellerBook() {
                                   <tbody>
                                     <>
                                     {k?.condition?.map((m, i) => (
-                                    <tr key={i}>
-                                      <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                                      <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
-                                      <td className="text-center">{m.percentage}</td>
-                                      <td className="text-center">{m.nights}</td>
-                                      <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
-                                    </tr>
+                                    <React.Fragment key={i}>
+                                      {m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0 ?
+                                      <tr>
+                                        <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                        <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                        <td className="text-center">{m.percentage}</td>
+                                        <td className="text-center">{m.nights}</td>
+                                        <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                      </tr>
+                                      : null
+                                      }
+                                    </React.Fragment>
                                     ))}
                                     </>
                                   </tbody>
@@ -871,7 +918,7 @@ export default function HotelTravellerBook() {
                   {resReprice.hotel?.rooms?.room.map((v, i) => ( 
                   <div key={i} className='fw-semibold'>
                     <hr className='my-2' />
-                    <div className='text-capitalize fn13 mb-1'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} with {v.meal?.toLowerCase()}
+                    <div className='text-capitalize fn13 mb-1'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} {v.meal ? <>with {v.meal?.toLowerCase()}</> : 'With Room Only'}
                       {['Refundable', 'refundable'].includes(qry?.rateType) ?
                       <span className="refund"> (Refundable)</span>:''
                       }
@@ -942,7 +989,7 @@ export default function HotelTravellerBook() {
               </div>
             </div>
 
-            <div ref={cancelPolicyHtml} className='d-none'>
+            {/* <div ref={cancelPolicyHtml} className='d-none'>
               {resReprice.hotel?.rooms?.room &&
               <>
               {resReprice.hotel.rooms.room.map((v, i) => ( 
@@ -1006,6 +1053,148 @@ export default function HotelTravellerBook() {
               ))}
               </>
               }
+            </div> */}
+            <div ref={cancelPolicyHtml} className='d-none'>
+              <div>
+                {resReprice.hotel?.rooms?.room &&
+                  <>
+                  <div>
+                    {resReprice.hotel.rooms.room.map((v, i) => ( 
+                    <div key={i}>
+                      {v.policies?.policy?.map((k, i) => (
+                      <React.Fragment key={i}>
+                        {k?.type ==='CAN' &&
+                        <>
+                        <div style={{textTransform:'capitalize',fontSize:'13px', color:'#01468a'}}><strong>Cancellation Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                        <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dddddd" style={{width:'100%', maxWidth:'100%', borderCollapse:'collapse',borderSpacing:0,fontFamily:'Arial, Helvetica, sans-serif', fontSize:'12px', marginBottom:'10px', border:'1px solid #dddddd'}}>
+                          <thead>
+                            <tr style={{backgroundColor:'#f5f5f5',}}>
+                              <th>From</th>
+                              <th>To</th>
+                              <th style={{textAlign:'center'}}>Percentage(%)</th>
+                              <th style={{textAlign:'center'}}>Nights</th>
+                              <th style={{textAlign:'center'}}>Fixed</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <>
+                            {k?.condition?.map((m, i) => (
+                              <React.Fragment key={i}>
+                                {m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0 ?
+                                  <tr>
+                                    <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                    <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                    <td style={{textAlign:'center'}}>{m.percentage}</td>
+                                    <td style={{textAlign:'center'}}>{m.nights}</td>
+                                    <td style={{textAlign:'center'}}>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                  </tr>
+                                : null
+                                }
+                              </React.Fragment>
+                            ))}
+                            </>
+                          </tbody>
+                        </table>
+                        <div style={{fontSize:'12px',marginBottom:'5px'}}><strong>Supplier Information:</strong> {k?.textCondition}</div>
+                        </>
+                        }
+
+                        {k?.type ==='MOD' && 
+                        <>
+                          {k?.condition &&
+                          <>
+                          <div style={{textTransform:'capitalize',fontSize:'13px', color:'#01468a'}}><strong>Amendment Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                          
+                          <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dddddd" style={{width:'100%', maxWidth:'100%', borderCollapse:'collapse',borderSpacing:0,fontFamily:'Arial, Helvetica, sans-serif', fontSize:'12px', marginBottom:'10px', border:'1px solid #dddddd'}}>
+                            <thead>
+                              <tr style={{backgroundColor:'#f5f5f5'}}>
+                                <th>From</th>
+                                <th>To</th>
+                                <th style={{textAlign:'center'}}>Percentage(%)</th>
+                                <th style={{textAlign:'center'}}>Nights</th>
+                                <th style={{textAlign:'center'}}>Fixed</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <>
+                              {k?.condition?.map((m, i) => (
+                                <React.Fragment key={i}>
+                                {m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0 ?
+                                  <tr>
+                                    <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                    <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                    <td style={{textAlign:'center'}}>{m.percentage}</td>
+                                    <td style={{textAlign:'center'}}>{m.nights}</td>
+                                    <td style={{textAlign:'center'}}>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                  </tr>
+                                  : null
+                                }
+                                </React.Fragment>
+                              ))}
+                              </>
+                            </tbody>
+                          </table>
+                          </>
+                          }
+                        </>
+                        }
+
+                        {k?.type ==='NOS' && 
+                        <>
+                          {k?.condition &&
+                          <>
+                          <div style={{textTransform:'capitalize',fontSize:'13px', color:'#01468a'}}><strong>No Show Policy Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</strong></div>
+                          <table className='table-bordered' width="100%" cellPadding="5" cellSpacing="0" border="1" bordercolor="#dddddd" style={{width:'100%', maxWidth:'100%', borderCollapse:'collapse',borderSpacing:0,fontFamily:'Arial, Helvetica, sans-serif', fontSize:'12px', marginBottom:'10px', border:'1px solid #dddddd'}}>
+                            <thead>
+                              <tr style={{backgroundColor:'#f5f5f5'}}>
+                                <th>From</th>
+                                <th>To</th>
+                                <th style={{textAlign:'center'}}>Percentage(%)</th>
+                                <th style={{textAlign:'center'}}>Nights</th>
+                                <th style={{textAlign:'center'}}>Fixed</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <>
+                              {k?.condition?.map((m, i) => (
+                                <React.Fragment key={i}>
+                                  {m.percentage > 0 || m.nights > 0 ||  parseFloat(m.fixed) > 0 ?
+                                    <tr>
+                                      <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
+                                      <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                                      <td style={{textAlign:'center'}}>{m.percentage}</td>
+                                      <td style={{textAlign:'center'}}>{m.nights}</td>
+                                      <td style={{textAlign:'center'}}>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                    </tr>
+                                    : null
+                                  }
+                              </React.Fragment>
+                              ))}
+                              </>
+                            </tbody>
+                          </table>
+                          </>
+                          }
+                        </>
+                        }
+                      </React.Fragment> 
+                      ))}
+
+                      <div style={{fontSize:'12px'}}>
+                      {v.remarks?.remark?.map((p, i) => ( 
+                        <div key={i} style={{marginTop:'5px'}}>
+                          <div style={{textTransform:'capitalize'}} className='fw-semibold'>{p?.type?.toLowerCase().replace('_',' ') }:</div>
+                          <div style={{whiteSpace:'pre-line'}} dangerouslySetInnerHTML={{ __html:p?.text}}></div>
+                        </div>
+                      ))}
+                      </div>
+                      <hr />
+                    </div>
+                    ))}
+                  </div>
+                  </>
+                }
+              </div>
             </div>
             
             <button ref={noRefundBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#nonRfndblModal">No refund</button>

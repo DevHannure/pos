@@ -54,7 +54,7 @@ export default function BookingItinerary() {
     let valItem = value
     let errors = {}; 
     if(!valItem){
-      errors.email = 'Email is required.'; 
+      errors.email = 'Username is required.'; 
     }
     else if(process.env.NEXT_PUBLIC_APPCODE==='1'){
       if (!/\S+@\S+\.\S+/.test(valItem)) { 
@@ -78,7 +78,7 @@ export default function BookingItinerary() {
   const validateForm = () => { 
     let errors = {}; 
     if (!email) { 
-        errors.email = 'Email is required.'; 
+        errors.email = 'Username is required.'; 
     } 
     else if(process.env.NEXT_PUBLIC_APPCODE==='1'){
       if (!/\S+@\S+\.\S+/.test(email)) { 
@@ -161,7 +161,8 @@ export default function BookingItinerary() {
         .catch(err => console.error(err));
 
         const req = {
-          UserCode: email,
+          //UserCode: email,
+          UserCode: userDtl?.user?.userEmail,
           AppCode: process.env.NEXT_PUBLIC_APPCODE,
           OTP: otp,
           DeviceInfo:{
@@ -210,7 +211,8 @@ export default function BookingItinerary() {
     .catch(err => console.error(err));
 
     const req = {
-      UserCode: email,
+      //UserCode: email,
+      UserCode: userDtl?.user?.userEmail,
       AppCode: process.env.NEXT_PUBLIC_APPCODE,
       DeviceInfo:{
         Url: process.env.NEXT_PUBLIC_DOMAINNAME,
@@ -489,7 +491,7 @@ export default function BookingItinerary() {
     <div className="loginForm">
       <h3 className="fs-5 mb-3">Agent Login</h3>
       <div className="mb-4">
-        <input type="text" className="form-control" autoComplete="off" placeholder="Enter your email id" value={email} onChange={(e) => emailChange(e.target.value)}  />
+        <input type="text" className="form-control" autoComplete="off" placeholder={process.env.NEXT_PUBLIC_APPCODE==='1' ? 'Enter your email id' : 'Enter your username'} value={email} onChange={(e) => emailChange(e.target.value)}  />
         {errors.email && <div className='text-danger m-1'>{errors.email}</div>}
       </div>
       <div className="mb-1">

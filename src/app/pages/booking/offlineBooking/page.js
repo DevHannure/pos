@@ -2,7 +2,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faArrowRightLong, faArrowLeftLong, faFileImport, faCloudUploadAlt, faPlus, faPencilAlt, faTrashAlt} from "@fortawesome/free-solid-svg-icons";
+import { faStar, faArrowRightLong, faArrowLeftLong, faFileImport, faCloudUploadAlt, faPlus, faPencilAlt, faTrashAlt, faShoppingCart} from "@fortawesome/free-solid-svg-icons";
 import {faCheckCircle} from "@fortawesome/free-regular-svg-icons";
 import {useRouter, useSearchParams} from 'next/navigation';
 import DatePicker from "react-datepicker";
@@ -629,6 +629,115 @@ export default function OfflineBook() {
                 </div>
 
               </div>
+
+              <div className="modal fade" id="cartModal">
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content">
+                  <div className="modal-header bg-light">
+                    <h5 className="modal-title">Cart</h5>
+                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="accordion accordion-flush">
+                      <div className="accordion-item mb-3">
+                        <h2 className="accordion-header">
+                          <button className="accordion-button p-2 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                          Hotel (2)
+                          </button>
+                        </h2>
+                        <div id="flush-collapseOne" className="accordion-collapse collapse show">
+                          <div className="accordion-body p-1">
+                          <div>
+                            <div>
+                              <h3 className="fs-6 blue my-1">Panorama Deira Hotel</h3>
+                              <div className="mb-1"><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starGold" /><FontAwesomeIcon icon={faStar} className="starBlank" /><FontAwesomeIcon icon={faStar} className="starBlank" /></div>
+                              <div className="text-black-50 mb-2 fn12">Opposite Al Ghurair, Dubai, United Arab Emirates</div>
+                            </div>
+                            
+                            <hr className="my-2" />
+                            <table className="table table-sm table-bordered fw-semibold">
+                              <thead>
+                              <tr className="table-light">
+                                <th><strong className="blue">Rooms:</strong></th>
+                                <th><strong className="blue">Check-in:</strong></th>
+                                <th><strong className="blue">Check-out:</strong></th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              <tr>
+                                <td>1</td>
+                                <td>Thu, 13 Jun 2024</td>
+                                <td>Fri, 14 Jun 2024</td>
+                              </tr>
+                              </tbody>
+                            </table>
+                            <div className="fw-semibold">
+                              <hr className="my-2" />
+                              <div className="text-capitalize fn13 mb-1"><strong className="blue">Room 1:</strong> standard double room (twin beds) with roomonly<span className="nonrefund"> (Non-Refundable)</span></div>
+                              <div className="fn13"><strong className="blue">Pax:</strong> 2 Adult(s)</div>
+                              <div className="fs-6"><strong className="blue">Fare: AED 102.19</strong></div>
+                            </div>
+                          </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="accordion-item mb-3">
+                        <h2 className="accordion-header">
+                          <button className="accordion-button p-2 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">Excursion</button>
+                        </h2>
+                        <div id="flush-collapseTwo" className="accordion-collapse collapse">
+                          <div className="accordion-body p-1">
+                            <div>
+                              <div>
+                                <h3 className="fs-6 blue my-2">Full Day Tour (Without Transfers) - Jeddah</h3>
+                              </div>
+                              <table className="table table-sm table-bordered fw-semibold">
+                                <thead>
+                                  <tr className="table-light">
+                                    <th><strong className="blue">Date:</strong></th>
+                                    <th><strong className="blue">Pax:</strong></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td>Thu, 13 Jun 2024</td>
+                                    <td>2 Adult(s)</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                              <div className="fw-semibold">
+                                <hr className="my-2" />
+                                <div className="fs-6"><strong className="blue">Fare: AED 102.19</strong></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                    
+                      
+                    </div>
+                    <div className="bg-light fs-5 d-flex justify-content-between p-2 border">
+                      <div>Trip Total</div>
+                      <div>AED <strong>468.12</strong></div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
+                    &nbsp;<button type="button" className='btn btn-warning px-4' data-bs-dismiss="modal">Next <i className="fas fa-long-arrow-alt-right fn14"></i></button>
+                  </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="position-fixed bottom-0 end-0 w-auto" data-bs-toggle="modal" data-bs-target="#cartModal">
+                <button type="button" className="btn btn-secondary p-3 m-2 rounded-pill position-relative">
+                  <FontAwesomeIcon icon={faShoppingCart} className="fs-5" />
+                  <span className="position-absolute top-0 start-50 translate-middle badge rounded-pill text-bg-danger">1</span>
+                </button>
+              </div>
+
             </div>
 
             

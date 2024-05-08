@@ -43,7 +43,7 @@ export default function PaymentReceipt() {
         setTimeout(() => {
             sessionStorage.clear();
             router.push('/');
-        }, 9000); 
+        }, 5000); 
       }
     }
     

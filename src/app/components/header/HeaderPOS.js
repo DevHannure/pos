@@ -62,9 +62,7 @@ export default function Header() {
   useEffect(() => {
     dispatch(doUserInfo(data));
     if(data && !customersCreditInfo){
-      if(process.env.NEXT_PUBLIC_APPCODE === "1"){
-        customersCreditDetailsBtn(data?.user.userCode);
-      }
+      customersCreditDetailsBtn(data?.user.userCode);
     }
     if(data && !appFeaturesInfo){
       appFeaturesBtn();
@@ -191,43 +189,35 @@ export default function Header() {
               <div className="text-end">
                 <ul className="deviderList">
                   <li className="text-capitalize">
-                    {customersCreditInfo &&
+                    {userInfos?.user?.paymentMode === "CA"?
+                    <span>Cash Customer &nbsp;|&nbsp; </span>
+                    :
+                    <>
+                    {userInfos?.user?.isSubUser ?
                       <>
-                      {userInfos?.user?.paymentMode === "CA"?
-                      <span>Cash Customer &nbsp;|&nbsp; </span>
-                      :
-                      <>
-                      {userInfos?.user?.isSubUser ?
-                        <>
-                          {userInfos?.user?.consultantCreditDisplay ?
-                            <span>
-                              Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; 
-                              <span className="text-success"> Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
-                              <span className="text-danger"> Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  
-                            </span> : null
-                          }
-                        </>
-                        :
-                        <>
+                        {userInfos?.user?.consultantCreditDisplay ?
                           <span>
                             Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; 
-                            <span className="text-success"> Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
-                            <span className="text-danger"> Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  
-                          </span>
-                        </>
-                      }
+                            <span className="text-success">Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
+                            <span className="text-danger">Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  
+                          </span> : null
+                        }
                       </>
-                      }
+                      :
+                      <>
+                        <span>
+                          Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; 
+                          <span className="text-success">Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
+                          <span className="text-danger">Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  
+                        </span>
                       </>
                     }
+                    </>
 
-                    {process.env.NEXT_PUBLIC_APPCODE === "1" ?
-                    <>{userInfos?.user?.customerConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
-                    :
-                    <>{userInfos?.user?.companyConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
                     }
+                    
 
-                     {userInfos?.user?.branchName?.toLowerCase()}
+                    {userInfos?.user?.customerConsultantName?.replace(/_/g, " ")?.toLowerCase()}, {userInfos?.user?.branchName?.toLowerCase()}
                     </li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
@@ -238,15 +228,7 @@ export default function Header() {
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li> */}
-                
-                {/* <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/reservationTray'}>POS</Link></li> */}
-
-                {process.env.NEXT_PUBLIC_APPCODE === "1" ?
-                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/b2bReservationTray' }>My Bookings</Link></li>
-                  :
-                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/reservationTray'}>My Bookings</Link></li>
-                }
-
+                <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/reservationTray'}>My Bookings</Link></li>
                {userInfos?.user?.isSubUser ? 
                 null 
                 : 

@@ -57,7 +57,8 @@ export default function ModifySearch(props) {
   const [selectedDestination, setSelectedDestination] = useState(options);
   const [calNum, setCalNum] = useState(2);
   const [chkIn, setChkIn] = useState(props.TurReq !== '' ? new Date(props.TurReq.chkIn) : new Date());
-  const [cusNationality, setCusNationality] = useState(props.TurReq ? props.TurReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
+  //const [cusNationality, setCusNationality] = useState(props.TurReq ? props.TurReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
+  const [cusNationality, setCusNationality] = useState(props.TurReq ? props.TurReq.nationality : userInfo?.user?.countryCode);
   const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
   const regionCodeSav = useSelector((state) => state.commonResultReducer?.regionCodeSaver);
   const [regionCode, setRegionCode] = useState(regionCodeSav ? regionCodeSav : '');
@@ -223,8 +224,17 @@ export default function ModifySearch(props) {
       if(!nationalityOptions){
         nationalityReq();
       }
+      if(!cusNationality){
+        setCusNationality(props.TurReq ? props.TurReq.nationality : userInfo?.user?.countryCode);
+      }
     }
   }, [userInfo]);
+
+  useEffect(() => {
+    if(cusNationality && cusCode){
+      regionReq()
+    }
+  }, [cusNationality, cusCode]);
 
   const nationalityReq = async()=> {
     const responseCoutry = await MasterService.doGetCountries(props.TurReq ? props.TurReq.correlationId : userInfo.correlationId);
@@ -232,9 +242,9 @@ export default function ModifySearch(props) {
     dispatch(doCountryOnLoad(resCoutry));
   }
 
-  useEffect(() => {
-    regionReq()
-  }, [cusCode]);
+  // useEffect(() => {
+  //   regionReq()
+  // }, [cusCode]);
   
   const regionReq = async()=> {
     if(cusCode){
@@ -300,7 +310,8 @@ export default function ModifySearch(props) {
       let qry = {
         "customerCode": cusCode,
         "destination":selectedDestination,
-        "chkIn": format(chkIn, 'yyyy-MM-dd'),
+        //"chkIn": format(chkIn, 'yyyy-MM-dd'),
+        "chkIn": chkIn.toString(),
         "adults": adtVal,
         "children": chdVal,
         "ca": '',
@@ -337,7 +348,6 @@ export default function ModifySearch(props) {
       if(resSaveRecent?.isSuccess){
         dispatch(doRecentSearch(null));
       }
-
       e.nativeEvent.target.disabled = false;
       e.nativeEvent.target.innerHTML = 'Search';
       sessionStorage.setItem("qryTourList", encData);

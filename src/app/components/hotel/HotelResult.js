@@ -25,6 +25,7 @@ const roomOptions = [
 ];
 
 export default function HotelResult(props) {
+  
   const noRefundBtn = useRef(null);
   const soldOutBtn = useRef(null);
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function HotelResult(props) {
     setChildrenAgesVar(childrenAgesArray?.toString());
     setOccupancyStrVar(OccupancyStrArray.map(item => item).join('*'));
 
-    setPagesCount(Math.ceil(getHtlRes?.hotels?.b2BHotel.length / pageSize))
+    setPagesCount(Math.ceil(getHtlRes?.hotels?.b2BHotel?.length / pageSize))
     setCurrentPage(0);
   },[getHtlRes]);
 
@@ -104,12 +105,11 @@ export default function HotelResult(props) {
   const roomData = useSelector((state) => state.hotelResultReducer?.roomDtls);
   //const [roomData, setRoomData] = useState({});
   const [htlCollapse, setHtlCollapse] = useState('');
-  const [supplierNameVar, setSupplierNameVar] = useState('');
   const [systemIdVar, setSystemIdVar] = useState('');
+  const [fltrRoomData, setFltrRoomData] = useState(null);
   
   const roomDetail = async(v) => {
     let hotelCollapseCode = '#room'+v.systemId;
-    setSupplierNameVar(v.supplierName);
     setSystemIdVar(v.systemId);
 
     if(hotelCollapseCode!==htlCollapse){
@@ -126,8 +126,10 @@ export default function HotelResult(props) {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
         "HotelCode": v.systemId,
-        "CheckInDate": qry.chkIn,
-        "CheckOutDate": qry.chkOut,
+        // "CheckInDate": qry.chkIn,
+        // "CheckOutDate": qry.chkOut,
+        "CheckInDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+        "CheckOutDate": format(new Date(qry.chkOut), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Nationality": qry.nationality.split('-')[1],
         "Rooms": {"Room":roomsVar},
@@ -149,7 +151,7 @@ export default function HotelResult(props) {
       //"SessionId": supplierName?.toLowerCase()==="local" ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
       "SessionId": getOrgHtlResult?.generalInfo?.sessionId
     }
-    //let roomRes = {}
+
     let roomItems = {...roomData}
     let resHtlRoomDtl = null;
     if (_.isEmpty(roomData[v.systemId])) {
@@ -168,11 +170,11 @@ export default function HotelResult(props) {
         if(resXmlRoomResult && resLocalRoomResult){
           var xmlB2BRoom = resXmlRoomResult?.hotel?.rooms?.b2BRoom ? resXmlRoomResult.hotel.rooms.b2BRoom : [];
           if(xmlB2BRoom){
-            xmlB2BRoom = xmlB2BRoom.map((item) => ({ ...item, productCode: v.adsProductCode, local:false }))
+            xmlB2BRoom = xmlB2BRoom.map((item) => ({ ...item, productCode: v.adsProductCode, supplierName:v.shortCodeName, local:false }))
           }
-          var localB2BRoom = resLocalRoomResult?.hotel?.rooms?.b2BRoom ? resLocalRoomResult.hotel.rooms.b2BRoom : [];
+          var localB2BRoom = resLocalRoomResult?.hotel?.rooms?.b2BRoom ? resLocalRoomResult?.hotel?.rooms?.b2BRoom : [];
           if(localB2BRoom){
-            localB2BRoom = localB2BRoom.map((item) => ({ ...item, productCode: v.localProductCode, local:true }))
+            localB2BRoom = localB2BRoom.map((item) => ({ ...item, productCode: v.localProductCode, supplierName:'local', local:true }))
           }
           var mixB2BRoom = [...xmlB2BRoom, ...localB2BRoom];
           mixB2BRoom.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
@@ -188,10 +190,10 @@ export default function HotelResult(props) {
           localRoomObj.SearchParameter.TassProInfo.ProductCode = v.localProductCode;
           const responseLocalRoom = HotelService.doLocalHotelRoomDetails(localRoomObj, qry.correlationId);
           let resLocalRoomResult = await responseLocalRoom;
-          if(resLocalRoomResult){
-            var localB2BRoom = resLocalRoomResult?.hotel?.rooms?.b2BRoom ? resLocalRoomResult.hotel.rooms.b2BRoom : [];
+          if(resLocalRoomResult?.hotel?.rooms){
+            var localB2BRoom = resLocalRoomResult?.hotel?.rooms?.b2BRoom ? resLocalRoomResult?.hotel?.rooms?.b2BRoom : [];
             if(localB2BRoom){
-              localB2BRoom = localB2BRoom.map((item) => ({ ...item, productCode: v.localProductCode, local:true }));
+              localB2BRoom = localB2BRoom.map((item) => ({ ...item, productCode: v.localProductCode, supplierName:'local', local:true }));
               resLocalRoomResult.hotel.rooms.b2BRoom = localB2BRoom
             }
             resLocalRoomResult?.hotel?.rooms?.b2BRoom.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
@@ -204,7 +206,7 @@ export default function HotelResult(props) {
           if(resXmlRoomResult){
             var xmlB2BRoom = resXmlRoomResult?.hotel?.rooms?.b2BRoom ? resXmlRoomResult.hotel.rooms.b2BRoom : [];
             if(xmlB2BRoom){
-              xmlB2BRoom = xmlB2BRoom.map((item) => ({ ...item, productCode: v.adsProductCode, local:false }));
+              xmlB2BRoom = xmlB2BRoom.map((item) => ({ ...item, productCode: v.adsProductCode, supplierName:v.shortCodeName, local:false }));
               resXmlRoomResult.hotel.rooms.b2BRoom = xmlB2BRoom
             }
             resXmlRoomResult?.hotel?.rooms?.b2BRoom.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
@@ -213,18 +215,9 @@ export default function HotelResult(props) {
         }
       }
 
-      //let resHtlRoomDtl = await responseHtlRoom;
-      // roomTypeName
-      // groupCode
-      // marriageIdentifier
-      // rateType
-      // isPackage
-      // isDynamic
-      // roomBasisName
-      // OfferDesctription
       let newArr = []
 
-      if(qry.paxInfoArr.length === 1){
+      if(qry.paxInfoArr?.length === 1){
         newArr = resHtlRoomDtl?.hotel?.rooms?.b2BRoom.map((item) => {
           return [item]
         })
@@ -242,11 +235,11 @@ export default function HotelResult(props) {
         });
 
         filterArr.map((v) => {
-          if(qry.paxInfoArr.length === v.length){
+          if(qry.paxInfoArr?.length === v?.length){
             const numAscending = [...v].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
             newArr.push(numAscending)
           }
-          if(qry.paxInfoArr.length < v.length){
+          if(qry.paxInfoArr?.length < v?.length){
             const uniqueRoom = [...new Map(v.map(k => [k.roomIdentifier, k])).values()]
             //console.log("uniqueRoom", uniqueRoom)
             const numAscending = [...uniqueRoom].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
@@ -262,6 +255,7 @@ export default function HotelResult(props) {
       dispatch(doRoomDtls(roomItems));
       //setRoomData(roomItems)
     }
+    setFltrRoomData(roomItems?.[v.systemId]);
   }
 
   const srtVal = (val) =>{
@@ -271,6 +265,8 @@ export default function HotelResult(props) {
     let obj = {'htlFilters': htlFilterVar, 'htlFilterSort': htlFilterSort}
     dispatch(doFilterSort(obj));
   };
+
+  const [showMore, setShowMore] = useState(false);
 
   const columns = [
     {
@@ -296,7 +292,13 @@ export default function HotelResult(props) {
       cell: (row) => (
         <div>
           <div className='text-capitalize fw-semibold'>{row.item[0].roomBasisName.toLowerCase()}</div>
-          <div className='fn10 text-success text-capitalize'>{row.item[0].promotions?.[0]?.text?.toLowerCase()}</div>
+          <div className='fn10 text-success text-capitalize'>
+          {row.item[0]?.promotions?.[0]?.text?.length > 90 ?
+          <>{showMore ? row.item[0].promotions?.[0]?.text?.toLowerCase() : `${row.item[0].promotions?.[0]?.text?.toLowerCase()?.substring(0, 90)}`} <button className="btn btn-link p-0 fn10" onClick={() => setShowMore(!showMore)}>{showMore ? " less" : " more"}</button> </>
+          :
+          <>{row.item[0].promotions?.[0]?.text?.toLowerCase()}</>
+          }
+          </div>
         </div>
       ),
       sortable: true,
@@ -391,8 +393,8 @@ export default function HotelResult(props) {
         "CountryName": qry.destination[0].countryName,
         "HotelCode": hotelCode,
         "GroupCode": roomVal.groupCode.toString(),
-        "CheckInDate": qry.chkIn,
-        "CheckOutDate": qry.chkOut,
+        "CheckInDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+        "CheckOutDate": format(new Date(qry.chkOut), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "RateKeys": {
           "RateKey": rateKeyArray
@@ -444,8 +446,6 @@ export default function HotelResult(props) {
   }
 
   const cancelPolicy = async(e, roomVal, rc) => {
-    //console.log("e", e)
-    //e.isDefaultPrevented();
     let rateKeyArray = rc.split('Seprator').slice(1);
     setRoomRow(roomVal)
     setCanPolData(null);
@@ -457,8 +457,8 @@ export default function HotelResult(props) {
         "CountryName": qry.destination[0].countryName,
         "HotelCode": hotelCode,
         "GroupCode": roomVal.groupCode.toString(),
-        "CheckInDate": qry.chkIn,
-        "CheckOutDate": qry.chkOut,
+        "CheckInDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+        "CheckOutDate": format(new Date(qry.chkOut), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "RateKeys": {
           "RateKey": rateKeyArray
@@ -497,42 +497,7 @@ export default function HotelResult(props) {
     else{
       setCanPolData(cancelPolicyData[hotelCode+'_'+roomVal.rateCode]);
     }
-    //window.scroll(0,570)
-    //e.scrollIntoView();
-
-    //e.preventDefault();
-    //console.log("divRef.current", divRef)
-    //debugger;
-    // divRef.current.scroll({
-    //   top: 300,
-    //   behavior: "smooth"
-    // });
     
-    // const section = e.target;
-    // section.scroll(0,300)
-
-    //const section = e.target;
-    // section.scrollIntoView( { behavior: 'smooth', block: 'start' } );
-    
-    // var y = document.getElementsByClassName('dataScroll');
-    // var aNode = y[0];
-    // debugger;
-    // aNode.scroll({
-    //   top: 150,
-    //   behavior: 'smooth'
-    // });
-
-    //aNode.scrollTop = aNode.scrollHeight;
-
-    // aNode.scrollTo({
-    //   top:e.screenY,
-    //   behavior:"smooth"
-    // });
-  //   section.scrollIntoView({
-  //     behavior: "smooth",
-  //     block: "start",
-  //     inline: "start"
-  //  });
   }
 
   const htlDetail = async(htlCode) => {
@@ -590,7 +555,7 @@ export default function HotelResult(props) {
       "supplierCode": val.item[0].supplierCodeFK,
       "uniqueId": getOrgHtlResult?.generalInfo?.localSessionId,
       "occupancyStr": occupancyStrVar,
-      "supplierName": supplierNameVar,
+      "supplierName": val.item[0].supplierName,
       "systemId": systemIdVar,
       "rateType": val.item[0].rateType,
       "productCode": val.item[0].productCode,
@@ -632,65 +597,6 @@ export default function HotelResult(props) {
     router.push('/pages/hotel/hotelTravellerBook');
   }
 
-  const RoomSection = (prop) => {
-    const roomDataFilter = prop.roomData;
-    const [fltrRoomTxt, setFltrRoomTxt] = useState('');
-    const [selRoomStatus, setSelRoomStatus] = useState('');
-    const filteredItems = roomDataFilter.filter(
-      v => {
-        let kk = (v.item[0]?.roomBasisName.toLowerCase().includes(fltrRoomTxt.toLowerCase()) || v.item[0]?.roomTypeName.toLowerCase().includes(fltrRoomTxt.toLowerCase()) );
-        return kk
-      },
-    );
-
-    const fltrResSupplier = filteredItems.filter((v) => {
-      let status = [];
-      let roomOpt = [selRoomStatus?.value]
-      // selRoomStatus?.forEach((v) => {
-      //   roomOpt.push(v.value)
-      // });
-      if(roomOpt.includes("Refundable")){
-        status.push(v.item[0]?.rateType==='Refundable' || v.item[0]?.rateType==='refundable'); 
-      }
-      else if(roomOpt.includes("NonRefundable")){
-        status.push(v.item[0]?.rateType==='Non-Refundable' || v.item[0]?.rateType==='Non Refundable' || v.item[0]?.rateType==='non-refundable' || v.item[0]?.rateType==='non refundable'); 
-      }
-      else if(roomOpt.includes("Unknown")){
-        status.push(v.item[0]?.rateType===''); 
-      }
-      else if(roomOpt.includes("Preferred")){
-        status.push(v.item[0]?.local); 
-      }
-      else{
-        status.push(v); 
-      }
-      let statusVar = status.includes(false)
-      return !statusVar
-    });
-
-    return (
-      <>
-      <div className="px-2">
-        <div className="row gx-2 justify-content-end">
-          <div className="col-md-3 col-6">
-            <Select
-              name="selectFltr"
-              options={roomOptions}
-              classNamePrefix="selectSm"
-              onChange={setSelRoomStatus}
-              value={selRoomStatus}
-            />
-          </div>
-          <div className="col-md-3 col-6">
-            <input type="text" className="form-control form-control-sm fn13" placeholder="Search" value={fltrRoomTxt} onChange={(e) => setFltrRoomTxt(e.target.value)} />
-          </div>
-        </div>
-      </div>
-      <DataTable columns={columns} data={fltrResSupplier} fixedHeader fixedHeaderScrollHeight="320px" className="dataScroll" highlightOnHover  />
-      </>
-    )
-  }
-
   const GalleryComp = (prop) => {
     const imgGallery = prop?.imgVal ? prop.imgVal.map((item) => ({ 
       original: 'https://static.giinfotech.ae/medianew'+item, 
@@ -720,9 +626,52 @@ export default function HotelResult(props) {
     )
   }
 
+  const [fltrRoomTxt, setFltrRoomTxt] = useState('');
+  const [selRoomStatus, setSelRoomStatus] = useState('');
+  
+  useEffect(() => {
+    setTimeout(() => {
+      filterRoomSort();
+    }, 100)
+  }, [fltrRoomTxt, selRoomStatus]);
+
+  const filterRoomSort = () =>{
+    let roomItems = {...roomData}
+    let roomDataVar = roomItems[htlCollapse.replace("#room", "")];
+    const filteredItems = roomDataVar?.filter(v => {
+      let kk = (v.item[0]?.roomBasisName.toLowerCase().includes(fltrRoomTxt.toLowerCase()) || v.item[0]?.roomTypeName.toLowerCase().includes(fltrRoomTxt.toLowerCase()) );
+      return kk
+    });
+
+    const fltrResSupplier = filteredItems?.filter((v) => {
+      let status = [];
+      let roomOpt = [selRoomStatus?.value];
+   
+      if(roomOpt.includes("Refundable")){
+        status.push(v.item[0]?.rateType==='Refundable' || v.item[0]?.rateType==='refundable'); 
+      }
+      else if(roomOpt.includes("NonRefundable")){
+        status.push(v.item[0]?.rateType==='Non-Refundable' || v.item[0]?.rateType==='Non Refundable' || v.item[0]?.rateType==='non-refundable' || v.item[0]?.rateType==='non refundable'); 
+      }
+      else if(roomOpt.includes("Unknown")){
+        status.push(v.item[0]?.rateType===''); 
+      }
+      else if(roomOpt.includes("Preferred")){
+        status.push(v.item[0]?.local); 
+      }
+      else{
+        status.push(v); 
+      }
+      let statusVar = status.includes(false)
+      return !statusVar
+    });
+    setFltrRoomData(fltrResSupplier)
+  }
+
+
   return (
     <>
-    {getHtlRes?.hotels.b2BHotel.length ?  
+    {getHtlRes?.hotels?.b2BHotel?.length ?  
     <>
       <div className="d-lg-table-cell align-top rightResult border-start">
 
@@ -819,15 +768,38 @@ export default function HotelResult(props) {
               </div>
 
               
-              <div className={"collapse "+(htlCollapse==='#room'+v.systemId ? 'show':'')}>
+              <div className={`collapse room${v.systemId} `+ (htlCollapse==='#room'+v.systemId ? 'show':'')}>
                 <div>
                   <div className="fn13 roomColumn">
-                    <div className="fs-6 fw-semibold mx-2 mt-1">Room Rates: {qry.paxInfoArr.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
+                    <div className="fs-6 fw-semibold mx-2 mt-1">Room Rates: {qry.paxInfoArr?.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
                     {roomData?.[v.systemId] ?
                     <>
                     {roomData?.[v.systemId]?.length ?
                     <div className="mt-n1">
-                      <RoomSection roomData={roomData?.[v.systemId]} />
+                      <>
+                      <div className="px-2">
+                        <div className="row gx-2 justify-content-end">
+                          <div className="col-md-3 col-6">
+                            <Select
+                              name="selectFltr"
+                              options={roomOptions}
+                              classNamePrefix="selectSm"
+                              onChange={setSelRoomStatus}
+                              value={selRoomStatus}
+                            />
+                          </div>
+                          <div className="col-md-3 col-6">
+                            <input type="text" className="form-control form-control-sm fn13" placeholder="Search" value={fltrRoomTxt} onChange={(e) => setFltrRoomTxt(e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                      {fltrRoomData ?
+                        <DataTable columns={columns} data={fltrRoomData} pagination className="dataScroll" highlightOnHover  />
+                        : null
+                      }
+                      
+                      </>
+                      {/* <RoomSection roomData={roomData?.[v.systemId]} /> */}
                     </div>
                     :
                     <div className='fs-5 text-center mt-2'>No Room Rates Found</div>
@@ -1171,7 +1143,7 @@ export default function HotelResult(props) {
                         {k?.condition?.map((m, i) => (
                         <tr key={i}>
                           <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                          <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                          <td>{i === k?.condition?.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                           <td className="text-center">{m.percentage}</td>
                           <td className="text-center">{m.nights}</td>
                           <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
@@ -1204,7 +1176,7 @@ export default function HotelResult(props) {
                           {k?.condition?.map((m, i) => (
                           <tr key={i}>
                             <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                            <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                            <td>{i === k?.condition?.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                             <td className="text-center">{m.percentage}</td>
                             <td className="text-center">{m.nights}</td>
                             <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
@@ -1238,7 +1210,7 @@ export default function HotelResult(props) {
                           {k?.condition?.map((m, i) => (
                           <tr key={i}>
                             <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                            <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                            <td>{i === k?.condition?.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                             <td className="text-center">{m.percentage}</td>
                             <td className="text-center">{m.nights}</td>
                             <td>{parseFloat(m.fixed)?.toFixed(2)}</td>

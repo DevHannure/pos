@@ -13,8 +13,7 @@ import { useSelector, useDispatch } from "react-redux";
 import HotelService from '@/app/services/hotel.service';
 import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
-import MasterService from '@/app/services/master.service';
-import { doReserveListOnLoad, doReserveListQry, doSubDtlsList, doGetCustomersList, doGetSuppliersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
+import { doReserveListOnLoad, doReserveListQry, doSubDtlsList,} from '@/app/store/reservationTrayStore/reservationTray';
 import {format} from 'date-fns';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -47,9 +46,6 @@ export default function BBReservationTray() {
   const [dimensions, setDimensions] = useState(null);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const resListRes = useSelector((state) => state.reservationListReducer?.reserveListObj);
-  const allCustomersList = useSelector((state) => state.reservationListReducer?.allCustomersObj);
-  const allSuppliersList = useSelector((state) => state.reservationListReducer?.allSuppliersObj);
-  const allUsersList = useSelector((state) => state.reservationListReducer?.allUsersObj);
   const systemCurrency = userInfo?.user?.systemCurrencyCode;
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
   const {data} = useSession();
@@ -59,41 +55,13 @@ export default function BBReservationTray() {
       if(!resListRes) {
         doReservationsOnLoad();
       }
-      if(!allCustomersList) {
-        getAllCustomers();
-      }
-      if(!allSuppliersList) {
-        getAllSuppliers();
-      }
-      if(!allUsersList) {
-        getAllUsers();
-      }
     }
   }, [userInfo, resListRes]);
-
-  const getAllCustomers = async() => {
-    const responseAllCustomer = MasterService.doGetCustomers(userInfo.correlationId);
-    const resAllCustomer = await responseAllCustomer;
-    dispatch(doGetCustomersList(resAllCustomer));
-  };
-
-  const getAllSuppliers = async() => {
-    const responseAllSuppliers = MasterService.doGetSuppliers(userInfo.correlationId);
-    const resAllSuppliers = await responseAllSuppliers;
-    dispatch(doGetSuppliersList(resAllSuppliers));
-  };
-
-  const getAllUsers = async() => {
-    const responseAllUsers = MasterService.doGetUsers(userInfo.correlationId);
-    const resAllUsers = await responseAllUsers;
-    dispatch(doGetUsersList(resAllUsers));
-  };
 
   const [selBookingStatus, setSelBookingStatus] = useState(qry ? qry.SelBookingStatus : null);
   const bookingStatus = selBookingStatus?.map(function(item) {
     return item['value'];
   });
-  
 
   const [dateType, setDateType] = useState(qry ? qry.DateType : "0");
   const [dateFrom, setDateFrom] = useState(qry ? (qry.DateFrom ? new Date(qry.DateFrom) : "") : new Date(new Date().setDate(new Date().getDate() - 5)));
@@ -105,42 +73,9 @@ export default function BBReservationTray() {
   };
   const [bookingType, setBookingType] = useState(qry ? qry.BookingType : "");
   const [bookingChannel, setBookingChannel] = useState(qry ? qry.BookingChannel : "");
-  
   const [customerCode, setCustomerCode] = useState(qry ? qry.CustomerCode : null);
-  const [customerNameOptions, setCustomerNameOptions] =  useState([]);
-  useEffect(() => {
-    if(allCustomersList){
-      let itemCustomer = [{label: 'All', value: ''}]
-      allCustomersList?.map(user =>{
-        itemCustomer.push({label: user.customerName, value: user.customerCode})
-      });
-      setCustomerNameOptions(itemCustomer)
-    }
-  }, [allCustomersList]);
-
   const [supplierCode, setSupplierCode] = useState(qry ? qry.SupplierCode : null);
-  const [supplierNameOptions, setSupplierNameOptions] =  useState([]);
-  useEffect(() => {
-    if(allSuppliersList){
-      let itemSupplier = [{label: 'All', value: ""}]
-      allSuppliersList?.map(supplier =>{
-        itemSupplier.push({label: supplier.supplierName, value: supplier.supplierCode})
-      });
-      setSupplierNameOptions(itemSupplier)
-    }
-  }, [allSuppliersList]);
-
   const [userCode, setUserCode] = useState(null);
-  const [userNameOptions, setUserNameOptions] =  useState([]);
-  useEffect(() => {
-    if(allUsersList){
-      let itemUser = [{label: 'All', value: ""}]
-      allUsersList?.map(user =>{
-        itemUser.push({label: user.userName, value: user.userCode})
-      });
-      setUserNameOptions(itemUser)
-    }
-  }, [allUsersList]);
 
   const [rateType, setRateType] = useState(qry ? qry.RateType : "");
   const [ticketType, setTicketType] = useState(qry ? qry.TicketType : "0");
@@ -369,7 +304,7 @@ export default function BBReservationTray() {
     }
     let getDtlObj = {
       "BookingNo": dtlCode,
-      "UserId": userInfo?.user?.userId
+      "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId
     }
 
     let dtlItems = {...dtlData}
@@ -431,9 +366,9 @@ export default function BBReservationTray() {
     if (bServiceStatus == "on request" || bServiceStatus == "sent to supp.") {serviceFlag = 1;} 
     else if (bServiceStatus == "supp.confirmed") {serviceFlag = 2;} 
     else if (bServiceStatus == "cust.confirmed") {serviceFlag = 3;} 
-    else if (bServiceStatus == "cancelled" || bServiceStatus == "cancelled(p)") {serviceFlag = 4;} 
+    else if (bServiceStatus == "cancelled" || bServiceStatus == "cancelled(p)", "on cancellation") {serviceFlag = 4;} 
     else if (bServiceStatus == "not available") {serviceFlag = 5;} 
-    else if (bServiceStatus == "on cancellation") {serviceFlag = 6;} 
+    //else if (bServiceStatus == "on cancellation") {serviceFlag = 6;} 
     else if (bServiceStatus == "posted") {serviceFlag = 7;} 
     else if (bServiceStatus == "failed" || bServiceStatus == "not available") {serviceFlag = 12;} 
     else if (bServiceStatus == "not confirm") {serviceFlag = 13;}
@@ -706,7 +641,6 @@ export default function BBReservationTray() {
             //"SessionId": cancelServiceDtl?.UniqueId?.split('-')[1] 
             "SessionId": cancelServiceDtl?.H2HSessionId
           }
-
           const responseCancel = HotelService.doLocalCancel(cancelLocalObj, userInfo.correlationId);
           const resCancel = await responseCancel;
           if(resCancel?.errorInfo){
@@ -714,6 +648,16 @@ export default function BBReservationTray() {
             cancelModalClose.current?.click();
             setCancelLoad(false);
           }
+          else{
+            toast.success("Cancellation Successfully!",{theme: "colored"});
+            cancelModalClose.current?.click();
+            setCancelLoad(false);
+            dispatch(doReserveListOnLoad(null));
+            dispatch(doSubDtlsList({}));
+            detailsBtn(`#detailsub${cancelServiceDtl?.BookingNo?.toString()}`,cancelServiceDtl?.BookingNo?.toString());
+            router.push('/pages/booking/b2bReservationTray');
+          }
+
         }
       }
       setCancelLoad(false);
@@ -910,10 +854,7 @@ export default function BBReservationTray() {
                           {ifMenuExist('ViewItinerary') &&
                             <>
                               {IfUserHasreadWriteAccess('ViewItinerary') &&
-                              <>
                               <div className='divCell text-nowrap'>Details</div>
-                              {/* <div className='divCell text-nowrap'>View</div> */}
-                              </>
                               }
                             </>
                           }
@@ -930,7 +871,7 @@ export default function BBReservationTray() {
                           <div className='divCell'>{e.passengerName}</div>
                           <div className='divCell'>{e.customerRefNo}</div>
                           <div className='divCell fw-semibold'>
-                            {["cancelled", "cancelled(p)", "failed", "not available"].includes(e.status.toLowerCase()) ?
+                            {["cancelled", "cancelled(p)", "failed", "not available", "on cancellation"].includes(e.status.toLowerCase()) ?
                             <span className='text-danger'>{e.status}</span>
                             :
                             ["cust.confirmed"].includes(e.status.toLowerCase()) ?
@@ -1120,7 +1061,7 @@ export default function BBReservationTray() {
                                           s.ServiceStatus == "Posted" ?
                                           <>Posted</>
                                           :
-                                          ["cancelled", "cancelled(p)", "failed", "not available"].includes(s.ServiceStatus.toLowerCase()) ?
+                                          ["cancelled", "cancelled(p)", "failed", "not available", "on cancellation"].includes(s.ServiceStatus.toLowerCase()) ?
                                           <span className='text-danger'>{s.ServiceStatus}</span>
                                           :
                                           ["cust.confirmed"].includes(s.ServiceStatus.toLowerCase()) ?

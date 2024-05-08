@@ -6,13 +6,11 @@ import { faStar, faCaretRight, faCheck, faArrowRightLong, faCircle } from "@fort
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { useSelector, useDispatch } from "react-redux";
-import { doTourOptDtls } from '@/app/store/tourStore/tour';
-import { doFilterSort } from '@/app/store/tourStore/tour';
+import { doFilterSort, doTourOptDtls, doTourReprice } from '@/app/store/tourStore/tour';
 import {format, addDays} from 'date-fns';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useRouter } from 'next/navigation';
-import Select from 'react-select';
 import TourService from '@/app/services/tour.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -20,12 +18,13 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function TourResult(props) {
   const router = useRouter();
   const qry = props.TurReq;
-  console.log("qry", qry)
   const _ = require("lodash");
   const dispatch = useDispatch();
   const getTourRes = useSelector((state) => state.tourResultReducer?.tourResObj);
   const getOrgTourResult = useSelector((state) => state.tourResultReducer?.tourResOrgObj);
   const tourFilterVar = useSelector((state) => state.tourResultReducer?.tourFltr);
+
+  const soldOutBtn = useRef(null);
 
   const srtVal = (val) =>{
     let tourFilterSort = {
@@ -65,7 +64,8 @@ export default function TourResult(props) {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
         "GroupCode": v.groupCode,
-        "ServiceDate": qry.chkIn,
+        //"ServiceDate": qry.chkIn,
+        "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Adult": qry.adults?.toString(),
         "TourCode": v.tourCode,
@@ -111,7 +111,8 @@ export default function TourResult(props) {
       }
       let resOptions = await responseOptions;
       if(resOptions){
-        resOptions.generalInfo.supplierShortCode = v.supplierShortCode
+        resOptions.generalInfo.supplierShortCode = v.supplierShortCode;
+        resOptions.tourImg = v.imagePath ? v.imagePath : "",
         resOptions?.tourOptions?.map((item) =>{
           let adultPrice = 0;
           let childPrice = 0;
@@ -163,7 +164,8 @@ export default function TourResult(props) {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
         "GroupCode": req.groupCode,
-        "ServiceDate": qry.chkIn,
+        //"ServiceDate": qry.chkIn,
+        "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Adult": qry.adults?.toString(),
         "TourCode": req.rateKey,
@@ -206,7 +208,9 @@ export default function TourResult(props) {
     }
   }
 
+  const [soldMsg, setSoldMsg] = useState("");
   const avlbTour = async (e, req, info) => {
+    console.log("info", info)
     e.nativeEvent.target.disabled = true;
     e.nativeEvent.target.innerHTML = 'Processing...';
     let tourAvlbObj = {
@@ -220,31 +224,100 @@ export default function TourResult(props) {
       "ca": qry.ca,
       "rateKey": req.rateKey,
       "regionCode": qry.regionCode,
-      "sessionId": info.sessionId,
-      "supplierShortCode": info.supplierShortCode,
+      "sessionId": info?.generalInfo.sessionId,
+      "supplierShortCode": info?.generalInfo.supplierShortCode,
       "nationality": qry.nationality,
+      "tourName": info.tourName,
+      "tourImg": info.tourImg,
+      "tourOption": req,
       "correlationId": qry.correlationId
     }
-    debugger
-    console.log("tourAvlbObj", tourAvlbObj)
+    
+    let encJson = AES.encrypt(JSON.stringify(tourAvlbObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+
     const responseReprice = TourService.doAvailability(tourAvlbObj);
     const resReprice = await responseReprice;
+    dispatch(doTourReprice(resReprice));
 
-    if(resReprice?.isBookable){
-      
+    if(!resReprice?.isBookable){
+      e.nativeEvent.target.disabled = true;
+      setSoldMsg(resReprice?.message)
+      soldOutBtn.current?.click();
     }
     else{
-      e.nativeEvent.target.disabled = true;
+      e.nativeEvent.target.disabled = false;
+      e.nativeEvent.target.innerHTML = ' Book Now ';
+      sessionStorage.setItem("qryTourTraveller", encData);
+      router.push('/pages/tour/tourTravellerBook');
+    }
+  }
+
+  const [tourData, setTourData] = useState({});
+  const [TourDetails, setTourDetails] = useState(null);
+
+  const tourDetail = async(req) => {
+    setTourDetails(null);
+    let tourObj = {
+      "CustomerCode": qry.customerCode,
+      "SearchParameter": {
+        "DestinationCode": qry.destination[0].destinationCode,
+        "CountryCode": qry.destination[0].countryCode,
+        "GroupCode": req.groupCode,
+        //"ServiceDate": qry.chkIn,
+        "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+        "Currency": qry.currency,
+        "Adult": qry.adults?.toString(),
+        "TourCode": req.tourCode,
+        "TassProField": {
+          "CustomerCode": qry.customerCode,
+          "RegionId": qry.regionCode?.toString()
+        }
+      },
+      "SessionId": req.supplierShortCode?.toLowerCase() === 'local' ? getTourRes?.generalInfo?.localSessionId : getTourRes?.generalInfo?.sessionId
     }
 
-    console.log("resReprice", resReprice);
+    if (parseInt(qry.children) > 0) {
+      let childrenObj = {}
+      let arrChildAges = []
+      let indx = 0
+      let chdAgesArr = qry.ca.split(',');
+      for (var k = 0; k < chdAgesArr.length; k++) {
+        indx = indx + 1
+        let ageObj = {}
+        ageObj.Identifier = indx
+        ageObj.Text = chdAgesArr[k]
+        arrChildAges.push(ageObj)
+      }
+      childrenObj.Count = parseInt(qry.children)
+      childrenObj.ChildAge = arrChildAges;
+      tourObj.SearchParameter.Children = childrenObj
+    }
 
-    // const responseHtlDtl = HotelService.doHotelDetail(htlObj, qry.correlationId);
-    
-    // const resHtlDtl = await responseHtlDtl;
-    // dispatch(doHotelReprice(resReprice));
-    // dispatch(doHotelDtl(resHtlDtl));
-}
+    let tourRes = {}
+    let tourItems = {...tourData}
+
+    if (_.isEmpty(tourData[req.tourCode])) {
+      let responseTourDtl = null;
+      if(req.supplierShortCode?.toLowerCase() === 'local'){
+        responseTourDtl = TourService.doLocalTourDetail(tourObj, qry.correlationId);
+      }
+      else{
+        responseTourDtl = TourService.doTourDetail(tourObj, qry.correlationId);
+      } 
+      const resTourDtl = await responseTourDtl;
+      setTourDetails(resTourDtl);
+      tourRes = resTourDtl;
+      if (_.isEmpty(tourData)) {
+        tourItems = {}
+      }
+      tourItems[req.tourCode] = tourRes;
+      setTourData(tourItems);
+    }
+    else {
+      setTourDetails(tourData[req.tourCode]);
+    }
+  }
   
   return (
     <>
@@ -285,7 +358,7 @@ export default function TourResult(props) {
             <div key={index} className="htlboxcol rounded mb-4 shadow-sm p-2">
               <div className={"row " + (tourCollapse==='#tour'+v.code ? 'colOpen':'collapsed')} aria-expanded={tourCollapse==='#tour'+v.code}>
                 <div className='col-md-3'>
-                  <div className='position-relative rounded w-100 h-100 overflow-hidden'>
+                  <div onClick={()=> tourDetail(v)} className='position-relative rounded w-100 h-100 overflow-hidden curpointer'>
                     {v.imagePath ?
                     <Image src={v.imagePath} alt={v.name} fill style={{objectFit:'cover', objectPosition:'center'}} priority />
                     :
@@ -370,7 +443,9 @@ export default function TourResult(props) {
                                 {cat.isSlot ? 
                                 <td className="align-middle fs-6 bg-warning text-white text-center curpointer" onClick={()=> timeSlot(cat, tourOptData?.[v.code]?.generalInfo)} data-bs-toggle="modal" data-bs-target="#timeSlotModal">&nbsp; Select &nbsp;</td>
                                 :
-                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer" onClick={(e)=> avlbTour(e, cat, tourOptData?.[v.code]?.generalInfo)}>Book Now</td>
+                                <td className="align-middle p-0 h-0">
+                                  <button className='btn btn-warning fs-6 p-0 w-100 h-100 rounded-0' onClick={(e)=> avlbTour(e, cat, tourOptData?.[v.code])}>Book Now</button>
+                                </td>
                                 }
                               </tr>
                             ))
@@ -487,70 +562,85 @@ export default function TourResult(props) {
       {/* <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#timeSlotModal">Launch demo modal</button> */}
 
       <div className="modal fade" id="timeSlotModal">
-          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
-            <div className="modal-content">
-              <div className="modal-header">
-                <div>
-                  {respTimeSlot?.tourOptionName ?
-                  <>
-                    <h1 className="modal-title fs-5 text-capitalize mb-2">{respTimeSlot?.tourOptionName?.toLowerCase()}</h1>
-                    <div className="row">
-                      <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 text-success" /> Available</div>
-                      <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 starGold" /> Limited Availability</div>
-                      <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 text-danger" /> Sold Out</div>
-                    </div>
-                  </> : null
-                  }
-                </div>
-                <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div className="modal-body">
-                {respTimeSlot ?
-                  <div className='fw-semibold'>
-                    <div className="fs-5 mb-3">Select Time Options</div>
-                    <div className='row'>
-                      {respTimeSlot?.timeSlots?.map((k, i) => ( 
-                        <div className='col-md-3' key={i}>
-                          <div className={"bggray my-3 rounded shadow overflow-hidden border " + (k.available > 10 ? 'border-success':'' ||  k.available > 0 && k.available < 10 ? 'border-yellow':'' ||  k.available == 0 ? 'border-danger':'')}>
-                            <div className={"px-3 py-2 text-white " + (k.available > 10 ? 'bg-success':'' ||  k.available > 0 && k.available < 10 ? 'bg-yellow':'' ||  k.available == 0 ? 'bg-danger':'')}>
-                              <div className="d-flex justify-content-between">
-                                  <div>Time: {k.timing}</div>
-                                  <div>(Avl: {k.available})</div>
-                              </div>
-                            </div>
-                            <div className="p-3 text-center">
-                                <div className="mb-1"><strong>Adult:</strong> {qry.currency} {k.paxPrices[0].gross}</div>
-                                {qry.children ?
-                                <div className="mb-1">
-                                    <strong>Child [Age: {k.paxPrices[1].age}]:</strong> {qry.currency} {k.paxPrices[1].gross}
-                                </div> : null
-                                }
-                                {k.available !== 0 &&
-                                <div className='mt-3'><button className='btn btn-warning' onClick={(e)=> avlbTour(e, k, respTimeSlot?.generalInfo)}> &nbsp; Book &nbsp; </button></div>
-                                // <Button className="fn12 mt-2" variant="warning" size="sm" onClick={()=> avlbTour(v)}>&nbsp;Book&nbsp;</Button>
-                                }
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
+        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div>
+                {respTimeSlot?.tourOptionName ?
+                <>
+                  <h1 className="modal-title fs-5 text-capitalize mb-2">{respTimeSlot?.tourOptionName?.toLowerCase()}</h1>
+                  <div className="row">
+                    <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 text-success" /> Available</div>
+                    <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 starGold" /> Limited Availability</div>
+                    <div className="col-auto"><FontAwesomeIcon icon={faCircle} className="fn14 text-danger" /> Sold Out</div>
                   </div>
-                  :
-                  <div className='text-center blue py-5'>
-                    <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
-                    <div className="dumwave align-middle">
-                      <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                      <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                      <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
-                    </div>
-                  </div>
+                </> : null
                 }
               </div>
-              
+              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div className="modal-body">
+              {respTimeSlot ?
+                <div className='fw-semibold'>
+                  <div className="fs-5 mb-3">Select Time Options</div>
+                  <div className='row'>
+                    {respTimeSlot?.timeSlots?.map((k, i) => ( 
+                      <div className='col-md-3' key={i}>
+                        <div className={"bggray my-3 rounded shadow overflow-hidden border " + (k.available > 10 ? 'border-success':'' ||  k.available > 0 && k.available < 10 ? 'border-yellow':'' ||  k.available == 0 ? 'border-danger':'')}>
+                          <div className={"px-3 py-2 text-white " + (k.available > 10 ? 'bg-success':'' ||  k.available > 0 && k.available < 10 ? 'bg-yellow':'' ||  k.available == 0 ? 'bg-danger':'')}>
+                            <div className="d-flex justify-content-between">
+                                <div>Time: {k.timing}</div>
+                                <div>(Avl: {k.available})</div>
+                            </div>
+                          </div>
+                          <div className="p-3 text-center">
+                              <div className="mb-1"><strong>Adult:</strong> {qry.currency} {k.paxPrices[0].gross}</div>
+                              {qry.children ?
+                              <div className="mb-1">
+                                  <strong>Child [Age: {k.paxPrices[1].age}]:</strong> {qry.currency} {k.paxPrices[1].gross}
+                              </div> : null
+                              }
+                              {k.available !== 0 &&
+                              <div className='mt-3'><button className='btn btn-warning' onClick={(e)=> avlbTour(e, k, respTimeSlot)}> &nbsp; Book &nbsp; </button></div>
+                              // <Button className="fn12 mt-2" variant="warning" size="sm" onClick={()=> avlbTour(v)}>&nbsp;Book&nbsp;</Button>
+                              }
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+                :
+                <div className='text-center blue py-5'>
+                  <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
+                  <div className="dumwave align-middle">
+                    <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                    <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                    <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                  </div>
+                </div>
+              }
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+      <button ref={soldOutBtn} type="button" className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#soldOutModal">Sold Out</button>
+      <div className="modal fade" id="soldOutModal" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-body">
+              <h1 className="fs-6">{soldMsg}</h1>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+              &nbsp;<button type="button" className='btn btn-sm btn-success' data-bs-dismiss="modal">Ok</button>
             </div>
           </div>
         </div>
+      </div>
 
     </>
     :

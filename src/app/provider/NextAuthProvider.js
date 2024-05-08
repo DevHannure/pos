@@ -7,7 +7,7 @@ import {store} from '../store/store';
 const AuthProvider = ({ children }) => {
   return (
   <Provider store={store}>
-    <SessionProvider>
+    <SessionProvider refetchInterval={1 * 60} refetchOnWindowFocus={true}>
       {children}
     </SessionProvider>
   </Provider>

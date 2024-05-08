@@ -255,7 +255,7 @@ export default function ReservationTray() {
           convertCartToReservationBtn()
         }
         else{
-          toast.error("You have exceeded your credit limit. Any new booking made will be on cash basis and rooms allocated might be released if outstanding amount is not settled asap. Check yes to complete booking.",{theme: "colored"});
+          toast.error("You have exceeded your credit limit. Any new booking made will be on cash basis and rooms allocated might be released if outstanding amount is not settled asap.",{theme: "colored"});
         }
       }
       else{

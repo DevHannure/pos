@@ -134,7 +134,6 @@ export default function BookingItinerarySub(props) {
     return status
   };
 
-  
   const completeBtn = async() => {
     let allowMe = validate();
     if(allowMe){

@@ -210,7 +210,6 @@ export default function TourResult(props) {
 
   const [soldMsg, setSoldMsg] = useState("");
   const avlbTour = async (e, req, info) => {
-    console.log("info", info)
     e.nativeEvent.target.disabled = true;
     e.nativeEvent.target.innerHTML = 'Processing...';
     let tourAvlbObj = {

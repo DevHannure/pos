@@ -359,7 +359,7 @@ export default function HotelFilter(props) {
 
               </div>
             </div>
-            {process.env.NEXT_PUBLIC_APPCODE === "0" &&
+            {process.env.NEXT_PUBLIC_APPCODE !== "1" &&
               <div className="border-bottom pb-2 mb-2 pe-2">
                 <button className="accordion-button bg-transparent p-0 shadow-none fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#suppliers">Suppliers</button>
                 <div id="suppliers" className="collapse show mt-1">

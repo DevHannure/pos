@@ -162,7 +162,7 @@ export default function BookingItinerary() {
 
         const req = {
           //UserCode: email,
-          UserCode: userDtl?.user?.userEmail,
+          UserCode: process.env.NEXT_PUBLIC_APPCODE === "1" ? email : userDtl?.user?.userEmail,
           AppCode: process.env.NEXT_PUBLIC_APPCODE,
           OTP: otp,
           DeviceInfo:{
@@ -212,7 +212,7 @@ export default function BookingItinerary() {
 
     const req = {
       //UserCode: email,
-      UserCode: userDtl?.user?.userEmail,
+      UserCode: process.env.NEXT_PUBLIC_APPCODE === "1" ? email : userDtl?.user?.userEmail,
       AppCode: process.env.NEXT_PUBLIC_APPCODE,
       DeviceInfo:{
         Url: process.env.NEXT_PUBLIC_DOMAINNAME,
@@ -226,7 +226,7 @@ export default function BookingItinerary() {
     const resResendOtp = await responseResendOtp;
     if(resResendOtp === 'Success'){
       setRunTimer(true)
-      toast.success(`OTP email sent to ${email}`,{theme: "colored"});
+      toast.success(`OTP email sent to ${userDtl?.user?.userEmail}`,{theme: "colored"});
     }
     else{
       toast.error(resResendOtp,{theme: "colored"})

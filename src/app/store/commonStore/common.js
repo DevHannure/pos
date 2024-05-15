@@ -4,6 +4,7 @@ const initialState = {
   deviceInfo:null,
   userInfo:null,
   country:null,
+  xmlSupplier:null,
   b2bXmlSupplier:null,
   regionCodeSaver:null,
   custCreditDtls:null,
@@ -30,7 +31,10 @@ export const commonResult = createSlice({
     doCountryOnLoad:  (state, action) => {
       state.country = action.payload
     },
-    doB2bXmlSupplierOnLoad:  (state, action) => {
+    doXmlOnLoad:  (state, action) => {
+      state.xmlSupplier = action.payload
+    },
+    doB2bXmlOnLoad:  (state, action) => {
       state.b2bXmlSupplier = action.payload
     },
     doRegionCode:  (state, action) => {
@@ -49,6 +53,6 @@ export const commonResult = createSlice({
 
 });
 
-export const {doDeviceInfo, doUserInfo, doCustCreditDtls, doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doAppFeatures, doRecentSearch} = commonResult.actions
+export const {doDeviceInfo, doUserInfo, doCustCreditDtls, doCountryOnLoad, doXmlOnLoad, doB2bXmlOnLoad, doRegionCode, doAppFeatures, doRecentSearch} = commonResult.actions
 
 export default commonResult.reducer;

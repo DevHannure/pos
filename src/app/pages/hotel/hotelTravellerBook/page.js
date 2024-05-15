@@ -17,6 +17,7 @@ import {format, addDays, differenceInDays} from 'date-fns';
 import { useSelector, useDispatch } from "react-redux";
 import {doHotelReprice, doHotelDtl} from '@/app/store/hotelStore/hotel';
 import BookingItinerarySub from '@/app/components/booking/bookingItinerarySub/BookingItinerarySub';
+import {doCustCreditDtls} from '@/app/store/commonStore/common';
 
 export default function HotelTravellerBook() {
   const [qry, setQry] = useState(null);
@@ -28,11 +29,13 @@ export default function HotelTravellerBook() {
       setQry(JSON.parse(bytes))
     }
   }, []);
+  
   const router = useRouter();
   const dispatch = useDispatch();
   const resReprice = useSelector((state) => state.hotelResultReducer?.repriceDtls);
   const htlDetails = useSelector((state) => state.hotelResultReducer?.htlDtls);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
 
   const noRefundBtn = useRef(null);
   const soldOutBtn = useRef(null);
@@ -61,8 +64,21 @@ export default function HotelTravellerBook() {
         roomRatetype2(qry.paxInfoArr[1])
         roomRatetype3(qry.paxInfoArr[2])
       }
+
+      if(!customersCreditInfo){
+        customersCreditDetailsBtn(qry?.customerCode)
+      }
     }
   },[qry]);
+
+  const customersCreditDetailsBtn = async(userCode) => {
+    let customersCreditDetailsObj={
+      "CustomerCode": userCode
+    }
+    const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, qry.correlationId);
+    const resCustCreditDtls = await responseCustCreditDtls;
+    dispatch(doCustCreditDtls(resCustCreditDtls));
+  }
 
   const [supplierNet, setSupplierNet] = useState(null);
   const [supplierGross, setSupplierGross] = useState(null);
@@ -168,8 +184,6 @@ export default function HotelTravellerBook() {
       }
     }
   }
-
-  
   
   const createRoomObj = () => {
     let roomPax = []
@@ -187,13 +201,13 @@ export default function HotelTravellerBook() {
         "Rate": qry?.supplierName?.toLowerCase()==="local" ? Number(roomSupplierGross * exchangeRate).toFixed(2).toString() : Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
         //"Payable": Number(roomSupplierGross * exchangeRate).toFixed(2).toString(),
         "Payable": qry?.supplierName?.toLowerCase()==="local" ? Number(roomSupplierGross * exchangeRate).toFixed(2).toString() : Number(roomSupplierNet * exchangeRate).toFixed(2).toString(),
-        "MarkupAmount": Number(roomMarkUpAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+        "MarkupAmount": Number(roomMarkUpAmount * qry?.custCurrencyExchange).toFixed(2).toString(),
         "MarkupPercentage": "0",
         //"Tax": Number(roomTax).toString(),
         "Tax": "0",
-        "Net": Number(roomNet * userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-        "VATInputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
-        "VATOutputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+        "Net": Number(roomNet * qry?.custCurrencyExchange).toFixed(2).toString(),
+        "VATInputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatInputAmount * qry?.custCurrencyExchange).toFixed(2).toString() : "0",
+        "VATOutputAmount": resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount ? Number(resReprice.hotel?.rooms?.room[i]?.price.vatOutputAmount * qry?.custCurrencyExchange).toFixed(2).toString() : "0",
         "RoomTypeName": resReprice.hotel?.rooms?.room[i]?.roomName,
         "RateBasisName": resReprice.hotel?.rooms?.room[i]?.meal ? resReprice.hotel?.rooms?.room[i]?.meal : 'Room Only',
         "RateTypeCode": i===0 && room1[0]?.rateTypeCode || i===1 && room2[0]?.rateTypeCode || i===2 && room3[0]?.rateTypeCode,
@@ -219,14 +233,14 @@ export default function HotelTravellerBook() {
               "SupplierCurrencyFixed": m.supplierFixed,
               "SupplierCurrencyPercentage": m.percentage,
               "SupplierCurrencyExchangeRate": exchangeRate.toString(),
-              "CustomerCurrencyCode": userInfo?.user?.currencyCode.toString(),
+              "CustomerCurrencyCode": qry?.currency,
               "CustomerCurrencyFixed": m.fixed,
               "CustomerCurrencyPercentage": m.percentage,
-              "CustomerCurrencyExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+              "CustomerCurrencyExchangeRate": qry?.custCurrencyExchange,
               "SystemCurrencyCode": userInfo?.user?.systemCurrencyCode,
-              "SystemCurrencyFixed": (Number(m.fixed*userInfo?.user?.currencyExchangeRate) / Number(userInfo?.user?.systemCurrencyExchangeRate)).toFixed(2).toString(),
+              "SystemCurrencyFixed": (Number(m.fixed*qry?.custCurrencyExchange) / 1).toFixed(2).toString(),
               "SystemCurrencyPercentage": m.percentage,
-              "SystemCurrencyExchangeRate": Number(userInfo?.user?.systemCurrencyExchangeRate).toFixed(2).toString(),
+              "SystemCurrencyExchangeRate": "1",
               "MarkupPercentage": (Number((roomSingle.Net - roomSingle.Rate) / roomSingle.Rate)* 100).toFixed(2).toString(),
               "PolicyType": "Cancellation Policy"
             }
@@ -413,13 +427,13 @@ export default function HotelTravellerBook() {
           "BookingDetail": {
             "BookingType": process.env.NEXT_PUBLIC_APPCODE==='1' ? "W" : "P",
             "BookingStatus": "-1",
-            "BookingCurrencyCode": userInfo?.user?.currencyCode,
+            "BookingCurrencyCode": qry?.currency,
             "WalkinUserCode": "",
-            "BranchCode": userInfo?.user?.branchCode,
+            "BranchCode": qry?.branchCode,
             "RegionCode": qry?.regionID,
-            "CustomerCode": userInfo?.user?.userCode,
-            "CustomerConsultantCode": userInfo?.user?.customerConsultantCode,
-            "CompanyConsultantCode": userInfo?.user?.companyConsultantCode,
+            "CustomerCode": qry?.customerCode,
+            "CustomerConsultantCode": qry?.customerConsultantCode,
+            "CompanyConsultantCode": qry?.companyConsultantCode,
             "CustomerRemarks": custRemarks,
             "LeadPassengerName": leadPaxName,
             "IsPackage": "",
@@ -465,18 +479,18 @@ export default function HotelTravellerBook() {
             "Rate": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross * exchangeRate).toFixed(2).toString() : Number(supplierNet * exchangeRate).toFixed(2).toString(),
             //"PayableAmount": Number(supplierGross * exchangeRate).toFixed(2).toString(),
             "PayableAmount": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross * exchangeRate).toFixed(2).toString() : Number(supplierNet * exchangeRate).toFixed(2).toString(),
-            "MarkupAmount": Number(markUpAmount*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-            "NetAmount": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-            "SellPrice": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
-            "GSANet": Number(net*userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "MarkupAmount": Number(markUpAmount*qry?.custCurrencyExchange).toFixed(2).toString(),
+            "NetAmount": Number(net*qry?.custCurrencyExchange).toFixed(2).toString(),
+            "SellPrice": Number(net*qry?.custCurrencyExchange).toFixed(2).toString(),
+            "GSANet": Number(net*qry?.custCurrencyExchange).toFixed(2).toString(),
             "VATInput": "0",
-            "VATInputAmount": resReprice.hotel?.rooms?.vatInputAmount ? Number(resReprice.hotel?.rooms?.vatInputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+            "VATInputAmount": resReprice.hotel?.rooms?.vatInputAmount ? Number(resReprice.hotel?.rooms?.vatInputAmount * qry?.custCurrencyExchange).toFixed(2).toString() : "0",
             "VATOutput": "0",
-            "VATOutputAmount": resReprice.hotel?.rooms?.vatOutputAmount ? Number(resReprice.hotel?.rooms?.vatOutputAmount * userInfo?.user?.currencyExchangeRate).toFixed(2).toString() : "0",
+            "VATOutputAmount": resReprice.hotel?.rooms?.vatOutputAmount ? Number(resReprice.hotel?.rooms?.vatOutputAmount * qry?.custCurrencyExchange).toFixed(2).toString() : "0",
             "DueDate": dueDateFinal,
             "UniqueId": qry.uniqueId,
-            "CustomerCurrencyCode": userInfo?.user?.currencyCode,
-            "CustomerExchangeRate": Number(userInfo?.user?.currencyExchangeRate).toFixed(2).toString(),
+            "CustomerCurrencyCode": qry?.currency,
+            "CustomerExchangeRate": qry?.custCurrencyExchange,
             "CustomerNetAmount": Number(net).toFixed(2).toString(),
             "XMLSupplierCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
             //"XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
@@ -730,7 +744,7 @@ export default function HotelTravellerBook() {
                                     <th>To</th>
                                     <th className="text-center">Percentage(%)</th>
                                     <th className="text-center">Nights</th>
-                                    <th>Fixed</th>
+                                    <th className="text-center">Fixed</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -780,7 +794,7 @@ export default function HotelTravellerBook() {
                                       <th>To</th>
                                       <th className="text-center">Percentage(%)</th>
                                       <th className="text-center">Nights</th>
-                                      <th>Fixed</th>
+                                      <th className="text-center">Fixed</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -793,7 +807,7 @@ export default function HotelTravellerBook() {
                                           <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                           <td className="text-center">{m.percentage}</td>
                                           <td className="text-center">{m.nights}</td>
-                                          <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                          <td className="text-center">{parseFloat(m.fixed)?.toFixed(2)}</td>
                                         </tr>
                                         : null
                                       }
@@ -820,7 +834,7 @@ export default function HotelTravellerBook() {
                                       <th>To</th>
                                       <th className="text-center">Percentage(%)</th>
                                       <th className="text-center">Nights</th>
-                                      <th>Fixed</th>
+                                      <th className="text-center">Fixed</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -833,7 +847,7 @@ export default function HotelTravellerBook() {
                                         <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
                                         <td className="text-center">{m.percentage}</td>
                                         <td className="text-center">{m.nights}</td>
-                                        <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
+                                        <td className="text-center">{parseFloat(m.fixed)?.toFixed(2)}</td>
                                       </tr>
                                       : null
                                       }

@@ -19,7 +19,7 @@ import MasterService from '@/app/services/master.service';
 import HotelService from '@/app/services/hotel.service';
 import DefaultCustomer from '@/app/components/default/DefaultCustomer';
 import { doHotelSearchOnLoad, doRoomDtls } from '@/app/store/hotelStore/hotel';
-import { doCountryOnLoad, doB2bXmlSupplierOnLoad, doRegionCode, doRecentSearch } from '@/app/store/commonStore/common';
+import { doCountryOnLoad, doXmlOnLoad, doB2bXmlOnLoad, doRegionCode, doRecentSearch } from '@/app/store/commonStore/common';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 
@@ -96,6 +96,9 @@ const multiValueContainer = ({ selectProps, data }) => {
 export default function ModifySearch(props) {
   const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const userCustomersList = useSelector((state) => state.masterListReducer?.userCustomersObj);
+  const recentSearchMain = useSelector((state) => state.commonResultReducer?.recentSearch);
+  const recentSearch = recentSearchMain?.filter(parameter => parameter.domain.includes(`${window.location.origin}`));
   const router = useRouter();
   const dispatch = useDispatch();
 
@@ -170,13 +173,14 @@ export default function ModifySearch(props) {
 
   const [selectedStarOption, setSelectedStarOption] = useState(starOptions);
 
-  const selectedXML = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
-  //const [selectedXML, setSelectedXML] = useState(null);
-  const [xmlOptions, setXmlOptions] = useState([]);
-  //const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : process.env.NEXT_PUBLIC_NATIONALITY);
   const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : userInfo?.user?.countryCode);
+  const [cusXML, setCusXML] = useState(props.HtlReq ? props.HtlReq.activeSuppliers : []);
+  
   //const [nationalityOptions, setNationalityOptions] = useState([]);
   const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
+  const xmlOptions = useSelector((state) => state.commonResultReducer?.xmlSupplier);
+  const b2bXmlOptions = useSelector((state) => state.commonResultReducer?.b2bXmlSupplier);
+
   const regionCodeSav = useSelector((state) => state.commonResultReducer?.regionCodeSaver);
   const [regionCode, setRegionCode] = useState(regionCodeSav ? regionCodeSav : '');
   const [cusCurrency, setCusCurrency] = useState(props.HtlReq ? props.HtlReq.currency : '');
@@ -189,6 +193,8 @@ export default function ModifySearch(props) {
   const typeaheadHtlRef = useRef(null);
 
   const [nationOptions, setNationOptions] =  useState([]);
+  const [selectedXML, setSelectedXML] = useState([]);
+
   useEffect(() => {
     if(nationalityOptions){
       let itemNation = []
@@ -198,6 +204,16 @@ export default function ModifySearch(props) {
       setNationOptions(itemNation);
     }
   }, [nationalityOptions]);
+
+  useEffect(() => {
+    if(xmlOptions){
+      let itemXML = []
+      xmlOptions?.map(x =>{
+        itemXML.push({label: x.supplierName, value: x.supplierShortName});
+      });
+      setSelectedXML(itemXML);
+    }
+  }, [xmlOptions]);
   
   const handleSearch = async (query) => {
     setOptions([]);
@@ -500,27 +516,72 @@ export default function ModifySearch(props) {
       if(!cusNationality){
         setCusNationality(props.HtlReq ? props.HtlReq.nationality : userInfo?.user?.countryCode);
       }
-      if(process.env.NEXT_PUBLIC_APPCODE==='1' && !selectedXML){
-        b2bXmlReq()
+      if(!xmlOptions){
+        xmlReq();
+      }
+
+      if(process.env.NEXT_PUBLIC_APPCODE ==='1'){
+        if(!b2bXmlOptions){
+          userSupplierReq(userInfo?.user?.userCode)
+        }
+        if(!recentSearch){
+          recentSearcheBtn(userInfo?.user?.userCode)
+        }
       }
     }
   }, [userInfo]);
 
   useEffect(() => {
     if(cusNationality && cusCode){
-      regionReq()
+      regionReq();
     }
   }, [cusNationality, cusCode]);
 
   const nationalityReq = async()=> {
-    const responseCoutry = await MasterService.doGetCountries(props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+    const responseCoutry = await MasterService.doGetCountries(userInfo.correlationId);
     const resCoutry = responseCoutry;
     dispatch(doCountryOnLoad(resCoutry));
   }
 
-  // useEffect(() => {
-  //   regionReq()
-  // }, [cusCode]);
+  const xmlReq = async()=> {
+    let xmlReq = {
+      "Flag": 0,
+      "ServiceCode": 1
+    }
+    const responseXml = await MasterService.doGetXMLSuppliers(xmlReq, userInfo.correlationId);
+    const resXml = responseXml;
+    dispatch(doXmlOnLoad(resXml));
+  }
+
+  const userSupplierReq = async(code)=> {
+    let userXmlReq = {
+      "Flag": 1,
+      "ServiceCode": 1,
+      "CustomerCode": code
+    }
+    const responseUserXml = await MasterService.doGetXMLSuppliers(userXmlReq, userInfo.correlationId);
+    const resUserXml = responseUserXml;
+    if(resUserXml){
+      let itemXML = []
+      resUserXml?.map(x =>{
+        itemXML.push({label: x.supplierName, value: x.supplierShortName});
+      });
+      setCusXML(itemXML);
+      
+      if(process.env.NEXT_PUBLIC_APPCODE ==='1'){
+        dispatch(doB2bXmlOnLoad(itemXML));
+      }
+    }
+    //dispatch(doXmlOnLoad(resXml));
+  }
+
+  useEffect(() => {
+    if(process.env.NEXT_PUBLIC_APPCODE !=='1'){
+      if(cusCode){
+        customerChange()
+      }
+    }
+  }, [cusCode]);
 
   const regionReq = async()=> {
     if(cusCode){
@@ -536,24 +597,6 @@ export default function ModifySearch(props) {
       setWaitLoad(false);
     }
   }
-
-  const b2bXmlReq = async()=> {
-    const xmlObj= {
-      "Flag": 1,
-      "ServiceCode": 1,
-      "CustomerCode": userInfo.user.userCode
-    }
-    const responseXml = await MasterService.doGetXMLSuppliers(xmlObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
-    const resXml = responseXml;
-    let xmlAraay = []
-    if(resXml){
-      resXml.forEach((v) => {
-        xmlAraay.push(v.supplierShortName)
-      })
-    }
-    dispatch(doB2bXmlSupplierOnLoad(xmlAraay.toString()));
-    //setSelectedXML(xmlAraay.toString())
-  } 
 
   const [modifyCollapse, setModifyCollapse] = useState(false);
 
@@ -589,6 +632,13 @@ export default function ModifySearch(props) {
       toast.error("Please Select Nationality",{theme: "colored"})
       return false
     }
+
+    if (regionCode === '' || regionCode === null) {
+      status = false
+      toast.error("Please Select Nationality",{theme: "colored"})
+      return false
+    }
+
     if (cusCurrency === '' || cusCurrency === null) {
       status = false
       toast.error("Please Select Currency",{theme: "colored"})
@@ -626,10 +676,42 @@ export default function ModifySearch(props) {
     }
   }
 
+  const customerChange = () =>{
+    let userObj = userCustomersList?.filter(data => data.customerCode == cusCode);
+    if(userObj){
+      setCusNationality(userObj[0]?.customerCountry);
+      userSupplierReq(userObj[0]?.customerCode);
+      recentSearcheBtn(userObj[0]?.customerCode);
+    }
+  }
+
+  const recentSearcheBtn = async(cusCode)=> {
+    if(cusCode){
+      dispatch(doRecentSearch(null));
+      const reacentObj= {
+        "CustomerCode": cusCode,
+        "Domain": process.env.NEXT_PUBLIC_DOMAINNAME,
+        "ServiceCode": "1"
+      }
+      const responseRecent = await MasterService.doGetRecentSearchListCustomerwise(reacentObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+      const resRecent = responseRecent;
+      dispatch(doRecentSearch(resRecent));
+    }
+  }
+
+  
   const srchHtl = async(e) => {
     dispatch(doHotelSearchOnLoad(null));
     dispatch(doRoomDtls({}));
     let allowMe = validate();
+    let userObj = userCustomersList?.filter(data => data?.customerCode == cusCode);
+
+    if(process.env.NEXT_PUBLIC_APPCODE !== "1"){
+      if(!userObj){
+        allowMe = false;
+      }
+    }
+   
     if(allowMe){
       e.nativeEvent.target.disabled = true;
       e.nativeEvent.target.innerHTML = 'Searching...';
@@ -639,24 +721,25 @@ export default function ModifySearch(props) {
       selectedStarOption.forEach((v) => {
         starOpt.push(v.value);
       }); 
-
+      
       let qry = {
         "customerCode": cusCode,
         "destination":selectedDestination,
-        // "chkIn": format(chkIn, 'yyyy-MM-dd'),
-        // "chkOut": format(chkOut, 'yyyy-MM-dd'),
         "chkIn": chkIn.toString(),
         "chkOut": chkOut.toString(),
         "currency": cusCurrency,
         "nationality": cusNationality,
         "regionCode": regionCode,
-        "activeSuppliers":selectedXML,
-        "correlationId": props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId,
+        "activeSuppliers":cusXML,
+        "correlationId": userInfo.correlationId,
         "starRating": starOpt,
         "hotelName": selectedHotel,
         "num_rooms": parseInt(rmCountArr.length),
-        "h2hCheck" : userInfo?.user?.h2H,
-        //"uniqId": uniqId,
+        "h2hCheck" : process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.h2H : Number(userObj[0]?.customerH2H),
+        "custCurrencyExchange": process.env.NEXT_PUBLIC_APPCODE === "1" ? Number(userInfo?.user?.currencyExchangeRate).toFixed(2) : Number(userObj[0]?.currencyExchangeRate).toFixed(2),
+        "customerConsultantCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.customerConsultantCode : userObj[0]?.customerConsultantCode,
+        "companyConsultantCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.companyConsultantCode : userObj[0]?.companyConsultantCode,
+        "branchCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.branchCode : userObj[0]?.branchCode,
         "paxInfoArr": rmCountArr
       }
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
@@ -692,6 +775,7 @@ export default function ModifySearch(props) {
       router.push('/pages/hotel/hotelListing');
       //router.push(`/pages/hotel/hotelListing?qry=${encData}`);
     }
+
   }
 
   return (
@@ -773,7 +857,8 @@ export default function ModifySearch(props) {
                     closeMenuOnSelect={true}
                     onChange={(e) => setCusNationality(e.value)}
                     options={nationOptions} 
-                    defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                    value={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                    //defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
                     //defaultValue={{ label: "Select Dept", value: '91-IN' }}
                     classNamePrefix="tFourMulti" />
                   }
@@ -821,20 +906,24 @@ export default function ModifySearch(props) {
                   />
                 </div>
               </div>
-              {/* <div className="col-lg-3 tFourInput bor-s">
+
+              {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
+              <div className="col-lg-3 tFourInput bor-s">
                 <div className="mb-3">
                   <label>XML Suppliers</label>
                   <Select
                     id="selectxml"
                     instanceId="selectxml"
                     closeMenuOnSelect={false}
-                    defaultValue={selectedXML}
-                    onChange={setSelectedXML}
-                    options={xmlOptions}
+                    onChange={setCusXML}
+                    options={selectedXML} 
+                    value={cusXML}
                     isMulti
                     classNamePrefix="tFourMulti" />
                 </div>
-              </div> */}
+              </div>
+              }
+
             </div>
         </div>
 
@@ -949,7 +1038,8 @@ export default function ModifySearch(props) {
                       closeMenuOnSelect={true}
                       onChange={(e) => setCusNationality(e.value)}
                       options={nationOptions} 
-                      defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                      value={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                      //defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
                       //defaultValue={{ label: "Select Dept", value: '91-IN' }}
                       classNamePrefix="tFourMulti" />
                   }
@@ -998,11 +1088,28 @@ export default function ModifySearch(props) {
                   />
                 </div>
               </div>
+
+              {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
+              <div className="col-lg-3">
+                <div className="mb-3">
+                  <label>XML Suppliers</label>
+                  <Select
+                    id="selectxml"
+                    instanceId="selectxml"
+                    closeMenuOnSelect={false}
+                    onChange={setCusXML}
+                    options={selectedXML} 
+                    value={cusXML}
+                    isMulti
+                    classNamePrefix="tFourMulti" />
+                </div>
+              </div>
+              }
               
             </div>
 
             <div className="row gx-3">
-              <DefaultCustomer customerDetails={customerDetails} Type={'result'} />
+              <DefaultCustomer customerDetails={customerDetails} Type={'result'} query={props} />
             </div>
             <div className="row gx-3">
               <div className="col text-end">

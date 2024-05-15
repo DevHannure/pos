@@ -3,20 +3,21 @@ import React, {useState, useEffect} from 'react';
 import Select from 'react-select';
 import {useDispatch, useSelector } from "react-redux";
 import MasterService from '@/app/services/master.service';
-import { doRecentSearch} from '@/app/store/commonStore/common';
 import {doGetUserCustomersList} from '@/app/store/masterStore/master';
+import {doCustCreditDtls} from '@/app/store/commonStore/common';
 
 export default function DefaultCustomer(props) {
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
-  const recentSearchMain = useSelector((state) => state.commonResultReducer?.recentSearch);
+  const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
+
   const userCustomersList = useSelector((state) => state.masterListReducer?.userCustomersObj);
+  const [customerNameOptions, setCustomerNameOptions] =  useState([]);
   const [cusCurrency, setCusCurrency] = useState('');
   const [customerCodeOption, setCustomerCodeOption] = useState(null);
+  
   const [customerCode, setCustomerCode] = useState(null);
 
-  const [customerNameOptions, setCustomerNameOptions] =  useState([]);
-  
   useEffect(() => {
     if(userCustomersList){
       let itemCustomer = []
@@ -32,22 +33,33 @@ export default function DefaultCustomer(props) {
       if(process.env.NEXT_PUBLIC_APPCODE === "1"){
         setCusCurrency(userInfo.user.currencyCode);
         setCustomerCode(userInfo?.user?.userCode);
-        if(recentSearchMain===null){
-          recentSearcheBtn(userInfo?.user?.userCode)
+        if(!customersCreditInfo){
+          customersCreditDetailsBtn(userInfo?.user?.userCode)
         }
       }
-      else{
+
+      if(process.env.NEXT_PUBLIC_APPCODE !== "1"){
+        if(props?.query?.HtlReq){
+          setCusCurrency(props.query.HtlReq.currency);
+          setCustomerCode(props.query.HtlReq.customerCode);
+          let customerObj = customerNameOptions?.filter(data => data.value == props.query.HtlReq.customerCode);
+          if(customerObj){
+            setCustomerCodeOption(customerObj[0]);
+          }
+          if(!customersCreditInfo){
+            customersCreditDetailsBtn(props.query.HtlReq.customerCode)
+          }
+        }
         if(!userCustomersList) {
           getUserCustomers();
         }
       }
-      
     }
   }, [userInfo]);
 
   useEffect(() => {
-    props.customerDetails({'custCurrency':cusCurrency, 'custCode': customerCode})
-  }, [props, cusCurrency]);
+    props.customerDetails({'custCurrency':cusCurrency, 'custCode': customerCode});
+  }, [props, cusCurrency, customerCode, customerCodeOption]);
 
   const getUserCustomers = async() => {
     const responseUserCustomer = MasterService.doGetCustomersForUserCode(userInfo?.user?.userCode, userInfo?.correlationId);
@@ -59,17 +71,24 @@ export default function DefaultCustomer(props) {
     setCustomerCodeOption(e);
     setCusCurrency(e.data.currencyCode);
     setCustomerCode(e.data.customerCode);
+    // let userData = {
+    //   "currencyCode": e.data.currencyCode,
+    //   "customerCode": e.data.customerCode,
+    //   "customerName": e.data.customerName,
+    //   "modeOfPayment": e.data.modeOfPayment
+    // }
+    //sessionStorage.setItem("userData",  JSON.stringify({userData}) );
+    sessionStorage.setItem("userData",  JSON.stringify(e) );
+    customersCreditDetailsBtn(e.data.customerCode)
   }
 
-  const recentSearcheBtn = async(cusCode)=> {
-    if(cusCode){
-      const reacentObj= {
-        "CustomerCode": cusCode
-      }
-      const responseRecent = await MasterService.doGetRecentSearchListCustomerwise(reacentObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
-      const resRecent = responseRecent;
-      dispatch(doRecentSearch(resRecent));
+  const customersCreditDetailsBtn = async(userCode) => {
+    let customersCreditDetailsObj={
+      "CustomerCode": userCode
     }
+    const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, userInfo?.correlationId);
+    const resCustCreditDtls = await responseCustCreditDtls;
+    dispatch(doCustCreditDtls(resCustCreditDtls));
   }
 
   return (
@@ -103,6 +122,21 @@ export default function DefaultCustomer(props) {
     </>
     :
     <>
+
+      {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
+      <div className="col-lg-3">
+          <div className="mb-3">
+            <label>Customer</label>
+            <Select
+              id="customerName"
+              instanceId="customerName"
+              value={customerCodeOption}
+              onChange={(e) => changeCustomers(e)}
+              options={customerNameOptions} 
+              classNamePrefix="tFourMulti" />
+          </div>
+        </div>
+      }
       <div className="col-lg-3">
         <div className="mb-3">
           <label>Currency</label>

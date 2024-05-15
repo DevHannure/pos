@@ -33,7 +33,6 @@ export default function HotelResult(props) {
   const _ = require("lodash");
 
   const dispatch = useDispatch();
-  //const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
   const getOrgHtlResult = useSelector((state) => state.hotelResultReducer?.htlResOrgObj);
   const htlFilterVar = useSelector((state) => state.hotelResultReducer?.htlFltr);
@@ -118,6 +117,8 @@ export default function HotelResult(props) {
     else{
       setHtlCollapse('')
     }
+
+    let supplierString = qry?.activeSuppliers?.map(function(item) {return item['value'];});
     const htlRoomObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
@@ -145,7 +146,8 @@ export default function HotelResult(props) {
           "ProductName": "",
           "UniqueId": getOrgHtlResult?.generalInfo?.localSessionId,
           "OccupancyStr": occupancyStrVar,
-          "ActiveSuppliers": qry.activeSuppliers
+          "ActiveSuppliers": supplierString?.toString()
+          //"ActiveSuppliers": qry.activeSuppliers
         }
       },
       //"SessionId": supplierName?.toLowerCase()==="local" ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
@@ -559,6 +561,10 @@ export default function HotelResult(props) {
       "systemId": systemIdVar,
       "rateType": val.item[0].rateType,
       "productCode": val.item[0].productCode,
+      "custCurrencyExchange": qry.custCurrencyExchange,
+      "customerConsultantCode": qry.customerConsultantCode,
+      "companyConsultantCode": qry.companyConsultantCode,
+      "branchCode": qry.branchCode,
       "sessionId": val.item[0].local ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
     };
 

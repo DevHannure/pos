@@ -51,6 +51,8 @@ export default function HotelListing() {
 
   const doHtlResultOnLoad = async() => {
     let uniqId = getUID();  
+    let supplierString = qry?.activeSuppliers?.map(function(item) {return item['value'];});
+
     let htlSrchObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
@@ -80,7 +82,8 @@ export default function HotelListing() {
           "ProductName": qry.hotelName[0]?.hotelName,
           "UniqueId": uniqId,
           "OccupancyStr": "",
-          "ActiveSuppliers": qry.activeSuppliers
+          "ActiveSuppliers": supplierString?.toString()
+          //"ActiveSuppliers": qry.activeSuppliers
           //"ActiveSuppliers": "DerbySoft,DOTW,EANRapid,HotelRack,IWTX,Jumeirah,MIKI,RateHawk,RoomsXml,TBO"
         }
       }

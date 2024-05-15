@@ -30,7 +30,6 @@ export default function BookingDetailsPage() {
   let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
   const qry = JSON.parse(bytes);
   const dispatch = useDispatch();
-  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
   const {data} = useSession();
 
@@ -262,7 +261,7 @@ export default function BookingDetailsPage() {
     let ifexist = false;
     const featureInclude = appFeaturesInfo?.find(v => v.featureName === feature);
     if(featureInclude){
-      if(process.env.NEXT_PUBLIC_APPCODE==='0'){
+      if(process.env.NEXT_PUBLIC_APPCODE==='2'){
         if(featureInclude.showInPOS){
           ifexist = true
         }

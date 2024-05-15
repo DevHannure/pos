@@ -85,7 +85,7 @@ export default function RecentSearch() {
               <p className="fs-6 mb-3">See if the price has changed since your last search</p>
               <div>
                 <Slider {...settings}>
-                  {recentSearch?.slice(0, 15).map((r) => (
+                  {recentSearch?.map((r) => (
                     <React.Fragment key={r.id}>
                       <div className="bg-white text-start shadow-sm p-3 pt-1 pe-2 m-2">
                         <div className='text-end curpointer fs-5 fw-semibold text-body-tertiary position-relative' onClick={() => deleteBtn(r)}>x</div>

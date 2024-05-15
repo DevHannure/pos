@@ -148,13 +148,12 @@ export default function ReservationTray() {
   const [bookingNo, setBookingNo] = useState(qry ? qry.BookingNo : "");
   
   const [takeNumberObj, setTakeNumberObj] = useState(false);
-  const [pageSize, setPageSize] = useState(qry ? qry.Take : "10");
   const [currentPageObj, setCurrentPageObj] = useState(false);
   const [currentPage, setCurrentPage] = useState(qry ? qry.Skip : "0");
+  const [pageSize, setPageSize] = useState(qry ? qry.Take : "10");
+  const [pagesCount, setPagesCount] = useState(0);
   const [activePage, setActivePage] = useState(qry ? qry.ActivePage : 0);
   
-  const [pagesCount, setPagesCount] = useState(0);
-
   useEffect(() => {
     if(customerCode){
       getReservations();
@@ -463,7 +462,7 @@ export default function ReservationTray() {
     const featureInclude = appFeaturesInfo?.find(v => v.featureName === feature);
 
     if(featureInclude){
-      if(process.env.NEXT_PUBLIC_APPCODE==='0'){
+      if(process.env.NEXT_PUBLIC_APPCODE==='2'){
         if(featureInclude.showInPOS){
           ifexist = true
         }
@@ -1518,9 +1517,23 @@ export default function ReservationTray() {
                       <ul className="pagination pagination-sm justify-content-center m-0">
                         <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
                         <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
-                        {[...Array(pagesCount)].map((page, i) => 
+                        {/* {[...Array(pagesCount)].map((page, i) => 
                         <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
-                        )}
+                        )} */}
+
+                        {activePage !== 0 &&
+                          <li className="page-item"><button type="button" onClick={() => handleClick(activePage - 1)} className="page-link">{activePage}</button></li>
+                        }
+                        <li className="page-item"><button type="button" onClick={() => handleClick(activePage)} className={"page-link " + (activePage === activePage ? 'active' : '')}>{activePage+1}</button></li>
+                        {Number(activePage) === Number(pagesCount-1) ?
+                        <></>
+                        :
+                        <>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 1)} className="page-link">{activePage + 2}</button></li>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 2)} className="page-link">{activePage + 3}</button></li>
+                        <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 3)} className="page-link">{activePage + 4}</button></li>
+                        </>
+                        }
 
                         <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
                         <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>

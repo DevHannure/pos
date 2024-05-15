@@ -24,7 +24,6 @@ import Select, { components } from 'react-select';
 
 export default function TourTravellerBook() {
   const [qry, setQry] = useState(null);
-  console.log("qry", qry)
   const [defaultConuntry, setDefaultConuntry] = useState('AE');
   const getGeoInfo = () => {
     fetch('https://ipapi.co/json/')
@@ -148,8 +147,6 @@ export default function TourTravellerBook() {
 
   const [phoneTxt, setPhoneTxt] = useState('')
   const [phoneError, setPhoneError] = useState('')
-
-  console.log("cusNationality", cusNationality)
 
   return (
     <MainLayout>

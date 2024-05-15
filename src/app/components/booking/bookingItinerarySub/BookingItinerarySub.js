@@ -11,13 +11,29 @@ import MasterService from '@/app/services/master.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonLoader from '@/app/components/common/CommonLoader';
-import {useSelector} from "react-redux";
+import {doGetUserCustomersList} from '@/app/store/masterStore/master';
+import { useSelector, useDispatch } from "react-redux";
 
 function getUID() {return Date.now().toString(36);}
 
 export default function BookingItinerarySub(props) {
+  const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
+  const userCustomersList = useSelector((state) => state.masterListReducer?.userCustomersObj);
+  const [userObj, setUserObj] = useState(null);
+  const [paymentMode, setPaymentMode] = useState('');
+  const [payMode, setPayMode] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if(userInfo){
+      if(process.env.NEXT_PUBLIC_APPCODE !== "1"){
+        if(!userCustomersList) {
+          getUserCustomers();
+        }
+      }
+    }
+  }, [userInfo]);
 
   useEffect(()=>{
     doItineraryLoad();
@@ -25,6 +41,25 @@ export default function BookingItinerarySub(props) {
   
   const [bkngDetails, setBkngDetails] = useState(null);
   const [bkngCombDetails, setBkngCombDetails] = useState(null);
+
+  useEffect(() => {
+    if(process.env.NEXT_PUBLIC_APPCODE === "1"){
+      setPaymentMode(userInfo?.user.paymentMode)
+    }
+    else{
+      if(userCustomersList && bkngDetails){
+        let userVar = userCustomersList?.filter(data => data?.customerCode == bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode);
+        setUserObj(userVar);
+        setPaymentMode(userVar[0]?.modeOfPayment)
+      }
+    }
+  }, [userCustomersList, bkngDetails]);
+
+  const getUserCustomers = async() => {
+    const responseUserCustomer = MasterService.doGetCustomersForUserCode(userInfo?.user?.userCode, userInfo?.correlationId);
+    const resUserCustomer = await responseUserCustomer;
+    dispatch(doGetUserCustomersList(resUserCustomer));
+  };
 
   const doItineraryLoad = async() => {
     setBkngDetails(null);
@@ -74,7 +109,6 @@ export default function BookingItinerarySub(props) {
 
   const [mainLoader, setMainLoader] = useState(false);
 
-  const [payMode, setPayMode] = useState('');
   const [agentRefText, setAgentRefText] = useState('');
   const [termCheckbox, setTermCheckbox] = useState(false);
 
@@ -125,7 +159,8 @@ export default function BookingItinerarySub(props) {
         let uniqId = getUID();
         let payObj = {
           "bookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
-          "pGSupplier": parseFloat(userInfo?.user.pgType),
+          //"pGSupplier": parseFloat(userInfo?.user.pgType),
+          "pGSupplier": process.env.NEXT_PUBLIC_APPCODE === "1" ? Number(userInfo?.user.pgType) : Number(userObj[0]?.pgType),
           "customerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
           "userId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
           "agentRefText": agentRefText,
@@ -150,7 +185,6 @@ export default function BookingItinerarySub(props) {
   const convertCartToReservationBtn = async() => {
     let cartToReservationObj = {
       "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
-      //"UserId": userInfo?.user?.userId
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId
     }
     const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, props?.qry.correlationId);
@@ -358,7 +392,7 @@ export default function BookingItinerarySub(props) {
                     <label><input className="form-check-input" type="radio" value="CC" name="payName" checked={payMode==='CC'} onChange={(e) => setPayMode(e.target.value)} /> Pay By Credit Card</label>
                   </div>
 
-                  {userInfo?.user.paymentMode==="LOC" &&
+                  {paymentMode==="LOC" &&
                     <>
                       {userInfo?.user?.isSubUser ?
                         <>
@@ -380,21 +414,6 @@ export default function BookingItinerarySub(props) {
                     <div className="form-check form-check-inline">
                       <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
                     </div>
-                  // <>
-                  //   {userInfo?.user?.isSubUser ?
-                  //     <>
-                  //       {userInfo?.user?.consultantAllowCredit ?
-                  //         <div className="form-check form-check-inline">
-                  //           <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
-                  //         </div> : ''
-                  //       }
-                  //     </>
-                  //     :
-                  //     <div className="form-check form-check-inline">
-                  //       <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
-                  //     </div>
-                  //   }
-                  // </>
                   : ''
                   }
 

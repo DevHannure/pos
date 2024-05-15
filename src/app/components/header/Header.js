@@ -11,7 +11,7 @@ import AuthService from '@/app/services/auth.service';
 import MasterService from '@/app/services/master.service';
 import ReservationService from '@/app/services/reservation.service';
 import { useSelector, useDispatch } from "react-redux";
-import { doUserInfo, doCustCreditDtls, doAppFeatures, doDeviceInfo } from '@/app/store/commonStore/common';
+import { doUserInfo, doAppFeatures, doDeviceInfo, doCustCreditDtls } from '@/app/store/commonStore/common';
 import { doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 import { doBookingTypeCounts, doBookingType} from '@/app/store/reservationStore/reservation';
 import {doCustConsultantOnLoad} from '@/app/store/masterStore/master';
@@ -23,7 +23,7 @@ export default function Header() {
   const { data, status } = useSession();
   const dispatch = useDispatch();
   const router = useRouter();
-  const userInfos = useSelector((state) => state.commonResultReducer?.userInfo);
+  const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
@@ -45,6 +45,10 @@ export default function Header() {
           dispatch(doDeviceInfo(deviceObj));
           }).catch(err => console.error(err));
     }
+
+    if(process.env.NEXT_PUBLIC_APPCODE !== "1"){
+      dispatch(doCustCreditDtls(null));
+    }
   }, []);
   
   //console.log("session666", data)
@@ -61,11 +65,7 @@ export default function Header() {
   
   useEffect(() => {
     dispatch(doUserInfo(data));
-    if(data && !customersCreditInfo){
-      if(process.env.NEXT_PUBLIC_APPCODE === "1"){
-        customersCreditDetailsBtn(data?.user.userCode);
-      }
-    }
+    
     if(data && !appFeaturesInfo){
       appFeaturesBtn();
     }
@@ -99,7 +99,7 @@ export default function Header() {
       .catch(err => console.error(err));
     if(resLocation?.ip_address){
       let req = {
-        UserCode: userInfos?.user?.customerConsultantEmail,
+        UserCode: process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
         AppCode: process.env.NEXT_PUBLIC_APPCODE,
         DeviceInfo:{
           Url: process.env.NEXT_PUBLIC_DOMAINNAME,
@@ -109,8 +109,8 @@ export default function Header() {
           IPLocation: resLocation.city + ', ' + resLocation.country,
         }
       }
-      const responseLogOut = AuthService.logout(req, userInfos?.correlationId);
-      const resLogOUt =  responseLogOut;
+      const responseLogOut = AuthService.logout(req, userInfo?.correlationId);
+      const resLogOUt =  await responseLogOut;
       if(resLogOUt){
         signOut({
           callbackUrl: '/login'
@@ -119,14 +119,7 @@ export default function Header() {
     }
   }
 
-  const customersCreditDetailsBtn = async(userCode) => {
-    let customersCreditDetailsObj={
-      "CustomerCode": userCode
-    }
-    const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, data?.correlationId);
-    const resCustCreditDtls = await responseCustCreditDtls;
-    dispatch(doCustCreditDtls(resCustCreditDtls));
-  }
+  
 
   // const reservationBtn = () => {
   //   dispatch(doReserveListOnLoad(null));
@@ -193,13 +186,13 @@ export default function Header() {
                   <li className="text-capitalize">
                     {customersCreditInfo &&
                       <>
-                      {userInfos?.user?.paymentMode === "CA"?
+                      {customersCreditInfo?.modeOfPayment === "CA"?
                       <span>Cash Customer &nbsp;|&nbsp; </span>
                       :
                       <>
-                      {userInfos?.user?.isSubUser ?
+                      {userInfo?.user?.isSubUser ?
                         <>
-                          {userInfos?.user?.consultantCreditDisplay ?
+                          {userInfo?.user?.consultantCreditDisplay ?
                             <span>
                               Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; 
                               <span className="text-success"> Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
@@ -222,12 +215,12 @@ export default function Header() {
                     }
 
                     {process.env.NEXT_PUBLIC_APPCODE === "1" ?
-                    <>{userInfos?.user?.customerConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
+                    <>{userInfo?.user?.customerConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
                     :
-                    <>{userInfos?.user?.companyConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
+                    <>{userInfo?.user?.companyConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
                     }
 
-                     {userInfos?.user?.branchName?.toLowerCase()}
+                     {userInfo?.user?.branchName?.toLowerCase()}
                     </li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
@@ -244,10 +237,10 @@ export default function Header() {
                 {process.env.NEXT_PUBLIC_APPCODE === "1" ?
                   <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/b2bReservationTray' }>My Bookings</Link></li>
                   :
-                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/reservationTray'}>My Bookings</Link></li>
+                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/'}>My Bookings</Link></li>
                 }
 
-               {userInfos?.user?.isSubUser ? 
+               {userInfo?.user?.isSubUser ? 
                 null 
                 : 
                 <li className="nav-item">

@@ -168,6 +168,17 @@ const ReservationtrayService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doGetCancellationPolicyDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetCancellationPolicyDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
   doGetRefundReasons: async function (reqObj, correlationId) {
     try {
       const response = await fetch(`${baseUrl}/reservationtray/GetRefundReasons`, {
@@ -178,6 +189,108 @@ const ReservationtrayService = {
       return response.json()
     } catch (error) {console.log("errorRefundReason", error)}
   },
+
+  doChangeServiceStatus: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/ChangeServiceStatus`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorChangeServiceStatus", error)}
+  },
+
+  doUpdateDueDate: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/UpdateDueDate`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorUpdateDueDate", error)}
+  },
+
+  doGetEditServiceDetailsData: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetEditServiceDetailsData`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorSwitchEditDetails", error)}
+  },
+
+  doGetSwitchSupplierDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetSwitchSupplierDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorSwitchSupplierDetails", error)}
+  },
+
+  doSaveSwitchSupplierDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/SaveSwitchSupplierDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorSwitchSupplierSave", error)}
+  },
+
+  doSaveServiceDateDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/SaveServiceDateDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorServiceDate", error)}
+  },
+
+  doGetGuestDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/GetGuestDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorGuestDetails", error)}
+  },
+
+  doSaveGuestDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/SaveGuestDetails`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorUpdateGuest", error)}
+  },
+
+
+  doSaveServiceAmendmentHistory: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/reservationtray/SaveServiceAmendmentHistory`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.text()
+    } catch (error) {console.log("errorUpdateGuest", error)}
+  },
+
+  
 
 }
 

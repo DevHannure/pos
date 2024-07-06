@@ -11,9 +11,8 @@ import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import CommonLoader from '@/app/components/common/CommonLoader';
 import {useSelector, useDispatch } from "react-redux";
-import {doReserveListQry, doReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
+import {doReserveListQry, doReserveListOnLoad, doCartReserveListOnLoad} from '@/app/store/reservationTrayStore/reservationTray';
 import {useSession} from "next-auth/react";
 import BookingDetails from '@/app/components/reports/bookingDtl/BookingDetails';
 import Itinerary from '@/app/components/reports/itineraryRpt/Itinerary';
@@ -21,6 +20,9 @@ import Invoice from '@/app/components/reports/invoiceRpt/Invoice';
 import Voucher from '@/app/components/reports/voucherRpt/Voucher';
 import CCReceipt from '@/app/components/reports/ccReceiptRpt/CCReceipt';
 import BookingVoucher from '@/app/components/reports/bookingVoucher/BookingVoucher';
+import SalesReport from '@/app/components/reports/salesReport/SalesReport';
+import DownloadTkt from '@/app/components/reports/downloadTkt/DownloadTkt';
+import BookingItinerarySub from '@/app/components/booking/bookingItinerarySub/BookingItinerarySub';
 
 export default function BookingDetailsPage() {
   const router = useRouter();
@@ -42,9 +44,17 @@ export default function BookingDetailsPage() {
   const [bkngDetails, setBkngDetails] = useState(null);
   const [bkngCombDetails, setBkngCombDetails] = useState(null);
   const [bStatus, setBStatus] = useState("");
+  const [bookItneryReq, setBookItneryReq] = useState(null);
 
   const doItineraryLoad = async() => {
+    setBookItneryReq(null);
     setBkngDetails(null);
+    if(qry?.btype === "O"){
+      setBookItneryReq({
+        "bcode": qry.bcode,
+        "correlationId": qry.correlationId
+      })
+    }
     let bookingItineraryObj = {
       "BookingNo": qry?.bcode,
       "BookingType": qry?.btype
@@ -94,6 +104,7 @@ export default function BookingDetailsPage() {
     if(bkngDetails && typeof bkngDetails !=='undefined' && bkngDetails != null && qry?.emailSend){
       dispatch(doReserveListQry(null));
       dispatch(doReserveListOnLoad(null));
+      dispatch(doCartReserveListOnLoad(null));
       sendReservationConfirmedEmailBtn();
     }
   }, [bkngDetails])
@@ -144,10 +155,26 @@ export default function BookingDetailsPage() {
     }
   }
 
+  const [salesReportDetails, setSalesReportDetails] = useState(null);
+  const viewSalesReport = async() => {
+    let reqRptObj = {
+      "BookingNo": qry?.bcode,
+    }
+    const responseRpt = ReservationtrayService.doGetBookingSalesReportData(reqRptObj, qry.correlationId);
+    const resRpt = await responseRpt;
+    if(resRpt?.errorInfo===null) {
+      setSalesReportDetails(resRpt);
+    }
+    else {
+      toast.error(resRpt?.errorInfo,{theme: "colored"});
+    }
+  }
+
   const rptMenuClose = useRef(null);
   const [reportName, setReportName] = useState("Booking Details");
 
   const [activeItem, setActiveItem] = useState('detailsColumn');
+
   const setActive = async(menuItem) => {
     setActiveItem(menuItem);
     window.scrollTo(0, 0);
@@ -162,6 +189,9 @@ export default function BookingDetailsPage() {
     }
     else if(menuItem==="receiptColumn"){
       setReportName("CC Receipt");
+    }
+    else if(menuItem==="salesReportColumn"){
+      setReportName("sales Report");
     }
     else{
       setReportName("Booking Details");
@@ -189,8 +219,6 @@ export default function BookingDetailsPage() {
       setNoPrint(true);
     }, 100);
   }
-
-  const [mainLoader, setMainLoader] = useState(false);
 
   const emailModalClose = useRef(null);
   const [emailText, setEmailText] = useState('');
@@ -229,7 +257,7 @@ export default function BookingDetailsPage() {
     if(allowMe){
       setNoPrint(false);
       setEmailLoad(true);
-      let emailSubject = (isActive('detailsColumn') ? 'Booking Details' : isActive('itineraryColumn') ? 'Booking Itinerary' : isActive('invoiceColumn') ? 'Booking Invoice' : isActive('voucherColumn') ? 'Booking Voucher' : isActive('receiptColumn') ? 'Booking Receipt' : 'Booking Email');
+      let emailSubject = (isActive('detailsColumn') ? 'Booking Details' : isActive('itineraryColumn') ? 'Booking Itinerary' : isActive('invoiceColumn') ? 'Booking Invoice' : isActive('voucherColumn') ? 'Booking Voucher' : isActive('receiptColumn') ? 'Booking Receipt' : isActive('downloadTicketColumn') ? 'Tour Ticket' : 'Booking Email');
       setTimeout(async function() {
         let emailObj = {
           "ToEmail": emailText,
@@ -314,97 +342,112 @@ export default function BookingDetailsPage() {
   return (
     <MainLayout>
       <ToastContainer />
-      {mainLoader &&
-        <CommonLoader Type="1" />
-      }
       <div className="middle">
         <div className="container-fluid">
           <div className='pt-3'>
             <div className="d-lg-table w-100">
-              <div className="d-lg-table-cell align-top mainContent">
-                <div className='leftFilter sticky-lg-top'>
-                  <div className='navbar navbar-expand-lg w-100'>
-                    <button className="navbar-toggler rptButton w-100 justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#rptNavigation" ref={rptMenuClose}>
-                      {reportName} <span className="navbar-toggler-icon"></span>
-                    </button>
-                    <div className="navbar-collapse collapse" id="rptNavigation">
-                      {bStatus !=="" &&
-                        <ul className="list-group mt-3 w-100">
-                          {ifMenuExist('ViewItinerary') &&
+              {!bookItneryReq ?
+                <div className="d-lg-table-cell align-top filterContent">
+                  <div className='leftFilter sticky-lg-top mt-4'>
+                    <div className='navbar navbar-expand-lg w-100'>
+                      <button className="navbar-toggler rptButton w-100 justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#rptNavigation" ref={rptMenuClose}>
+                        {reportName} <span className="navbar-toggler-icon"></span>
+                      </button>
+                      <div className="navbar-collapse collapse" id="rptNavigation">
+                        {bStatus !=="" &&
+                          <ul className="list-group w-100">
+                            {ifMenuExist('ViewItinerary') &&
+                              <>
+                                {IfUserHasreadWriteAccess('ViewItinerary') &&
+                                <>
+                                <button type="button" onClick={() => setActive('detailsColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('detailsColumn') ? 'active' : '')}>Booking Details</button>
+                                {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus === "2" &&
+                                  // <button type="button" onClick={() => setActive('bookingVoucherColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('bookingVoucherColumn') ? 'active' : '')}>Booking Voucher</button>
+                                  <button onClick={()=> setVoucherBellModal(true)} type="button" className='list-group-item fs-6 text-start rounded-0 '>Booking Voucher</button>
+                                }
+                                </>
+                                }
+                              </>
+                            }
+
+                            {process.env.NEXT_PUBLIC_APPCODE!=='0' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
                             <>
-                              {IfUserHasreadWriteAccess('ViewItinerary') &&
-                              <>
-                              <button type="button" onClick={() => setActive('detailsColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('detailsColumn') ? 'active' : '')}>Booking Details</button>
-                              
-                              {bkngDetails?.ReservationDetail?.BookingDetail?.BookingStatus === "2" &&
-                                // <button type="button" onClick={() => setActive('bookingVoucherColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('bookingVoucherColumn') ? 'active' : '')}>Booking Voucher</button>
-                                <button onClick={()=> setVoucherBellModal(true)} type="button" className='list-group-item fs-6 text-start rounded-0 '>Booking Voucher</button>
-                              }
-                              </>
-                              }
-                            </>
-                          }
-
-                          {process.env.NEXT_PUBLIC_APPCODE!=='0' || data?.user?.userAccess == "1" || data?.user?.userAccess=="2" ?
-                          <>
-                            {ifMenuExist('ViewItineraryReport') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewItineraryReport') &&
+                              {ifMenuExist('ViewItineraryReport') &&
                                 <>
-                                  {["on cancellation", "cancelled", "cancelled(p)"].includes(bStatus?.toLowerCase()) ?
-                                  <></>
-                                  :
-                                  <button type="button" onClick={() => setActive('itineraryColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('itineraryColumn') ? 'active' : '')}>Itinerary Report</button>
-                                  }
-                                </>
-                                }
-                              </>
-                            }
-
-                            {ifMenuExist('ViewInvoice') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewInvoice') &&
-                                <>
-                                  {!["on cancellation", "cancelled", "cancelled(p)", "open"].includes(bStatus?.toLowerCase()) ?
-                                  <button type="button" onClick={() => setActive('invoiceColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('invoiceColumn') ? 'active' : '')}>Invoice</button>
-                                  :
-                                  <></>
-                                  }
-                                </>
-                                }
-                              </>
-                            }
-
-                            {ifMenuExist('ViewVoucher') &&
-                              <>
-                                {IfUserHasreadWriteAccess('ViewVoucher') &&
+                                  {IfUserHasreadWriteAccess('ViewItineraryReport') &&
                                   <>
-                                    {["supp.confirmed", "on request", "on request(p-allc)", "sent to supp.", "not available", "on cancellation", "cancelled", "cancelled(p)"].includes(bStatus?.toLowerCase()) ?
+                                    {["on cancellation", "cancelled", "cancelled(p)"].includes(bStatus?.toLowerCase()) ?
                                     <></>
                                     :
-                                    <button type="button" onClick={() => (doVoucherLoad(), setActive('voucherColumn'))} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('voucherColumn') ? 'active' : '')}>Voucher</button>
+                                    <button type="button" onClick={() => setActive('itineraryColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('itineraryColumn') ? 'active' : '')}>Itinerary Report</button>
                                     }
-                                  </>    
-                                }
-                              </>
+                                  </>
+                                  }
+                                </>
+                              }
+
+                              {ifMenuExist('ViewInvoice') &&
+                                <>
+                                  {IfUserHasreadWriteAccess('ViewInvoice') &&
+                                  <>
+                                    {!["on cancellation", "cancelled", "cancelled(p)", "open"].includes(bStatus?.toLowerCase()) ?
+                                    <button type="button" onClick={() => setActive('invoiceColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('invoiceColumn') ? 'active' : '')}>Invoice</button>
+                                    :
+                                    <></>
+                                    }
+                                  </>
+                                  }
+                                </>
+                              }
+
+                              {ifMenuExist('ViewVoucher') &&
+                                <>
+                                  {IfUserHasreadWriteAccess('ViewVoucher') &&
+                                    <>
+                                      {["supp.confirmed", "on request", "on request(p-allc)", "sent to supp.", "not available", "on cancellation", "cancelled", "cancelled(p)"].includes(bStatus?.toLowerCase()) ?
+                                      <></>
+                                      :
+                                      <button type="button" onClick={() => (doVoucherLoad(), setActive('voucherColumn'))} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('voucherColumn') ? 'active' : '')}>Voucher</button>
+                                      }
+                                    </>    
+                                  }
+                                </>
+                              }
+
+                              {bkngDetails?.ReservationDetail?.BookingDetail?.IsCCBkg ?
+                                <button type="button" onClick={() => (doCCReceiptLoad(), setActive('receiptColumn'))} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('receiptColumn') ? 'active' : '')}>CC Receipt</button>
+                                :
+                                null
+                              }
+                            </>
+                            : null
                             }
 
-                            {bkngDetails?.ReservationDetail?.BookingDetail?.IsCCBkg ?
-                              <button type="button" onClick={() => (doCCReceiptLoad(), setActive('receiptColumn'))} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('receiptColumn') ? 'active' : '')}>CC Receipt</button>
-                              :
-                              null
+                            {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
+                            <>
+                              {ifMenuExist('ViewSalesReport') &&
+                                <>
+                                  {IfUserHasreadWriteAccess('ViewSalesReport') &&
+                                  <button type="button" onClick={() => (viewSalesReport(), setActive('salesReportColumn'))} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('salesReportColumn') ? 'active' : '')}>Sales Report</button>
+                                  }
+                                </>
+                              }
+                            </>
                             }
-                          </>
-                          : null
-                          }
-                        </ul>
-                      }
+
+                            {/* <button type="button" onClick={() => setActive('downloadTicketColumn')} className={"list-group-item fs-6 text-start rounded-0 " + (isActive('downloadTicketColumn') ? 'active' : '')}>Download Ticket</button> */}
+
+                          </ul>
+                        }
+                      </div>
                     </div>
-                  </div>
 
-                </div>
-              </div>
-              <div className='d-lg-table-cell align-top rightResult pt-0'>
+                  </div>
+                </div> : null
+              }
+              
+
+              <div className='d-lg-table-cell align-top rightResult pt-0 border-0'>
                 <div className='text-end mb-2'>
                   {qry?.returnurl &&
                     <><button onClick={() => router.back()} type='button' className="btn btn-primary fn12 py-1"><FontAwesomeIcon icon={faArrowLeftLong} /> Back</button>&nbsp;</>
@@ -418,10 +461,6 @@ export default function BookingDetailsPage() {
                     <BookingDetails res={bkngDetails} query={qry} noPrint={noPrint} />
                   }
 
-                  {/* {isActive('bookingVoucherColumn') &&
-                    <BookingVoucher dtl={voucherObj} />
-                  } */}
-
                   {isActive('itineraryColumn') &&
                     <Itinerary res={invoiceDetails} query={qry} />
                   }
@@ -434,7 +473,22 @@ export default function BookingDetailsPage() {
                   {isActive('receiptColumn') &&
                     <CCReceipt res={ccDetails} query={qry} />
                   }
+                  {isActive('salesReportColumn') &&
+                    <SalesReport res={salesReportDetails} />
+                  }
+
+                  {isActive('downloadTicketColumn') &&
+                    <DownloadTkt noPrint={noPrint} correlationId={qry.correlationId} />
+                  }
                 </div>
+
+                {bookItneryReq ?
+                  <div className='bg-white shadow-sm'>
+                    <BookingItinerarySub qry={bookItneryReq} />
+                  </div>
+                  :
+                  null
+                }
 
                 <div className="modal fade" id="emailModal" data-bs-backdrop="static" data-bs-keyboard="false">
                   <div className="modal-dialog modal-dialog-centered">

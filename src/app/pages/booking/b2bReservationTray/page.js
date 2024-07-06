@@ -479,7 +479,6 @@ export default function BBReservationTray() {
       default:
         return false;
     }
-
   }
 
   const [cancelServiceDtl, setCancelServiceDtl] = useState(null);
@@ -649,6 +648,16 @@ export default function BBReservationTray() {
             setCancelLoad(false);
           }
           else{
+            let reqAmendHistoryObj = {
+              "BookingNo": cancelServiceDtl.BookingNo?.toString(),
+              "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
+              "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+              "AppCode": Number(process.env.NEXT_PUBLIC_APPCODE),
+              "Action": "Cancelled",
+              "ServiceCode": cancelServiceDtl.ServiceCode
+            }
+            const responseHistory = ReservationtrayService.doSaveServiceAmendmentHistory(reqAmendHistoryObj, userInfo?.correlationId);
+            const resHistory = await responseHistory;
             toast.success("Cancellation Successfully!",{theme: "colored"});
             cancelModalClose.current?.click();
             setCancelLoad(false);
@@ -683,6 +692,16 @@ export default function BBReservationTray() {
     const responseCancelService = ReservationService.doCancelReservationService(reqObj, userInfo.correlationId);
     const resCancelService = await responseCancelService;
     if(resCancelService){
+      let reqAmendHistoryObj = {
+        "BookingNo": cancelServiceDtl.BookingNo?.toString(),
+        "ServiceMasterCode": cancelServiceDtl?.ServiceMasterCode?.toString(),
+        "UserId": process.env.NEXT_PUBLIC_APPCODE==='1' ? userInfo?.user?.customerConsultantEmail : userInfo?.user?.userId,
+        "AppCode": Number(process.env.NEXT_PUBLIC_APPCODE),
+        "Action": "Cancelled",
+        "ServiceCode": cancelServiceDtl.ServiceCode
+      }
+      const responseHistory = ReservationtrayService.doSaveServiceAmendmentHistory(reqAmendHistoryObj, userInfo?.correlationId);
+      const resHistory = await responseHistory;
       bookingDetailBtn();
       toast.success("Cancellation Successfully!",{theme: "colored"});
     }
@@ -993,21 +1012,17 @@ export default function BBReservationTray() {
                                       </div>
                                       }
 
-                                      <div className='divCell'>
+                                      <div className='divCell text-nowrap'>
                                         {s.ServiceCode === 17 ?
-                                          <div className="text-nowrap">
+                                          <>
                                             {s.IsLCC == false && s.H2H != 0 && s.H2H != 138 ?
                                               <>{s.CancellationDate}</>
                                               :
                                               <>N/A</>
                                             }
-                                          </div>
+                                          </>
                                         :
-                                        <>
-                                        <div style={{width:115}}>
-                                          {s.DueDate}
-                                        </div>
-                                        </>
+                                        <>{s.DueDate}</>
                                         }
                                       </div>
                                       
@@ -1079,7 +1094,6 @@ export default function BBReservationTray() {
                                       </div>
 
                                       <div className='divCell'>
-                                      {/* <button type="button" className='btn btn-sm btn-outline-danger py-0 border' disabled><FontAwesomeIcon icon={faTrash} /></button> */}
                                       
                                       {DisablePopupMenu(s, 'cs') ?
                                         <button onClick={()=> cancelBtn(s)} data-bs-toggle="modal" data-bs-target="#cancelServiceModal" type="button" className='btn btn-sm btn-outline-danger py-0 border'><FontAwesomeIcon icon={faTrash} /></button>

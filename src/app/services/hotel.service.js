@@ -5,16 +5,16 @@ const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 const HotelService = {
 
   doHotelSearch: async function (reqObj, correlationId) {
-    let controller = new AbortController();
-    setTimeout( () => {
-      controller.abort()
-  }, 300000);    // 300000 means 300 seconds
+    // let controller = new AbortController();
+    // setTimeout( () => {
+    //   controller.abort()
+    // }, 300000);    // 300000 means 300 seconds
     try {
       const response = await fetch(`${baseUrl}/hotel/Search`, {
         method: 'POST',
         body: JSON.stringify(reqObj),
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId},
-        signal: controller.signal
+        //signal: controller.signal
       });
       return response.json()
     } catch (error) {console.log("error", error)}
@@ -147,6 +147,7 @@ const HotelService = {
             "ClassificationCode": reqObj.classificationCode,
             "ProductCode": reqObj.productCode,
             "ProductName": "",
+            "RateBasisName": reqObj.rateBasisName,
             "SupplierCode": reqObj.supplierCode,
             "UniqueId": reqObj.uniqueId,
             "OccupancyStr": reqObj.occupancyStr,
@@ -192,7 +193,10 @@ const HotelService = {
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
-    } catch (error) {console.log("error", error)}
+    } catch (error) {
+      console.log("errorDoBook", error);
+      alert('Please take a Screenshot & send email to reservation department '+ error);
+    }
   },
 
   doLocalBook: async function (reqObj, correlationId) {
@@ -203,7 +207,10 @@ const HotelService = {
         headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
       });
       return response.json()
-    } catch (error) {console.log("error", error)}
+    } catch (error) {
+      console.log("errorDoLocalBook", error);
+      alert('Please take a Screenshot & send email to reservation department '+ error)
+    }
   },
 
   doTassProUpdate: async function (reqObj, correlationId) {

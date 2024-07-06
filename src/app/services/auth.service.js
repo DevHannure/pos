@@ -1,9 +1,7 @@
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API;
 const domainUrl = process.env.NEXT_PUBLIC_DOMAINNAME;
 
-
 const AuthService = {
-
   login: async function (reqObj) {
     try {
       const response = await fetch(`${baseUrl}/login/login`, {

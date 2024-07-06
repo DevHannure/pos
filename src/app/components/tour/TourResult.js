@@ -7,7 +7,7 @@ import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { useSelector, useDispatch } from "react-redux";
 import { doFilterSort, doTourOptDtls, doTourReprice } from '@/app/store/tourStore/tour';
-import {format, addDays} from 'date-fns';
+import {format} from 'date-fns';
 import AES from 'crypto-js/aes';
 import { enc } from 'crypto-js';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function TourResult(props) {
   const router = useRouter();
-  const qry = props.TurReq;
+  const qry = props.ModifyReq;
   const _ = require("lodash");
   const dispatch = useDispatch();
   const getTourRes = useSelector((state) => state.tourResultReducer?.tourResObj);
@@ -64,7 +64,6 @@ export default function TourResult(props) {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
         "GroupCode": v.groupCode,
-        //"ServiceDate": qry.chkIn,
         "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Adult": qry.adults?.toString(),
@@ -110,40 +109,83 @@ export default function TourResult(props) {
         responseOptions = TourService.doOptions(tourOptionObj, qry.correlationId);
       }
       let resOptions = await responseOptions;
-      if(resOptions){
+      if(!resOptions?.errorInfo){
         resOptions.generalInfo.supplierShortCode = v.supplierShortCode;
         resOptions.tourImg = v.imagePath ? v.imagePath : "",
-        resOptions?.tourOptions?.map((item) =>{
-          let adultPrice = 0;
-          let childPrice = 0;
+        resOptions?.tourOptions?.map((item) => {
+          let adultNet = 0;
+          let adultGross = 0;
+          let adultTax = 0;
+          let adultSupplierNet = 0;
+          let adultSupplierGross = 0;
+          let adultSupplierTax = 0;
+          let childNet = 0;
+          let childGross = 0;
+          let childTax = 0;
+          let childSupplierNet = 0;
+          let childSupplierGross = 0;
+          let childSupplierTax = 0;
 
           item.paxPrices.forEach((p) => {
             if(p.paxType === 'ADULT'){
-              adultPrice = (Number(p.net) * Number(qry.adults))
+              adultNet = (Number(p.net) * Number(qry.adults));
+              adultGross = (Number(p.gross) * Number(qry.adults));
+              adultTax = (Number(p.tax) * Number(qry.adults));
+              adultSupplierNet = (Number(p.supplierNet) * Number(qry.adults));
+              adultSupplierGross = (Number(p.supplierGross) * Number(qry.adults));
+              adultSupplierTax = (Number(p.supplierTax) * Number(qry.adults));
             }
             if(qry.children !==0){
               let chdAgesArr = qry.ca.split(',');
-              let subChildPrc = 0;
+              let subChildNet = 0;
+              let subChildGross = 0;
+              let subChildTax = 0;
+              let subChildSupplierNet = 0;
+              let subChildSupplierGross = 0;
+              let subChildSupplierTax = 0;
+
               chdAgesArr.forEach((c) => {
                 let arrAges = p.age.split('-');
                 let fromAge = Number(arrAges[0]);
                 let toAge = Number(arrAges[1]);
                 let current = Number(c);
                 if (current >= fromAge && current <= toAge){
-                  subChildPrc = subChildPrc + (Number(p.net))
+                  subChildNet = subChildNet + (Number(p.net));
+                  subChildGross = subChildGross+ (Number(p.gross));
+                  subChildTax = subChildTax+ (Number(p.tax));
+                  subChildSupplierNet = subChildSupplierNet+ (Number(p.supplierNet));
+                  subChildSupplierGross = subChildSupplierGross+ (Number(p.supplierGross));
+                  subChildSupplierTax = subChildSupplierTax+ (Number(p.supplierTax));
                 }
               })
-              childPrice += subChildPrc;
+              childNet += subChildNet;
+              childGross += subChildGross;
+              childTax += subChildTax;
+              childSupplierNet += subChildSupplierNet;
+              childSupplierGross += subChildSupplierGross;
+              childSupplierTax += subChildSupplierTax;
             }
           })
           
-          item.totalAdult = adultPrice;
-          item.totalChild = childPrice;
-          item.totalPaxPrice = adultPrice+childPrice;
+          item.totalAdultNet = adultNet;
+          //item.totalAdultGross = adultGross;
+          //item.totalAdultTax = adultTax;
+          // item.totalAdultSupplierNet = adultSupplierNet;
+          // item.totalAdultSupplierGross = adultSupplierGross;
+          // item.totalAdultSupplierTax = adultSupplierTax;
+          item.totalChildNet = childNet;
+          //item.totalChildGross = childGross;
+          //item.totalChildTax = childTax;
+          // item.totalChildSupplierNet = childSupplierNet;
+          // item.totalChildSupplierGross = childSupplierGross;
+          // item.totalChildSupplierTax = childSupplierTax;
+          item.totalPaxPrice = adultNet+childNet;
+          item.totalSupplierNet = adultSupplierNet+childSupplierGross;
+          item.totalSupplierGross = adultSupplierGross+childSupplierGross;
+          item.totalSupplierTax = adultSupplierTax+childSupplierTax;
         })
         resOptions?.tourOptions?.sort((a, b) => parseFloat(a.totalPaxPrice) - parseFloat(b.totalPaxPrice));
       }
-
       if (_.isEmpty(tourOptData)) {
         tourOptItems = {}
       }
@@ -155,16 +197,22 @@ export default function TourResult(props) {
   const [policyDtl, setPolicyDtl] = useState(null);
   
   const [respTimeSlot, setRespTimeSlot] = useState(null);
-    
-  const timeSlot = async (req, info) => {
-    setRespTimeSlot(null);
-    let tourTimeSlotObj = {
+  const [tourDtl, setTourDtl] = useState(null);
+  const [optionDtl, setOptionDtl] = useState(null);
+  
+  const [cancelPolicyData, setCancelPolicyData] = useState({});
+  const [canPolData, setCanPolData] = useState(null);
+
+  const cancelPolicy = async (req, code) => {
+    setPolicyDtl(req)
+    setCanPolData(null);
+    let info = tourOptData?.[code];
+    let canPolicyObj = {
       "CustomerCode": qry.customerCode,
       "SearchParameter": {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
         "GroupCode": req.groupCode,
-        //"ServiceDate": qry.chkIn,
         "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Adult": qry.adults?.toString(),
@@ -174,7 +222,74 @@ export default function TourResult(props) {
           "RegionId": qry.regionCode?.toString()
         }
       },
-      "SessionId": info.sessionId
+      "SessionId": info?.generalInfo.sessionId
+    }
+
+    if (parseInt(qry.children) > 0) {
+      let childrenObj = {}
+      let arrChildAges = []
+      let indx = 0
+      let chdAgesArr = qry.ca.split(',');
+      for (var k = 0; k < chdAgesArr.length; k++) {
+        indx = indx + 1
+        let ageObj = {}
+        ageObj.Identifier = indx
+        ageObj.Text = chdAgesArr[k]
+        arrChildAges.push(ageObj)
+      }
+      childrenObj.Count = parseInt(qry.children)
+      childrenObj.ChildAge = arrChildAges;
+      canPolicyObj.SearchParameter.Children = childrenObj
+    }
+
+    let cpRes = {}
+    let cpItems = {...cancelPolicyData}
+
+    if (_.isEmpty(cancelPolicyData[code+'_'+req.rateKey])) {
+      let responseCancelPol = null;
+      if(info?.generalInfo.supplierShortCode?.toLowerCase() === 'local'){
+        responseCancelPol = TourService.doLocalCancellationPolicy(canPolicyObj, qry.correlationId);
+      }
+      else{
+        responseCancelPol = TourService.doCancellationPolicy(canPolicyObj, qry.correlationId);
+      }
+      const resCancelPol = await responseCancelPol;
+      setCanPolData(resCancelPol);
+      cpRes = resCancelPol;
+      if (_.isEmpty(cancelPolicyData)) {
+        cpItems = {}
+      }
+      cpItems[code+'_'+req.rateKey] = cpRes;
+      setCancelPolicyData(cpItems);
+    }
+    else{
+      setCanPolData(cancelPolicyData[code+'_'+req.rateKey]);
+    }
+  }
+
+
+  const timeSlot = async (req, dtl) => {
+    setOptionDtl(req);
+    setTourDtl(dtl);
+    let info = tourOptData?.[dtl.code];
+
+    setRespTimeSlot(null);
+    let tourTimeSlotObj = {
+      "CustomerCode": qry.customerCode,
+      "SearchParameter": {
+        "DestinationCode": qry.destination[0].destinationCode,
+        "CountryCode": qry.destination[0].countryCode,
+        "GroupCode": req.groupCode,
+        "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+        "Currency": qry.currency,
+        "Adult": qry.adults?.toString(),
+        "TourCode": req.rateKey,
+        "TassProField": {
+          "CustomerCode": qry.customerCode,
+          "RegionId": qry.regionCode?.toString()
+        }
+      },
+      "SessionId": info?.generalInfo.sessionId
     }
 
     if (parseInt(qry.children) > 0) {
@@ -195,7 +310,7 @@ export default function TourResult(props) {
     }
 
     let responseTimeSlot = null;
-    if(info.supplierShortCode?.toLowerCase() === 'local'){
+    if(info?.generalInfo.supplierShortCode?.toLowerCase() === 'local'){
       responseTimeSlot = TourService.doLocalTimeSlots(tourTimeSlotObj, qry.correlationId);
     }
     else{
@@ -203,38 +318,73 @@ export default function TourResult(props) {
     }
     let resTimeSlot = await responseTimeSlot;
     if(resTimeSlot){
-      resTimeSlot.generalInfo.supplierShortCode = info.supplierShortCode
+      resTimeSlot.generalInfo.supplierShortCode = info?.generalInfo.supplierShortCode
       setRespTimeSlot(resTimeSlot);
     }
   }
 
   const [soldMsg, setSoldMsg] = useState("");
-  const avlbTour = async (e, req, info) => {
+
+  const timeSlotModalClose = useRef(null);
+  
+
+  const avlbTour = async (e, req, v) => {
     e.nativeEvent.target.disabled = true;
     e.nativeEvent.target.innerHTML = 'Processing...';
+    let info = tourOptData?.[v.code];
     let tourAvlbObj = {
       "customerCode": qry.customerCode,
       "destination": qry.destination,
-      "groupCode": req.groupCode,
-      "serviceDate": qry.chkIn,
+      "serviceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
       "currency": qry.currency,
       "adults": qry.adults,
       "children":qry.children,
       "ca": qry.ca,
-      "rateKey": req.rateKey,
       "regionCode": qry.regionCode,
+      "nationality": qry.nationality,
+      "customerConsultantCode": qry.customerConsultantCode,
+      "companyConsultantCode": qry.companyConsultantCode,
+      "branchCode": qry.branchCode,
+      "onlineBooking": qry.onlineBooking,
+      "correlationId": qry.correlationId,
+      "custCurrencyExchange": qry.custCurrencyExchange,
+      "type":v.type,
       "sessionId": info?.generalInfo.sessionId,
       "supplierShortCode": info?.generalInfo.supplierShortCode,
-      "nationality": qry.nationality,
       "tourName": info.tourName,
+      "tourCode": info.tourCode,
       "tourImg": info.tourImg,
-      "tourOption": req,
-      "correlationId": qry.correlationId
+      "classificationCode": req.localField.classificationCode,
+      "classificationName": req.localField.classificationName,
+      "periodCode": req.localField.periodCode,
+      "rateBasisCode": req.localField.rateBasisCode,
+      "rateBasisName": req.localField.rateBasisName,
+      "rateTypeCode": req.localField.rateTypeCode,
+      "rateTypeName": req.localField.rateTypeName,
+      "roomTypeCode": req.localField.roomTypeCode,
+      "roomTypeName": req.localField.roomTypeName,
+      "supplierCurrency": req.localField.supplierCurrency,
+      "supplierExchangeRate": req.localField.supplierExchangeRate,
+      "supplierCodeFK": req.localField.supplierCodeFK,
+      "markup": req.localField.markup,
+      "vatInput": req.localField.vatInput,
+      "vatOutput": req.localField.vatOutput,
+      "vatValue": req.localField.vatValue,
+      "tourOptionName": req.tourOptionName,
+      "tourTime": req.startTime,
+      "transferName": req.transferName,
+      "duration": req.tourOptionInfo?.duration,
+      "groupCode": req.groupCode,
+      "rateKey": req.rateKey,
+      "adultNet": req.totalAdultNet,
+      "childNet": req.totalChildNet,
+      "totalPaxPrice": req.totalPaxPrice,
+      "supplierGross": req.totalSupplierGross,
+      "supplierNet": req.totalSupplierNet,
+      "supplierTax": req.totalSupplierTax,
     }
-    
     let encJson = AES.encrypt(JSON.stringify(tourAvlbObj), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-
     const responseReprice = TourService.doAvailability(tourAvlbObj);
     const resReprice = await responseReprice;
     dispatch(doTourReprice(resReprice));
@@ -247,6 +397,82 @@ export default function TourResult(props) {
     else{
       e.nativeEvent.target.disabled = false;
       e.nativeEvent.target.innerHTML = ' Book Now ';
+      timeSlotModalClose.current?.click();
+      sessionStorage.setItem("qryTourTraveller", encData);
+      router.push('/pages/tour/tourTravellerBook');
+    }
+  }
+
+  const avlbTourWithTime = async (e, req) => {
+    e.nativeEvent.target.disabled = true;
+    e.nativeEvent.target.innerHTML = 'Processing...';
+    let info = tourOptData?.[tourDtl.code];
+    let tourAvlbObj = {
+      "customerCode": qry.customerCode,
+      "destination": qry.destination,
+      "serviceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
+      "currency": qry.currency,
+      "adults": qry.adults,
+      "children":qry.children,
+      "ca": qry.ca,
+      "regionCode": qry.regionCode,
+      "nationality": qry.nationality,
+      "customerConsultantCode": qry.customerConsultantCode,
+      "companyConsultantCode": qry.companyConsultantCode,
+      "branchCode": qry.branchCode,
+      "onlineBooking": qry.onlineBooking,
+      "correlationId": qry.correlationId,
+      "custCurrencyExchange": qry.custCurrencyExchange,
+      "type":tourDtl.type,
+      "sessionId": info?.generalInfo.sessionId,
+      "supplierShortCode": info?.generalInfo.supplierShortCode,
+      "tourName": info.tourName,
+      "tourCode": info.tourCode,
+      "tourImg": info.tourImg,
+      "classificationCode": optionDtl.localField.classificationCode,
+      "classificationName": optionDtl.localField.classificationName,
+      "periodCode": optionDtl.localField.periodCode,
+      "rateBasisCode": optionDtl.localField.rateBasisCode,
+      "rateBasisName": optionDtl.localField.rateBasisName,
+      "rateTypeCode": optionDtl.localField.rateTypeCode,
+      "rateTypeName": optionDtl.localField.rateTypeName,
+      "roomTypeCode": optionDtl.localField.roomTypeCode,
+      "roomTypeName": optionDtl.localField.roomTypeName,
+      "supplierCurrency": optionDtl.localField.supplierCurrency,
+      "supplierExchangeRate": optionDtl.localField.supplierExchangeRate,
+      "supplierCodeFK": optionDtl.localField.supplierCodeFK,
+      "markup": optionDtl.localField.markup,
+      "vatInput": optionDtl.localField.vatInput,
+      "vatOutput": optionDtl.localField.vatOutput,
+      "vatValue": optionDtl.localField.vatValue,
+      "tourOptionName": optionDtl.tourOptionName,
+      "tourTime": req.timing,
+      "transferName": optionDtl.transferName,
+      "duration": optionDtl.tourOptionInfo?.duration,
+      "groupCode": req.groupCode,
+      "rateKey": req.rateKey,
+      "adultNet": optionDtl.totalAdultNet,
+      "childNet": optionDtl.totalChildNet,
+      "totalPaxPrice": optionDtl.totalPaxPrice,
+      "supplierGross": optionDtl.totalSupplierGross,
+      "supplierNet": optionDtl.totalSupplierNet,
+      "supplierTax": optionDtl.totalSupplierTax,
+    }
+    let encJson = AES.encrypt(JSON.stringify(tourAvlbObj), 'ekey').toString();
+    let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
+    const responseReprice = TourService.doAvailability(tourAvlbObj);
+    const resReprice = await responseReprice;
+    dispatch(doTourReprice(resReprice));
+
+    if(!resReprice?.isBookable){
+      e.nativeEvent.target.disabled = true;
+      setSoldMsg(resReprice?.message)
+      soldOutBtn.current?.click();
+    }
+    else{
+      e.nativeEvent.target.disabled = false;
+      e.nativeEvent.target.innerHTML = ' Book Now ';
+      timeSlotModalClose.current?.click();
       sessionStorage.setItem("qryTourTraveller", encData);
       router.push('/pages/tour/tourTravellerBook');
     }
@@ -263,7 +489,6 @@ export default function TourResult(props) {
         "DestinationCode": qry.destination[0].destinationCode,
         "CountryCode": qry.destination[0].countryCode,
         "GroupCode": req.groupCode,
-        //"ServiceDate": qry.chkIn,
         "ServiceDate": format(new Date(qry.chkIn), 'yyyy-MM-dd'),
         "Currency": qry.currency,
         "Adult": qry.adults?.toString(),
@@ -338,13 +563,13 @@ export default function TourResult(props) {
           <div className="col-lg-8 d-none d-lg-block">
             <nav>
               <ul className="pagination pagination-sm justify-content-center m-0">
-                <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={currentPage <= 0} className="page-link border-0 text-dark rounded">First</button></li>
-                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage - 1)} disabled={currentPage <= 0} className="page-link border-0 text-dark rounded">Previous</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={currentPage <= 0} className="page-link text-dark">First</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage - 1)} disabled={currentPage <= 0} className="page-link text-dark">Previous</button></li>
                 {[...Array(pagesCount)].map((page, i) => 
-                  <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link border-0 rounded " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
+                  <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === currentPage ? 'active' : '')}>{i + 1}</button></li>
                 )}
-                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark rounded">Next</button></li>
-                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link border-0 text-dark rounded">Last</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(currentPage + 1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link text-dark">Next</button></li>
+                <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(currentPage) === Number(pagesCount-1)} className="page-link text-dark">Last</button></li>
               </ul>
             </nav>
           </div>
@@ -396,11 +621,11 @@ export default function TourResult(props) {
                 <div className='col-md-3'>
                   <div className="row gx-2 text-center h-100">
                     <div className="col-auto col-lg-12">
-                      <div className='mb-1'><span className='bg-success-subtle rounded fn10 px-2 py-1'>Cheapest with {v.supplierShortCode}</span></div>
+                      <div className='mb-1'><span className='text-warning bg-light rounded px-2 d-inline-block fw-semibold fn10 py-1'>Cheapest with {v.supplierShortCode}</span></div>
                       <div className="blue fw-semibold fs-5"><small className='fn14'>From</small> {qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
                     </div>
                     <div className="col-auto col-lg-12">
-                      <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => tourOption(v)}> &nbsp; Select &nbsp; </button>
+                      <button className="btn btn-warning togglePlus px-3 py-1" type="button" onClick={() => tourOption(v)}> &nbsp; Select &nbsp; </button>
                     </div>
                   </div>
                 </div>
@@ -436,14 +661,15 @@ export default function TourResult(props) {
                                   </div> */}
                                 </td>
                                 <td className="align-middle">{cat.transferName}</td>
-                                <td className="align-middle text-center"><button type="button" data-bs-toggle="modal" data-bs-target="#policyModal" onClick={()=> setPolicyDtl(cat)} className="btn fn13 fw-semibold btn-link p-0 text-warning">View <FontAwesomeIcon icon={faCaretRight} /></button> </td>
+                                {/* <td className="align-middle text-center"><button type="button" data-bs-toggle="modal" data-bs-target="#policyModal" onClick={()=> setPolicyDtl(cat)} className="btn fn13 fw-semibold btn-link p-0 text-warning">View <FontAwesomeIcon icon={faCaretRight} /></button> </td> */}
+                                <td className="align-middle text-center"><button type="button" data-bs-toggle="modal" data-bs-target="#policyModal" onClick={()=> cancelPolicy(cat, v.code)} className="btn fn13 fw-semibold btn-link p-0 text-warning">View <FontAwesomeIcon icon={faCaretRight} /></button> </td>
                                 <td className="align-middle text-success">{cat.status}</td>
                                 <td className="align-middle fs-6 bg-primary bg-opacity-10">{qry.currency} {Number(cat.totalPaxPrice).toFixed(2)}</td>
                                 {cat.isSlot ? 
-                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer" onClick={()=> timeSlot(cat, tourOptData?.[v.code]?.generalInfo)} data-bs-toggle="modal" data-bs-target="#timeSlotModal">&nbsp; Select &nbsp;</td>
+                                <td className="align-middle fs-6 bg-warning text-white text-center curpointer" onClick={()=> timeSlot(cat, v)} data-bs-toggle="modal" data-bs-target="#timeSlotModal">&nbsp; Select &nbsp;</td>
                                 :
                                 <td className="align-middle p-0 h-0">
-                                  <button className='btn btn-warning fs-6 p-0 w-100 h-100 rounded-0' onClick={(e)=> avlbTour(e, cat, tourOptData?.[v.code])}>Book Now</button>
+                                  <button className='btn btn-warning fs-6 p-0 w-100 h-100 rounded-0' onClick={(e)=> avlbTour(e, cat, v)}>Book Now</button>
                                 </td>
                                 }
                               </tr>
@@ -482,7 +708,8 @@ export default function TourResult(props) {
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title text-capitalize">{policyDtl?.tourOptionName?.toLowerCase()} ({policyDtl?.transferName?.toLowerCase()})</h5>
+              {/* <h5 className="modal-title text-capitalize">{policyDtl?.tourOptionName?.toLowerCase()} ({policyDtl?.transferName?.toLowerCase()})</h5> */}
+              <h5 className="modal-title">Cancellation Policy</h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
@@ -519,7 +746,63 @@ export default function TourResult(props) {
                 </table>
               </div> */}
 
-              {policyDtl?.transferTime &&
+              {canPolData?
+              <>
+              {canPolData.cancellationPolicies &&
+                <>
+                <div className='blue fs-6 text-capitalize mb-2 fw-semibold'>{policyDtl?.tourOptionName?.toLowerCase()} ({policyDtl?.transferName?.toLowerCase()})</div>
+                <div className="table-responsive">
+                  {canPolData.cancellationPolicies.map((v, i) => ( 
+                  <div key={i}>
+                    {v?.type ==='CAN' &&
+                    <>
+                    <table className="table table-bordered fn12 mb-1">
+                      <thead>
+                        <tr className="table-light">
+                          <th>From</th>
+                          <th>To</th>
+                          <th className="text-center">Percentage(%)</th>
+                          <th>Fixed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <>
+                        {v?.condition?.map((m, i) => (
+                        <tr key={i}>
+                          <td>{format(new Date(m.fromDate), 'dd MMM yyyy')} &nbsp;{m.fromTime}</td>
+                          <td>{format(new Date(m.toDate), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
+                          <td className="text-center">{m.percentage}</td>
+                          <td>{m.fixed && parseFloat(m.fixed)?.toFixed(2)}</td>
+                        </tr>
+                        ))}
+                        </>
+                      </tbody>
+                    </table>
+
+                    {v?.textCondition &&
+                      <div className="fn12"><strong>Supplier Information:</strong> {v?.textCondition}</div>
+                    }
+                    <div className="fn12 mt-3">Please note that the cancellation policy is based on date/time at local destination.</div>
+                    </>
+                    }
+                  </div>
+                  ))}
+                </div>
+                </>
+              }
+              </>
+              :
+              <div className='text-center blue my-3'>
+                <span className="fs-5 align-middle d-inline-block"><strong>Loading..</strong></span>&nbsp; 
+                <div className="dumwave align-middle">
+                  <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                  <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                  <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
+                </div>
+              </div>
+              }
+
+              {/* {policyDtl?.transferTime &&
                 <div>
                   <div className="fs-6 fw-semibold mb-2">Timings & Duration</div>
                   <table className="table table-sm table-borderless">
@@ -552,7 +835,7 @@ export default function TourResult(props) {
                 <div className="fs-6 fw-semibold mb-1">Child Policy</div>
                 <div className='mb-1' dangerouslySetInnerHTML={{ __html:policyDtl?.tourOptionInfo?.childPolicyDescription}}></div>
               </>
-              }
+              } */}
             </div> 
           </div>
         </div>
@@ -576,7 +859,7 @@ export default function TourResult(props) {
                 </> : null
                 }
               </div>
-              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" ref={timeSlotModalClose}></button>
             </div>
             <div className="modal-body">
               {respTimeSlot ?
@@ -600,7 +883,9 @@ export default function TourResult(props) {
                               </div> : null
                               }
                               {k.available !== 0 &&
-                              <div className='mt-3'><button className='btn btn-warning' onClick={(e)=> avlbTour(e, k, respTimeSlot)}> &nbsp; Book &nbsp; </button></div>
+                              // <div className='mt-3'><button className='btn btn-warning' onClick={(e)=> avlbTour(e, k, respTimeSlot)}> &nbsp; Book &nbsp; </button></div>
+                              <div className='mt-3'><button className='btn btn-warning' onClick={(e)=> avlbTourWithTime(e, k)}> &nbsp; Book &nbsp; </button></div>
+                              
                               // <Button className="fn12 mt-2" variant="warning" size="sm" onClick={()=> avlbTour(v)}>&nbsp;Book&nbsp;</Button>
                               }
                           </div>

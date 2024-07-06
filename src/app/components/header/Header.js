@@ -28,6 +28,7 @@ export default function Header() {
   const customersCreditInfo = useSelector((state) => state.commonResultReducer?.custCreditDtls);
   const appFeaturesInfo = useSelector((state) => state.commonResultReducer?.appFeaturesDtls);
   const reservationLink = useSelector((state) => state.reservationListReducer?.reserveQryObj);
+  const tempBookingLink = useSelector((state) => state.reservationListReducer?.tempQryObj);
   const bookingTypeCountInfo = useSelector((state) => state.reservationReducer?.bookTypeCount);
 
   useEffect(() => {
@@ -119,8 +120,6 @@ export default function Header() {
     }
   }
 
-  
-
   // const reservationBtn = () => {
   //   dispatch(doReserveListOnLoad(null));
   //   router.push('/pages/booking/b2bReservationTray');
@@ -171,17 +170,12 @@ export default function Header() {
   return (
     <>
     <header className={"headerMain " + (fixedClass ? 'fixedNav': 'absoluteNav')}>
+      
       <div className="cusnav navbar navbar-expand-lg navbar-light">
-        <div className="container-fluid">
-          <Link className="navbar-brand" href="/">
-            <Image className="mainlogo" src={`/images/logo${process.env.NEXT_PUBLIC_SHORTCODE}.png`} alt={process.env.NEXT_PUBLIC_SHORTCODE} width={235} height={65} priority />
-          </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainnavigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="mainNav navbar-collapse collapse" id="mainnavigation">
-            <div className="ms-auto mt-2">
-              <div className="text-end">
+        {process.env.NEXT_PUBLIC_SHORTCODE === "UDTN" &&
+          <div className="bg-light py-2">
+            <div className="container-fluid">
+              <div className="w-100 text-end">
                 <ul className="deviderList">
                   <li className="text-capitalize">
                     {customersCreditInfo &&
@@ -220,38 +214,114 @@ export default function Header() {
                     <>{userInfo?.user?.companyConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
                     }
 
-                     {userInfo?.user?.branchName?.toLowerCase()}
+                    {userInfo?.user?.branchName?.toLowerCase()}
                     </li>
                   <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
                 </ul>
               </div>
+            </div>
+          </div>
+        }
+        
+        <div className="container-fluid">
+        
+          <Link className="navbar-brand" href="/">
+            <Image className="mainlogo" src={`/images/logo${process.env.NEXT_PUBLIC_SHORTCODE}.png`} alt={process.env.NEXT_PUBLIC_SHORTCODE} width={235} height={65} priority />
+          </Link>
+          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainnavigation">
+            <span className="navbar-toggler-icon"></span>
+          </button>
+          <div className="mainNav navbar-collapse collapse" id="mainnavigation">
+            <div className="ms-auto mt-2">
+              {process.env.NEXT_PUBLIC_SHORTCODE !== "UDTN" &&
+                <div className="text-end">
+                  <ul className="deviderList">
+                    <li className="text-capitalize">
+                      {customersCreditInfo &&
+                        <>
+                        {customersCreditInfo?.modeOfPayment === "CA"?
+                        <span>Cash Customer &nbsp;|&nbsp; </span>
+                        :
+                        <>
+                        {userInfo?.user?.isSubUser ?
+                          <>
+                            {userInfo?.user?.consultantCreditDisplay ?
+                              <span>
+                                Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; 
+                                <span className="text-success"> Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
+                                <span className="text-danger"> Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  
+                              </span> : null
+                            }
+                          </>
+                          :
+                          <>
+                            <span>
+                              Cr. Limit:{parseFloat(customersCreditInfo?.creditLimit).toFixed(2)}({customersCreditInfo?.confirmationCurrency}) &nbsp;|&nbsp; 
+                              <span className="text-success"> Avl Cr:{parseFloat(customersCreditInfo?.creditAvailable).toFixed(2)}</span> &nbsp;|&nbsp; 
+                              <span className="text-danger"> Used Cr:{parseFloat(customersCreditInfo?.outstandingAmount+customersCreditInfo?.nonRefundableAmount).toFixed(2)}</span> &nbsp;|&nbsp;  
+                            </span>
+                          </>
+                        }
+                        </>
+                        }
+                        </>
+                      }
+
+                      {process.env.NEXT_PUBLIC_APPCODE === "1" ?
+                      <>{userInfo?.user?.customerConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
+                      :
+                      <>{userInfo?.user?.companyConsultantName?.replace(/_/g, " ")?.toLowerCase()}, </>
+                      }
+
+                      {userInfo?.user?.branchName?.toLowerCase()}
+                      </li>
+                    <li><span className="text-dark curpointer" onClick={signOutBtn}><FontAwesomeIcon icon={faPowerOff} /> Logout</span></li>
+                  </ul>
+                </div>
+              }
+              
+
               <ul className="navbar-nav justify-content-end">
                 <li className="nav-item"><Link className="nav-link" href="/">Search</Link></li>
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={cartBtn}>Cart</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>Bookings</button></li> */}
                 {/* <li className="nav-item"><button type="button" className="nav-link" onClick={reservationBtn}>My Bookings</button></li> */}
-                
                 {/* <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/reservationTray'}>POS</Link></li> */}
-
-                {process.env.NEXT_PUBLIC_APPCODE === "1" ?
-                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/b2bReservationTray' }>My Bookings</Link></li>
-                  :
-                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/'}>My Bookings</Link></li>
+                
+                {process.env.NEXT_PUBLIC_APPCODE !== "1" &&
+                  <li className="nav-item"><Link className="nav-link" href={tempBookingLink ? tempBookingLink : '/pages/booking/tempBookings'}>Cart</Link></li>
                 }
 
-               {userInfo?.user?.isSubUser ? 
-                null 
-                : 
-                <li className="nav-item">
-                  <button type="button" className="nav-link" onClick={b2bUserProfileBtn}>Profile</button>
-                  {/* <Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">More</Link>
+                {process.env.NEXT_PUBLIC_APPCODE === "1" ?
+                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/b2bReservationTray'}>My Bookings</Link></li>
+                  :
+                  <li className="nav-item"><Link className="nav-link" href={reservationLink ? reservationLink : '/pages/booking/reservationTray'}>My Bookings</Link></li>
+                }
+
+                {process.env.NEXT_PUBLIC_APPCODE !== "1" &&
+                  <li className="nav-item"><Link className="nav-link" href='/pages/dashboard'>Dashboard</Link></li>
+                }
+
+
+                {process.env.NEXT_PUBLIC_APPCODE === "1" ?
+                  <>
+                    {userInfo?.user?.isSubUser ? 
+                    null 
+                    : 
+                    <li className="nav-item">
+                      <button type="button" className="nav-link" onClick={b2bUserProfileBtn}>Profile</button>
+                    </li> 
+                    }
+                  </>
+                  : ''
+                }
+
+                {/* <Link className="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">More</Link>
                   <ul className="dropdown-menu dropdown-menu-end">
                     <li><button type="button" className="nav-link" onClick={b2bUserProfileBtn}>User Profile List</button></li>
                   </ul> */}
-                </li> 
-               }
-               <li className="nav-item dropdown">
+              <li className="nav-item dropdown">
                 <Link className="nav-link dropdown-toggle position-relative pe-0" href="#" data-bs-toggle="dropdown">
                   <FontAwesomeIcon icon={faBell} className='fs-5' />
                   <span className="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger p-1">{bookingTypeCountInfo?.[0]?.TotalBkgTypeCount}</span>
@@ -271,6 +341,7 @@ export default function Header() {
               </ul>
             </div>
           </div>
+         
         </div>
       </div>  
     </header>

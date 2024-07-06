@@ -1,0 +1,79 @@
+:root{
+    --bs-warning-rgb: 0, 168, 168;
+    --bs-link-color: #007ae4;
+    --bs-pagination-active-bg:#00A8A8;
+}
+body{background:#F2F4F7}
+.btn-warning{
+--bs-btn-color: #FFF;
+--bs-btn-bg: #00A8A8;
+--bs-btn-border-color: #00A8A8;
+--bs-btn-hover-color: #FFF;
+--bs-btn-hover-bg: #00A8A8;
+--bs-btn-hover-border-color: #00A8A8;
+--bs-btn-active-color: #FFF;
+--bs-btn-active-bg: #00A8A8;
+--bs-btn-active-border-color: #00A8A8;
+--bs-btn-disabled-color: #FFF;
+--bs-btn-disabled-bg: #00A8A8;
+--bs-btn-disabled-border-color: #00A8A8;
+}
+
+.btn-outline-warning{
+--bs-btn-color:#00A8A8; 
+--bs-btn-border-color:#00A8A8; 
+--bs-btn-hover-color: #FFF; 
+--bs-btn-hover-bg: #00A8A8; 
+--bs-btn-hover-border-color: #00A8A8; 
+--bs-btn-active-color: #FFF; 
+--bs-btn-active-bg: #00A8A8;
+--bs-btn-active-border-color: #00A8A8; 
+--bs-btn-disabled-border-color: #00A8A8;}
+
+.btn-warning:hover, .btn-outline-warning:hover{box-shadow: 0px 2px 12px rgba(0, 183, 172, 0.80)}
+.nav-pills {--bs-nav-pills-link-active-bg: #00A8A8;}
+.pagination{--bs-pagination-active-bg:#00A8A8;}
+
+.blue{color:#005198;}
+.cusnav{display: block; position:relative;box-shadow:0px 4px 6px rgba(0, 0, 0, 0.05);}
+.defaultPage .cusnav{background:#FFF;}
+.searchPanel{padding:80px 0 70px;}
+.serviceNav{justify-content:center;}
+.serviceNav ul{justify-content:center; background:rgba(255, 255, 255, 0.20); box-shadow:20px 10px 50px rgba(0, 0, 0, 0.15); border-radius:70px; border:3px #FFF solid; backdrop-filter:blur(30px); padding:5px 15px;}
+.serviceNav ul li a:before{display:none;}
+.serviceNav ul li a{color:#FFF;}
+.serviceNav ul li a img{display:block;}
+.serviceNav ul li.active a, .serviceNav ul li:hover a{background-color:#00A8A8;}
+.mainSearchColumn{background:#FFF; padding:10px;border-radius:8px;box-shadow:0 2px 8px rgb(0 0 0 / 20%); padding:0.5rem;}
+.searchColumn{background:transparent; border-radius:0px;box-shadow:none;}
+.searchColumn > .row.gx-3{--bs-gutter-x:0.6rem;}
+.tFourInput.bor-s, .tFourInput.bor-b{border:none;}
+.tInputBox{border:2px solid #F2F4F7; border-radius:6px; padding:5px 8px;}
+.tFourInput label{color:#858585;}
+.tFourInput label svg.fn12{color:#00A8A8; font-size: 14px;}
+.tFourInput .tFourMulti__control{min-height:38px;}
+.secondSearch{margin-top:0px;}
+.searchBtn{border-radius:22px; padding:10px 50px !important;}
+.react-datepicker__day--in-selecting-range, .react-datepicker__day--in-range, .react-datepicker__month-text--selected, .react-datepicker__month-text--in-selecting-range, .react-datepicker__month-text--in-range, .react-datepicker__quarter-text--selected, .react-datepicker__quarter-text--in-selecting-range, .react-datepicker__quarter-text--in-range, .react-datepicker__year-text--selected, .react-datepicker__year-text--in-selecting-range, .react-datepicker__year-text--in-range{background-color:#CFFFFF !important;}
+.react-datepicker__day--selected, .react-datepicker__day--range-start, .react-datepicker__day--selecting-range-start, .react-datepicker__day--range-end, .react-datepicker__day--selecting-range-end{background-color:#00A8A8 !important;}
+
+.middle{margin-top:0px;}
+.example-track.example-track-1{background:#00A8A8;}
+.leftFilter{background:#FFF;padding:10px;border-radius:6px;}
+.rightResult{border-left:0px;}
+[data-column-id="priceCell"].rdt_TableCell{background-color:transparent;}
+.htlBookBtn{height:auto; border-radius:6px;}
+.modifyBtn{background-color:#00A8A8;color:#FFF; padding:6px 12px; border-radius:16px; font-weight:600;}
+.modifyBtn:hover, .modifyBtn:focus, .modifyBtn:active{background-color:#00A8A8 !important;color:#FFF !important; box-shadow: 0px 2px 12px rgba(0, 183, 172, 0.80)}
+.modifyBtn .blue{color:#FFF !important;}
+.modifycol{ background-color:#FFF; color:#000; padding:7px 0px;}
+.modifycol label{font-weight:600;}
+.modifycol .form-control, .modifycol .tFourMulti__control, .modifycol .form-select{border: 2px solid #AAAAAA !important;}
+.crossBtn .text-white{color:#000 !important;}
+.searchModifyBtn{background-color:#00A8A8;color:#FFF; padding:10px 40px !important;}
+.searchModifyBtn:hover, .searchModifyBtn:focus, .searchModifyBtn:active{background-color:#00A8A8 !important;color:#FFF !important; box-shadow: 0px 2px 12px rgba(0, 183, 172, 0.80)}
+
+.udtnPattern{position:relative;}
+.udtnPattern:before{content:''; position:absolute; left:0px; top:0px; bottom:0px; width:80px; background-image:url(/images/udtnPatternLeft.png); background-position: left top; background-repeat: repeat-y; mix-blend-mode:difference; opacity:0.035; z-index: 1;}
+.udtnPattern:after{content:''; position:absolute; right:0px; top:0px; bottom:0px; width:80px; background-image:url(/images/udtnPatternRight.png); background-position: right top; background-repeat: repeat-y; mix-blend-mode:difference; opacity:0.035; z-index: 1;}
+.filterContent{padding-top:1rem}

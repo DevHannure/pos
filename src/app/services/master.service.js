@@ -217,7 +217,15 @@ const MasterService = {
     } catch (error) {console.log("errorRecentDelete", error)}
   },
 
-  
+  doGetCustomerDetails: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/customer/GetCustomerDetails?customerCode=${reqObj}`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
  
   
 

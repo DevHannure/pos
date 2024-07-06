@@ -1,9 +1,8 @@
 "use client"
 import React, {useEffect, useRef, useState} from 'react';
-import Image from 'next/image';
 import MainLayout from '@/app/layouts/mainLayout';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSort, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSort, faSearch, faEye } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
@@ -13,10 +12,8 @@ import { enc } from 'crypto-js';
 import { useSelector, useDispatch } from "react-redux";
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import MasterService from '@/app/services/master.service';
-import { doCartReserveListOnLoad, doGetCustomersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
+import { doCartReserveListOnLoad, doTempListQry, doGetCustomersList, doGetUsersList } from '@/app/store/reservationTrayStore/reservationTray';
 import {format} from 'date-fns';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 export default function TempBookings() {
   const _ = require("lodash");
@@ -25,10 +22,10 @@ export default function TempBookings() {
   let decData = search ? enc.Base64.parse(search).toString(enc.Utf8) : null;
   let bytes = decData ? AES.decrypt(decData, 'ekey').toString(enc.Utf8): null;
   const qry = bytes ? JSON.parse(bytes) : null;
-
   const router = useRouter();
   const refDiv = useRef(null);
   const dispatch = useDispatch();
+
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
   const resListRes = useSelector((state) => state.reservationListReducer?.cartReserveListObj);
   const allCustomersList = useSelector((state) => state.reservationListReducer?.allCustomersObj);
@@ -97,14 +94,13 @@ export default function TempBookings() {
   }, [allUsersList]);
 
   const [bookingNo, setBookingNo] = useState(qry ? qry.BookingNo : "");
-  
+
   const [takeNumberObj, setTakeNumberObj] = useState(false);
-  const [pageSize, setPageSize] = useState(qry ? qry.Take : "10");
   const [currentPageObj, setCurrentPageObj] = useState(false);
   const [currentPage, setCurrentPage] = useState(qry ? qry.Skip : "0");
-  const [activePage, setActivePage] = useState(qry ? qry.ActivePage : 0);
-  
+  const [pageSize, setPageSize] = useState(qry ? qry.Take : "10");
   const [pagesCount, setPagesCount] = useState(0);
+  const [activePage, setActivePage] = useState(qry ? qry.ActivePage : 0);
 
   useEffect(() => {
     if(customerCode){
@@ -124,7 +120,6 @@ export default function TempBookings() {
     }
   }, [pageSize]);
 
-  
   const changePageSize = (value) => {
     setTakeNumberObj(true);
     setPageSize(value);
@@ -162,7 +157,7 @@ export default function TempBookings() {
       "DateType": dateType,
       "DateFrom": dateFrom ? format(dateFrom, 'yyyy-MM-dd') : "",
       "DateTo": dateTo? format(dateTo, 'yyyy-MM-dd') : "",
-      "CustomerCode": customerCode,
+      "CustomerCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.userCode : customerCode,
       "CreatedBy": "",
       "BookingName": "",
       "BookingNo": bookingNo
@@ -170,6 +165,7 @@ export default function TempBookings() {
     let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
     dispatch(doCartReserveListOnLoad(null));
+    dispatch(doTempListQry(`/pages/booking/tempBookings?qry=${encData}`));
     router.push(`/pages/booking/tempBookings?qry=${encData}`);
   }
 
@@ -210,7 +206,7 @@ export default function TempBookings() {
     setCurrentPage("0");
   }
 
-  const viewBooking = (id) => {
+  const viewDetails = (id) => {
     let bookItnery = {
       "bcode": id,
       "btype": "O",
@@ -219,7 +215,7 @@ export default function TempBookings() {
     }
     let encJson = AES.encrypt(JSON.stringify(bookItnery), 'ekey').toString();
     let encData = enc.Base64.stringify(enc.Utf8.parse(encJson));
-    router.push(`/pages/booking/bookingItinerary?qry=${encData}`);
+    router.push(`/pages/booking/bookingDetails?qry=${encData}`);
   }
 
   return (
@@ -316,9 +312,10 @@ export default function TempBookings() {
                           <div className='divCell'>{e.status}</div>
                           <div className='divCell'>{Number(e.totalPrice).toFixed(2)}</div>
                           <div className='divCell'>{e.customerCurrency} {Number(e.totalCustomerPrice).toFixed(2)}</div>
-                          <div className='divCell'>
+                          <div className='divCell'><button onClick={()=> viewDetails(e.bookingNo)} type="button" className='sqBtn' title="Details"><FontAwesomeIcon icon={faEye} className='blue' /></button></div>
+                          {/* <div className='divCell'>
                             <button onClick={()=> viewBooking(e.bookingNo)} type="button" className='sqBtn' title="View Reservation" data-bs-toggle="tooltip"><Image src='/images/icon1.png' alt='icon' width={14} height={14} /></button>
-                          </div>
+                          </div> */}
                         </div>
                         
                         </React.Fragment>
@@ -339,16 +336,25 @@ export default function TempBookings() {
                     </div>
                     <div>
                       <nav>
-                      <ul className="pagination pagination-sm justify-content-center m-0">
-                        <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
-                        <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
-                        {[...Array(pagesCount)].map((page, i) => 
-                        <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
-                        )}
-
-                        <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
-                        <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
-                      </ul>
+                        <ul className="pagination pagination-sm justify-content-center m-0">
+                          <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
+                          {activePage !== 0 &&
+                            <li className="page-item"><button type="button" onClick={() => handleClick(activePage - 1)} className="page-link">{activePage}</button></li>
+                          }
+                          <li className="page-item"><button type="button" onClick={() => handleClick(activePage)} className={"page-link " + (activePage === activePage ? 'active' : '')}>{activePage+1}</button></li>
+                          {Number(activePage) === Number(pagesCount-1) ?
+                          <></>
+                          :
+                          <>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 1)} className="page-link">{activePage + 2}</button></li>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 2)} className="page-link">{activePage + 3}</button></li>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(activePage + 3)} className="page-link">{activePage + 4}</button></li>
+                          </>
+                          }
+                          <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
+                        </ul>
                       </nav>
                     </div>
                   </div>

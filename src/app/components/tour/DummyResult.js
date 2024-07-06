@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
 
 export default function DummyHotelResult(props) {
-  const qry = props.TurReq
+  const qry = props.ModifyReq
   const [filterCollapse, setFilterCollapse] = useState(true);
   useEffect(() => {
     let w = window.innerWidth;
@@ -21,7 +21,7 @@ export default function DummyHotelResult(props) {
     <>
     <div className="d-lg-table w-100">
 
-      <div className="d-lg-table-cell align-top mainContent">
+      <div className="d-lg-table-cell align-top filterContent">
         <div className="leftFilter fn13">
           <div className={`position-relative collapse ${filterCollapse && 'show'}`}>
             

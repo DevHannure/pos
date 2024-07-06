@@ -5,7 +5,6 @@ import ModifySearch from '@/app/components/hotel/ModifySearch'
 import HotelFilter from '@/app/components/hotel/HotelFilter';
 import HotelResult from '@/app/components/hotel/HotelResult';
 import DummyHotelResult from '@/app/components/hotel/DummyResult';
-import { useSearchParams  } from 'next/navigation';
 import { useDispatch, useSelector } from "react-redux";
 import HotelService from '@/app/services/hotel.service';
 import { doHotelSearchOnLoad } from '@/app/store/hotelStore/hotel';
@@ -23,11 +22,9 @@ export default function HotelListing() {
   const [qry, setQry] = useState(null);
   
   useEffect(() => {
-    //if(!qry){
-      let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
-      let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
-      setQry(JSON.parse(bytes))
-    //}
+    let decData = enc.Base64.parse(searchparams).toString(enc.Utf8);
+    let bytes = AES.decrypt(decData, 'ekey').toString(enc.Utf8);
+    setQry(JSON.parse(bytes))
   }, [searchparams]);
 
   const { status } = useSession();
@@ -35,7 +32,6 @@ export default function HotelListing() {
   
   const getHtlRes = useSelector((state) => state.hotelResultReducer?.htlResObj);
   
-
   const [countDown, setCountDown] = useState(0);
   const [runTimer, setRunTimer] = useState(false);
   const [counter, setCounter] = useState(0);
@@ -261,17 +257,17 @@ export default function HotelListing() {
     <MainLayout>
       {qry ?
       <div className="middle">
-        <ModifySearch Type={'result'} HtlReq={qry} filterOpen={(val) => chooseFilter(val)} />
+        <ModifySearch Type={'result'} ModifyReq={qry} filterOpen={(val) => chooseFilter(val)} />
         <div className="container-fluid">
           <div className='text-end'>Time: {counter}</div>
           {getHtlRes ?
           <div className="d-lg-table w-100">
-            <HotelFilter HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
-            <HotelResult HtlReq={qry} />
+            <HotelFilter ModifyReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+            <HotelResult ModifyReq={qry} />
           </div>
           :
           <>
-          <DummyHotelResult HtlReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+          <DummyHotelResult ModifyReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           {status ==='authenticated' &&
             <div className="mainloader1">
               <div className="loadingImg text-center rounded m-2">

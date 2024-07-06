@@ -15,35 +15,27 @@ export default async function AgentRegister() {
   return (
     <LoginLayout>
       <header>
-        <div className="cusnav navbar navbar-expand-lg navbar-light">
+        <div className="bg-white shadow py-2">
           <div className="container">
-            <Link className="navbar-brand" href="/">
-              <Image className="mainlogo"
-                src={`/images/logo-login${process.env.NEXT_PUBLIC_SHORTCODE}.png`}
-                alt={process.env.NEXT_PUBLIC_SHORTCODE}
-                width={216}
-                height={60}
-                priority
-              />
-            </Link>
-            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainnavigation">
-              <span className="navbar-toggler-icon"></span>
-            </button>
-            <div className="mainNav navbar-collapse collapse" id="mainnavigation">
+            <div className="d-flex align-items-center">
+              <Link href="/">
+                <Image className="mainlogo"
+                  src={`/images/logo-login${process.env.NEXT_PUBLIC_SHORTCODE}.png`}
+                  alt={process.env.NEXT_PUBLIC_SHORTCODE}
+                  width={216}
+                  height={60}
+                  priority
+                />
+              </Link>
               <div className="ms-auto">
-                <ul className="navbar-nav justify-content-end">
-                  <li className="nav-item"><Link className="nav-link fs-6" href="/login">&nbsp; Home &nbsp;</Link></li>
-                  <li className="nav-item"><a className="nav-link fs-6" href="https://aoryx.ae/about-arabian-oryx-travel-tourism-llc-dubai/" target="_blank">&nbsp; About us &nbsp;</a></li>
-                  <li className="nav-item"><a className="nav-link fs-6" href="https://aoryx.ae/contact-arabian-oryx-travel-and-tourism-dubai-uae/" target="_blank">&nbsp; Contact us &nbsp;</a></li>
-                  <li className="nav-item"><Link className="nav-link fs-6" href="/login">&nbsp; Sign in &nbsp;</Link></li>
-                </ul>
+                <Link className="nav-link fs-6" href="/login">&nbsp; &#8592; Back to Login &nbsp;</Link>
               </div>
             </div>
           </div>
         </div>  
       </header>
       <div className="loginBanner">
-        <Image src='/images/loginAORYX.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} />
+        <Image src={`/images/login${process.env.NEXT_PUBLIC_SHORTCODE}.jpg`} alt={process.env.NEXT_PUBLIC_SHORTCODE} fill style={{objectFit:'cover', objectPosition:'top'}} />
         <div className="mainLoginForm py-5">
           <div className="container">
             <div className="row">

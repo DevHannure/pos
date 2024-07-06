@@ -9,7 +9,7 @@ import {useDispatch, useSelector } from "react-redux";
 import { doFilterSort } from '@/app/store/tourStore/tour';
 
 export default function TourFilter(props) {
-  const qry = props.TurReq
+  const qry = props.ModifyReq
   const dispatch = useDispatch();
   const [filterCollapse, setFilterCollapse] = useState(true);
 
@@ -129,7 +129,7 @@ export default function TourFilter(props) {
 
 
   return (
-    <div className="d-lg-table-cell align-top mainContent">
+    <div className="d-lg-table-cell align-top filterContent">
       <div className="leftFilter fn13">
         <div className={`position-relative collapse ${filterCollapse && 'show'}`}>
           <div className="accordion">

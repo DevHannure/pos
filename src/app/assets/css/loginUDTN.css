@@ -1,0 +1,23 @@
+.cusnav{position: relative;}
+.loginBanner{position:relative;}
+.mainLoginForm{position:relative;padding:100px 0px;}
+.udtnWhiteBg{padding:15px;background:rgba(255, 255, 255, 0.20); box-shadow:20px 10px 50px rgba(0, 0, 0, 0.15); border-radius:20px; backdrop-filter:blur(30px)}
+.loginForm{background:rgba(255,255,255,1); padding:30px; border-radius:10px; box-shadow:0 2px 8px rgb(0 0 0 / 20%);}
+.topCol {border-right:2px dashed #ebe7e7; padding:10px 10px 0px; min-height:120px; margin:15px 0px;}
+.midColumn {height:220px; border-radius:12px; margin:15px 0px; overflow:hidden; position:relative; text-align:center; color:#FFF; font-size:18px;}
+
+.secondCol{background:#06377a; overflow:inherit; padding:40px 20px 0px;}
+.secondCol:before {display:inline-block; width:0; height:0; vertical-align:middle; content:""; border-top:16px solid transparent; border-right:16px solid #06377a; border-bottom:16px solid transparent; top:45%; left:-16px; position:absolute;}
+
+.fourCol{background:#580556; overflow:inherit; padding:40px 20px 0px;}
+.fourCol:before {display:inline-block; width:0; height:0; vertical-align:middle; content:""; border-top:16px solid transparent; border-left:16px solid #580556; border-bottom:16px solid transparent; top:45%; right:-16px; position:absolute;}
+
+.sixCol{background:#ebb405; overflow:inherit; padding:40px 20px 0px;}
+.sixCol:before {display:inline-block; width:0; height:0; vertical-align:middle; content:""; border-left:16px solid transparent; border-right:16px solid transparent; border-bottom:16px solid #ebb405;  top:-16px; left:45%; position:absolute;}
+.udtnMidImg{position:absolute; left:15px; right:15px; top:15px; bottom:15px; background:url(/images/loginUDTN1.jpg) center center /cover; border:6px solid #283B7F; border-radius:20px;}
+
+.footerBot{margin-top:0px !important;}
+@media only screen and (min-width: 240px) and (max-width:960px) {
+.topCol{border-right:none;border-bottom:2px dashed #ebe7e7;}
+.secondCol:before,.fourCol:before,.sixCol:before{display:none;}
+}

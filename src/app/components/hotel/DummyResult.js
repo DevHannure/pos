@@ -20,7 +20,7 @@ export default function DummyHotelResult(props) {
     <>
     <div className="d-lg-table w-100">
 
-      <div className="d-lg-table-cell align-top mainContent">
+      <div className="d-lg-table-cell align-top filterContent">
         <div className="leftFilter fn13">
           <div className={`position-relative collapse ${filterCollapse && 'show'}`}>
             

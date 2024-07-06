@@ -24,7 +24,10 @@ export default function DefaultCustomer(props) {
       userCustomersList?.map(user =>{
         itemCustomer.push({label: user.customerName?.toLowerCase(), value: user.customerCode, data:user})
       });
-      setCustomerNameOptions(itemCustomer)
+      if(itemCustomer){
+        itemCustomer.sort((a, b) => a.label.localeCompare(b.label))
+        setCustomerNameOptions(itemCustomer)
+      }
     }
   }, [userCustomersList]);
 
@@ -39,15 +42,15 @@ export default function DefaultCustomer(props) {
       }
 
       if(process.env.NEXT_PUBLIC_APPCODE !== "1"){
-        if(props?.query?.HtlReq){
-          setCusCurrency(props.query.HtlReq.currency);
-          setCustomerCode(props.query.HtlReq.customerCode);
-          let customerObj = customerNameOptions?.filter(data => data.value == props.query.HtlReq.customerCode);
+        if(props?.query?.ModifyReq){
+          setCusCurrency(props.query.ModifyReq.currency);
+          setCustomerCode(props.query.ModifyReq.customerCode);
+          let customerObj = customerNameOptions?.filter(data => data.value == props.query.ModifyReq.customerCode);
           if(customerObj){
             setCustomerCodeOption(customerObj[0]);
           }
           if(!customersCreditInfo){
-            customersCreditDetailsBtn(props.query.HtlReq.customerCode)
+            customersCreditDetailsBtn(props.query.ModifyReq.customerCode)
           }
         }
         if(!userCustomersList) {
@@ -71,14 +74,6 @@ export default function DefaultCustomer(props) {
     setCustomerCodeOption(e);
     setCusCurrency(e.data.currencyCode);
     setCustomerCode(e.data.customerCode);
-    // let userData = {
-    //   "currencyCode": e.data.currencyCode,
-    //   "customerCode": e.data.customerCode,
-    //   "customerName": e.data.customerName,
-    //   "modeOfPayment": e.data.modeOfPayment
-    // }
-    //sessionStorage.setItem("userData",  JSON.stringify({userData}) );
-    sessionStorage.setItem("userData",  JSON.stringify(e) );
     customersCreditDetailsBtn(e.data.customerCode)
   }
 
@@ -97,7 +92,7 @@ export default function DefaultCustomer(props) {
     <>
     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
      <div className="col-lg-3 tFourInput bor-b">
-        <div className="mb-3">
+        <div className="mb-3 tInputBox">
           <label>Customer</label>
           <Select
             id="customerName"
@@ -110,9 +105,8 @@ export default function DefaultCustomer(props) {
       </div>
     }
 
-
       <div className="col-lg-3 tFourInput bor-b bor-s bor-e">
-        <div className="mb-3">
+        <div className="mb-3 tInputBox">
           <label>Currency</label>
           <select className="form-select" value={cusCurrency} onChange={event => setCusCurrency(event.target.value)}>
             <option value={cusCurrency}>{cusCurrency}</option>

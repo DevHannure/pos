@@ -1,7 +1,7 @@
 "use client"
 import React, {useEffect, useState, useRef } from 'react';
 import MainLayout from '@/app/layouts/mainLayout';
-import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerary/HotelBookingItinerary';
+import HotelBookingItinerary from '@/app/components/booking/itinerary/HotelBookingItinerary';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faEnvelope, faPrint, faStar, faArrowLeftLong} from "@fortawesome/free-solid-svg-icons";
 import {faShareFromSquare, faTrashCan} from "@fortawesome/free-regular-svg-icons";

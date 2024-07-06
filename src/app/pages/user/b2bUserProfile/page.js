@@ -70,7 +70,7 @@ export default function B2BUserProfile() {
 
   useEffect(()=>{
     if(resListRes?.length){
-      setPagesCount(Math.ceil(resListRes.length / Number(pageSize)))
+      setPagesCount(Math.ceil(resListRes[0]?.totalcount / Number(pageSize)))
     }
   },[resListRes]);
 
@@ -572,7 +572,7 @@ export default function B2BUserProfile() {
                     <table className='table fn14 table-bordered'>
                       <thead>
                         <tr className="table-light">
-                          <th>S.No</th>
+                          {/* <th>S.No</th> */}
                           <th>CONSULTANT NAME</th>
                           <th>MOBILE</th>
                           <th>TELEPHONE</th>
@@ -585,7 +585,7 @@ export default function B2BUserProfile() {
                       <tbody>
                         {resListRes?.map((v, i) => (
                           <tr key={i}>
-                            <td>{i+1}</td>
+                            {/* <td>{activePage}{i+1}</td> */}
                             <td>{v.ConsultantName?.replace(/_/g, " ")}</td>
                             <td>{v.Mobile}</td>
                             <td>{v.Tel}</td>
@@ -610,18 +610,33 @@ export default function B2BUserProfile() {
                       </tbody>
                     </table>
                   </div>
-                  <nav className='my-2'>
-                    <ul className="pagination pagination-sm justify-content-end m-0">
-                      <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
-                      <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
-                      {[...Array(pagesCount)].map((page, i) => 
-                      <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
-                      )}
+                  
+                  <div className='p-2 d-flex justify-content-between'>
+                    <div>
+                      <select className="form-select form-select-sm" value={pageSize} onChange={(e)=> changePageSize(e.target.value)}>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="75">75</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                    <div>
+                      <nav>
+                        <ul className="pagination pagination-sm justify-content-end m-0">
+                          <li className="page-item"><button type="button" onClick={() => handleClick(0)} disabled={Number(activePage) <= 0} className="page-link">First</button></li>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) - 1)} disabled={Number(activePage) <= 0} className="page-link">Previous</button></li>
+                          {[...Array(pagesCount)].map((page, i) => 
+                          <li key={i} className="page-item"><button type="button" onClick={() => handleClick(i)} className={"page-link " + (i === activePage ? 'active' : '')}>{i + 1}</button></li>
+                          )}
 
-                      <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
-                      <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
-                    </ul>
-                  </nav>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(Number(activePage) + 1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Next</button></li>
+                          <li className="page-item"><button type="button" onClick={() => handleClick(pagesCount-1)} disabled={Number(activePage) === Number(pagesCount-1)} className="page-link">Last</button></li>
+                        </ul>
+                      </nav>
+                    </div>
+                  </div>
+                 
                 </>
                 :
                 <div className='text-danger fs-5 p-2 text-center my-3'>No Data Available</div>

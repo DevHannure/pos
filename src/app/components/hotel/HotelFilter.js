@@ -20,7 +20,7 @@ import { doFilterSort } from '@/app/store/hotelStore/hotel';
 // }
 
 export default function HotelFilter(props) {
-  const qry = props.HtlReq
+  const qry = props.ModifyReq
   const dispatch = useDispatch();
   const [filterCollapse, setFilterCollapse] = useState(true);
 
@@ -140,7 +140,7 @@ export default function HotelFilter(props) {
   }
 
   return (
-    <div className="d-lg-table-cell align-top mainContent">
+    <div className="d-lg-table-cell align-top filterContent">
       <div className="leftFilter fn13">
         <div className={`position-relative collapse ${filterCollapse && 'show'}`}>
           
@@ -366,7 +366,7 @@ export default function HotelFilter(props) {
                   <div className="cusScroll leftHeightPanel">
                     {getOrgHtlResult?.searchAnalytics?.searchAnalytics?.map((v,i) => (
                       <div key={i} className="form-check">
-                        <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value={v.supplierName?.toLowerCase()} onChange={e => supplierChange(e)} checked={supplierFil.includes(v.supplierName?.toLowerCase())} /> {v.supplierName} <span className="float-end text-black-50 fn12">({getOrgHtlResult?.hotels?.b2BHotel?.filter(element => element.supplierName?.toLowerCase() === v.supplierName?.toLowerCase())?.length}/{v.propertyCount})</span></label>
+                        <label className="mb-0 w-100"><input className="form-check-input" type="checkbox" value={v.supplierName?.toLowerCase()} onChange={e => supplierChange(e)} checked={supplierFil.includes(v.supplierName?.toLowerCase())} /> {process.env.NEXT_PUBLIC_SHORTCODE === "AORYX" ? <>{v.supplierName?.toLowerCase() === 'local' ? 'ArabianOryx' : v.supplierName }</> : v.supplierName} <span className="float-end text-black-50 fn12">({getOrgHtlResult?.hotels?.b2BHotel?.filter(element => element.supplierName?.toLowerCase() === v.supplierName?.toLowerCase())?.length}/{v.propertyCount})</span></label>
                       </div>
                     ))
                     }

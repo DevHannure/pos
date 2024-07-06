@@ -15,8 +15,6 @@ import { useSession } from "next-auth/react";
 import {format} from 'date-fns';
 import Image from 'next/image';
 
-function getUID() {return Date.now().toString(36);}
-
 export default function TourListing() {
   const searchparams = typeof window !== 'undefined' ? sessionStorage.getItem('qryTourList') : null;
   const [qry, setQry] = useState(null);
@@ -147,17 +145,17 @@ export default function TourListing() {
     <MainLayout>
       {qry ?
       <div className="middle">
-        <ModifySearch Type={'result'} TurReq={qry} filterOpen={(val) => chooseFilter(val)} />
+        <ModifySearch Type={'result'} ModifyReq={qry} filterOpen={(val) => chooseFilter(val)} />
         <div className="container-fluid">
           <div className='text-end'>Time: {counter}</div>
           {getTourRes ?
           <div className="d-lg-table w-100">
-            <TourFilter TurReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
-            <TourResult TurReq={qry} />
+            <TourFilter ModifyReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+            <TourResult ModifyReq={qry} />
           </div>
           :
           <>
-          <DummyTourResult TurReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
+          <DummyTourResult ModifyReq={qry} filterChoose={filterChoose} filterClose={(val) => chooseFilter(val)} />
           {status ==='authenticated' &&
             <div className="mainloader1">
               <div className="loadingImg text-center rounded m-2">

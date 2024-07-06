@@ -1,5 +1,5 @@
 "use client"
-import React, {useState, useRef } from 'react';
+import React, {useEffect, useState, useRef } from 'react';
 import { useSession } from "next-auth/react";
 import { useSelector, useDispatch } from "react-redux";
 import ReservationService from '@/app/services/reservation.service';
@@ -17,6 +17,7 @@ import {toast} from 'react-toastify';
 function getUID() {return Date.now().toString(36);}
 
 export default function Voucher(prop) {
+  
   const { data, status } = useSession();
 
   const dispatch = useDispatch();
@@ -27,9 +28,31 @@ export default function Voucher(prop) {
 
   const [agentRefText, setAgentRefText] = useState('');
   const [creditLimitError, setCreditLimitError] = useState('');
+  const [paymentMode, setPaymentMode] = useState('');
+
+  useEffect(() => {
+    if(prop){
+      if(process.env.NEXT_PUBLIC_APPCODE !== "1"){
+        if(!paymentMode){
+          getCustomersDetailsBtn();
+        }
+      }
+      else{
+        if(!paymentMode){
+          setPaymentMode(userInfo?.user.paymentMode)
+        }
+      }
+    }
+  }, [prop]);
+
+  const getCustomersDetailsBtn = async() => {
+    const responseCustomerDtl = MasterService.doGetCustomerDetails(prop?.dtl?.customerCode, userInfo?.correlationId);
+    const resCustomerDtl = await responseCustomerDtl;
+    setPaymentMode(resCustomerDtl?.modeOfPayment);
+  };
 
   const voucherBtn = () =>{
-    if(['AORYX','PLT'].includes(process.env.NEXT_PUBLIC_SHORTCODE)){
+    if(['PLT'].includes(process.env.NEXT_PUBLIC_SHORTCODE)){
       voucherModalOpen.current?.click();
     }
     else{
@@ -47,11 +70,14 @@ export default function Voucher(prop) {
     e.nativeEvent.target.disabled = true;
     e.nativeEvent.target.innerHTML = 'Processing...';
     let customersCreditDetailsObj={
-      "CustomerCode": userInfo?.user?.userCode
+      // "CustomerCode": userInfo?.user?.userCode
+      "CustomerCode": prop?.dtl?.customerCode
     }
     const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, prop?.dtl?.correlationId);
     const resCustCreditDtls = await responseCustCreditDtls;
-    dispatch(doCustCreditDtls(resCustCreditDtls));
+    if(process.env.NEXT_PUBLIC_APPCODE === "1"){
+      dispatch(doCustCreditDtls(resCustCreditDtls));
+    }
     if(resCustCreditDtls?.isCreditLimitExceeded){
       setCreditLimitError("Your Credit Limit is Low.");
       e.nativeEvent.target.disabled = true;
@@ -67,6 +93,7 @@ export default function Voucher(prop) {
       }
       const responseUpdateBooking = ReservationService.doUpdateBookingReference(updateBookingObj, prop?.dtl?.correlationId);
       const resUpdateBooking = await responseUpdateBooking;
+
       if(resUpdateBooking==="Success"){
         toast.success("Successfully!",{theme: "colored"});
         voucherModalClose.current?.click();
@@ -92,9 +119,8 @@ export default function Voucher(prop) {
       }
       else{
         voucherModalClose.current?.click();
-        toast.error("Something went wrong! Please try after sometime.",{theme: "colored"});
+        toast.error("You have exceeded your credit limit. Voucher unsuccessful",{theme: "colored"});
       }
-      
     }
   }
 
@@ -119,23 +145,27 @@ export default function Voucher(prop) {
 
   const [mainLoader, setMainLoader] = useState(false);
 
-  const pageReload = async() =>{
+  const pageReload = async() => {
     setMainLoader(true);
     closeParentModal();
-    dispatch(doBookingType(null));
-    let reqObj={
-      "UserId": process.env.NEXT_PUBLIC_APPCODE === "1" ? data?.user.userEmail : data?.user.userCode
-    }
-    let customersCreditDetailsObj={
-      "CustomerCode": data?.user.userCode
-    }
-    const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, data?.correlationId);
-    const responseBookingTypeCount = ReservationService.doGetBookingTypeListCounts(reqObj, data?.correlationId);
-    const resCustCreditDtls = await responseCustCreditDtls;
-    dispatch(doCustCreditDtls(resCustCreditDtls));
-    const resBookingTypeCount = await responseBookingTypeCount;
-    dispatch(doBookingTypeCounts(resBookingTypeCount));
 
+    if(process.env.NEXT_PUBLIC_APPCODE === "1"){
+      dispatch(doBookingType(null));
+      let reqObj={
+        //"UserId": process.env.NEXT_PUBLIC_APPCODE === "1" ? data?.user.userEmail : data?.user.userCode
+        "UserId": data?.user.userEmail
+      }
+      let customersCreditDetailsObj={
+        "CustomerCode": data?.user.userCode
+      }
+      const responseCustCreditDtls = MasterService.doGetCustomersCreditDetails(customersCreditDetailsObj, data?.correlationId);
+      const responseBookingTypeCount = ReservationService.doGetBookingTypeListCounts(reqObj, data?.correlationId);
+      const resCustCreditDtls = await responseCustCreditDtls;
+      dispatch(doCustCreditDtls(resCustCreditDtls));
+      const resBookingTypeCount = await responseBookingTypeCount;
+      dispatch(doBookingTypeCounts(resBookingTypeCount));
+    }
+    
     let bookItnery = {
       "bcode": prop?.dtl?.bookingId,
       "btype": "",
@@ -151,7 +181,6 @@ export default function Voucher(prop) {
   const closeParentModal = () => {
     prop.onCloseModal();            
   }
-
   return (
     <>
       {mainLoader &&
@@ -185,7 +214,7 @@ export default function Voucher(prop) {
             </div>
             <div className='modal-footer'>
               <div className='text-danger w-100 text-center m-0'>{creditLimitError}</div>
-              {userInfo?.user.paymentMode==="LOC" &&
+              {paymentMode==="LOC" &&
                 <>
                   {userInfo?.user?.isSubUser ?
                     <>

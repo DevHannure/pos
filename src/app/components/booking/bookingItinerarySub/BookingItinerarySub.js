@@ -1,5 +1,7 @@
 "use client"
 import React, {useEffect, useState } from 'react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {faCircle, faCircleDot} from "@fortawesome/free-regular-svg-icons";
 import {format} from 'date-fns';
 import { useRouter} from 'next/navigation';
 import AES from 'crypto-js/aes';
@@ -7,6 +9,7 @@ import { enc } from 'crypto-js';
 import ReservationService from '@/app/services/reservation.service';
 import ReservationtrayService from '@/app/services/reservationtray.service';
 import HotelService from '@/app/services/hotel.service';
+import TourService from '@/app/services/tour.service';
 import MasterService from '@/app/services/master.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -22,7 +25,7 @@ export default function BookingItinerarySub(props) {
   const userCustomersList = useSelector((state) => state.masterListReducer?.userCustomersObj);
   const [userObj, setUserObj] = useState(null);
   const [paymentMode, setPaymentMode] = useState('');
-  const [payMode, setPayMode] = useState(null);
+  const [payMode, setPayMode] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export default function BookingItinerarySub(props) {
   const doServiceComb = (resItinerary) => {
     let serviceComb = []
     serviceComb = resItinerary?.ReservationDetail?.Services?.map((s) => {
-      if(s.ServiceCode==="1"){
+      if(s.ServiceCode==="1" || s.ServiceCode==="4"){
         let filterDtl = []
         resItinerary?.ReservationDetail?.ServiceDetails.map(d => {
           if(s.ServiceMasterCode===d.ServiceMasterCode){
@@ -108,13 +111,12 @@ export default function BookingItinerarySub(props) {
   }
 
   const [mainLoader, setMainLoader] = useState(false);
-
   const [agentRefText, setAgentRefText] = useState('');
   const [termCheckbox, setTermCheckbox] = useState(false);
 
   const validate = () => {
     let status = true;
-    if (payMode==='') {
+    if (payMode==='' || !payMode) {
       status = false;
       toast.error("Please select a mode of payment",{theme: "colored"});
       return false
@@ -139,14 +141,14 @@ export default function BookingItinerarySub(props) {
     if(allowMe){
       setMainLoader(true);
       if(payMode === "PN") {
-        let customerHasCreditObj={
+        let customerHasCreditObj = {
           "BookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
           "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode
         }
         const responseCustomerHasCredit = MasterService.doCheckIfCustomerHasCredit(customerHasCreditObj, props?.qry.correlationId);
         const resCustomerCredit = await responseCustomerHasCredit;
         if(resCustomerCredit){
-          convertCartToReservationBtn()
+          convertCartToReservationBtn(payMode)
         }
         else{
           setMainLoader(false);
@@ -158,7 +160,6 @@ export default function BookingItinerarySub(props) {
         let uniqId = getUID();
         let payObj = {
           "bookingNo": bkngDetails?.ReservationDetail?.BookingDetail.BookingNo,
-          //"pGSupplier": parseFloat(userInfo?.user.pgType),
           "pGSupplier": process.env.NEXT_PUBLIC_APPCODE === "1" ? Number(userInfo?.user.pgType) : Number(userObj[0]?.pgType),
           "customerCode": bkngDetails?.ReservationDetail?.BookingDetail.CustomerCode,
           "userId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
@@ -173,22 +174,19 @@ export default function BookingItinerarySub(props) {
         setMainLoader(false);
         router.push(`/pages/payment/paymentOrder?qry=${encData}`);
       }
-
       else{
-        convertCartToReservationBtn()
+        convertCartToReservationBtn(payMode)
       }
-      
     }
   };
 
-  const convertCartToReservationBtn = async() => {
+  const convertCartToReservationBtn = async(payModeVar) => {
     let cartToReservationObj = {
       "TempBookingNo": bkngDetails?.ReservationDetail?.BookingDetail?.BookingNo,
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId
     }
     const responseCartToReservation = ReservationService.doConvertCartToReservation(cartToReservationObj, props?.qry.correlationId);
     const resCartToReservation = await responseCartToReservation;
-    
     if(resCartToReservation){
       let bookingItineraryObj = {
         "BookingNo": resCartToReservation.toString(),
@@ -203,16 +201,19 @@ export default function BookingItinerarySub(props) {
       else{
         setBkngDetails(resItineraryNew);
         doServiceComb(resItineraryNew);
-          resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
-            if(value.ServiceCode==="1"){
-              hotelBookBtn(value, index)
-            }
-          });
+        resItineraryNew?.ReservationDetail?.Services?.map((value, index) => {
+          if(value.ServiceCode==="1"){
+            hotelBookBtn(value, index, payModeVar)
+          }
+          if(value.ServiceCode==="4"){
+            tourBookBtn(value, index, payModeVar)
+          }
+        });
       }
     }
   };
 
-  const hotelBookBtn = async(value, index) => {
+  const hotelBookBtn = async(value, index, payModeVar) => {
     let roomArr = []
     roomArr = value.RoomDtlNew.map((r, i) => {
       let rateKeyArray = value.XMLRateKey.split('splitter');    
@@ -268,34 +269,153 @@ export default function BookingItinerarySub(props) {
         "ProductCode": value.ProductCode,
         "SupplierCode": value.SupplierCode,
         "RateKey": value.XMLRateKey,
-        "BookingStatus": payMode==='PL' ? "2" : "3"
+        "BookingStatus": payModeVar==='PL' ? "2" : payModeVar==='PN' ? "3" : "0"
       },
       "SessionId": value.XMLSessionId,
     }
-    let responseHotelBook = null;
+
     if(value.XMLSupplierCode==="138"){
-      responseHotelBook = HotelService.doLocalBook(hotelReq, props?.qry.correlationId);
+      const responseHotelBook = HotelService.doLocalBook(hotelReq, props?.qry.correlationId);
+      const resHotelBook = await responseHotelBook;
+      let adsNum = resHotelBook ? resHotelBook?.adsConfirmationNumber : 'No Response';
+      let postObj = (value?.XMLSessionId + '|' + adsNum + '|' + payModeVar +'|' + paymentMode);
+      let kk = TourService.doPostBook(postObj, props?.qry.correlationId);
+      if(resHotelBook?.errorInfo){
+        toast.error(resHotelBook?.errorInfo?.description,{theme: "colored"});
+        router.push('/');
+      }
+      else{
+        if(payModeVar==='PL'){
+          confirmReservationServiceBtn(value, hotelReq, resHotelBook, index);
+        }
+        if(payModeVar==='PN'){
+          reconfirmReservationServiceBtn(value, hotelReq, resHotelBook, index);
+        }
+      }
     }
     else{
-      responseHotelBook = HotelService.doBook(hotelReq, props?.qry.correlationId);
-    }
-    
-    const resHotelBook = await responseHotelBook;
-
-    if(resHotelBook){
-      if(payMode==='PL'){
-        confirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+      const responseHotelBook = HotelService.doBook(hotelReq, props?.qry.correlationId);
+      const resHotelBook = await responseHotelBook;
+      let adsNum = resHotelBook ? resHotelBook?.adsConfirmationNumber : 'No Response';
+      let postObj = (value?.XMLSessionId + '|' + adsNum + '|' + payModeVar +'|' + paymentMode);
+      let kk = TourService.doPostBook(postObj, props?.qry.correlationId);
+      if(resHotelBook?.errorInfo){
+        toast.error(resHotelBook?.errorInfo?.description,{theme: "colored"});
+        router.push('/');
       }
-      if(payMode==='PN'){
-        reconfirmReservationServiceBtn(value,hotelReq,resHotelBook, index);
+      else{
+        if(payModeVar==='PL'){
+          confirmReservationServiceBtn(value, hotelReq, resHotelBook, index);
+        }
+        if(payModeVar==='PN'){
+          reconfirmReservationServiceBtn(value, hotelReq, resHotelBook, index);
+        }
+      }
+     
+    }
+  };
+
+  const tourBookBtn = async(value, index, payModeVar) => {
+    let pickupArray = value.ProductImage.split('|');    
+    let tourReq = {
+      "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
+      "SearchParameter": {
+        "DestinationCode": value.ProductCityCode,
+        "CountryCode": value.ProductCountryISOCode,
+        "GroupCode": value.XMLSupplierCode,
+        "ServiceDate": format(new Date(value.BookedFrom), 'yyyy-MM-dd'),
+        "Currency": value.CustomerCurrencyCode,
+        "CustomerRefNumber": value.BookingNo+'-'+value.ServiceMasterCode,
+        "Adult": value.NoOfAdults,
+        "RateKey": value.XMLRateKey,
+        "Paxes": {
+          "Pax": []
+        },
+        "Pickup":pickupArray.length > 2 ? pickupArray[2] : ""
+      },
+      "TassProInfo": {
+        "CustomerCode": bkngDetails?.ReservationDetail?.BookingDetail?.CustomerCode,
+        "RegionID": bkngDetails?.ReservationDetail?.BookingDetail?.RegionCode
+      },
+      "SessionId": value.XMLSessionId,
+    }
+
+    let roomGuest = [];
+    let childGuest = [];
+    
+    value.RoomDtlNew.map((r, i) => { 
+      roomGuest = r.PaxNew.map((p) => {
+        let guest = {
+          "Title": {
+            "Code": "",
+            "Text": p.PaxTitle
+          },
+          "FirstName": p.FName,
+          "LastName": p.LName,
+          "IsLeadPAX": p.LeadPax,
+          "Type": p.PaxType === "A" ? "Adult" : "Child",
+          "Age": p.Age,
+          "Address": {
+            "Email": "",
+            "Mobile": p.Telephone
+          },
+        }
+        return guest
+      });
+
+      let childUser = r.PaxNew?.filter(c => c?.PaxType == "C");
+      childGuest = childUser?.map((p,i) => {
+        let Child = {
+          "Identifier": i+1,
+          "Text": p.Age
+        }
+        return Child
+      });
+    });
+
+    tourReq.SearchParameter.Paxes.Pax = roomGuest;
+
+    if(childGuest.length > 0){
+      tourReq.SearchParameter.Children = {
+        "ChildAge": childGuest,
+        "Count": value.NoOfChildren
+      }
+    }
+
+    if(value.XMLSupplierCode==="138"){
+      const responseTourBook = TourService.doLocalBook(tourReq, props?.qry.correlationId);
+      const resTourBook = await responseTourBook;
+      if(resTourBook){
+        if(payModeVar==='PL'){
+          confirmReservationServiceBtn(value, tourReq, resTourBook, index);
+        }
+        if(payModeVar==='PN'){
+          reconfirmReservationServiceBtn(value, tourReq, resTourBook, index);
+        }
+      }
+      else{
+        router.push('/');
+      }
+    }
+    else{
+      const responseTourBook = TourService.doBook(tourReq, props?.qry.correlationId);
+      const resTourBook = await responseTourBook;
+      if(resTourBook){
+        if(payModeVar==='PL'){
+          confirmReservationServiceBtn(value, tourReq, resTourBook, index);
+        }
+        if(payModeVar==='PN'){
+          reconfirmReservationServiceBtn(value, tourReq, resTourBook, index);
+        }
+      }
+      else{
+        router.push('/');
       }
     }
   };
 
   const confirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
     let cRSAEobj = {
-      // "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
-      // "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
@@ -332,8 +452,6 @@ export default function BookingItinerarySub(props) {
 
   const reconfirmReservationServiceBtn = async(value,serviceReq,serviceRes, index) => {
     let rCRSAEobj = {
-      // "BookingNo": serviceRes.customerRefNumber?.split('-')[0],
-      // "ServiceMasterCode": serviceRes.customerRefNumber?.split('-')[1],
       "BookingNo": value.BookingNo,
       "ServiceMasterCode": value.ServiceMasterCode,
       "UserId": bkngDetails?.ReservationDetail?.BookingDetail?.UserId,
@@ -373,7 +491,7 @@ export default function BookingItinerarySub(props) {
     <div>
       <ToastContainer />
       {mainLoader &&
-        <CommonLoader Type="2" />
+        <CommonLoader Type="4" />
       }
       {bkngDetails ?
         <>
@@ -382,54 +500,48 @@ export default function BookingItinerarySub(props) {
             <div className='p-2 fn15 mt-3 fw-semibold'>
               {bkngDetails.ReservationDetail.BookingDetail.BookingStatus ==="-1" ?
               <div>
+                {process.env.NEXT_PUBLIC_APPCODE === "2" &&
+                  <div className='mb-2'><strong className='bg-light px-2 py-1 rounded blue'>Cart Id: {bkngDetails?.ReservationDetail?.BookingDetail.BookingNo}</strong></div>
+                }
                 <div className="form-check mb-3">
                   <label><input className="form-check-input" type="checkbox" checked={termCheckbox} onChange={() => setTermCheckbox(!termCheckbox)}  /> I have read and accept the service details, rates, cancellation and payment policy.</label>
                 </div>
                 
                 <div className="mb-4">
-                  <div className="form-check form-check-inline">
-                    <label><input className="form-check-input" type="radio" value="CC" name="payName" checked={payMode==='CC'} onChange={(e) => setPayMode(e.target.value)} /> Pay By Credit Card</label>
-                  </div>
-
+                  <button onClick={()=> setPayMode('CC')} className="btn btn-link fw-semibold p-0 text-dark m-2"><FontAwesomeIcon icon={payMode==='CC' ? faCircleDot : faCircle} className='blue' /> Pay By Credit Card</button>
                   {paymentMode==="LOC" &&
                     <>
                       {userInfo?.user?.isSubUser ?
                         <>
                         {userInfo?.user?.consultantAllowCredit ?
-                          <div className="form-check form-check-inline">
-                            <label><input className="form-check-input" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
-                          </div> : ''
+                          <button onClick={()=> setPayMode('PN')} className="btn btn-link fw-semibold p-0 text-dark m-2"><FontAwesomeIcon icon={payMode==='PN' ? faCircleDot : faCircle} className='blue' /> Confirm & Voucher/Ticket Now</button>
+                          : ''
                         }
                         </>
                         :
-                        <div className="form-check form-check-inline">
-                          <label><input className="form-check-input" type="radio" value="PN" name="payName" checked={payMode==='PN'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Now</label>
-                        </div>
+                        <button onClick={()=> setPayMode('PN')} className="btn btn-link fw-semibold p-0 text-dark m-2"><FontAwesomeIcon icon={payMode==='PN' ? faCircleDot : faCircle} className='blue' /> Confirm & Voucher/Ticket Now</button>
                       }
                     </>
                   }
 
                   {bkngDetails.ReservationDetail.Services.some(o => o.NRF === false) ?
-                    <div className="form-check form-check-inline">
-                      <label><input className="form-check-input" type="radio" value="PL" name="payName" checked={payMode==='PL'} onChange={(e) => setPayMode(e.target.value)} /> Confirm & Voucher/Ticket Later</label>
-                    </div>
-                  : ''
+                    <button onClick={()=> setPayMode('PL')} className="btn btn-link fw-semibold p-0 text-dark m-2"><FontAwesomeIcon icon={payMode==='PL' ? faCircleDot : faCircle} className='blue' /> Confirm & Voucher/Ticket Later</button>
+                    : ''
                   }
-
                 </div>
 
                 {payMode === "CC" || payMode === "PN" ?
-                <div className="mb-3">
-                  <div className="row g-1 align-items-center">
-                    <div className="col-auto">
-                      <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
-                    </div>
-                    <div className="col-auto">
-                      <input type="text" className="form-control form-control-sm" value={agentRefText} onChange={(e) => setAgentRefText(e.target.value)} />
+                  <div className="mb-3">
+                    <div className="row g-1 align-items-center">
+                      <div className="col-auto">
+                        <label className="col-form-label fw-semibold">Agent Reference Number<span className='text-danger'>*</span></label>
+                      </div>
+                      <div className="col-auto">
+                        <input type="text" className="form-control form-control-sm" value={agentRefText} onChange={(e) => setAgentRefText(e.target.value)} />
+                      </div>
                     </div>
                   </div>
-                </div>
-                : ''
+                  : ''
                 }
 
                 <div className="mb-2">
@@ -456,13 +568,6 @@ export default function BookingItinerarySub(props) {
           </div>
         </div>
       }
-
-      {/* {emailBookingRes &&
-        <div id="emailArea" className="d-none">
-          <BookingDetails res={emailBookingRes} masterCode={sMasterCode} query={sQry} />
-        </div>
-      } */}
-
     </div>
   )
 }

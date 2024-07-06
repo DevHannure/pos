@@ -93,6 +93,39 @@ const multiValueContainer = ({ selectProps, data }) => {
   return val;
 };
 
+const ValueContainer = ({ children, ...props }) => {
+  const { getValue, hasValue } = props;
+  const nbArray = getValue();
+  const nbValues = getValue().length;
+  let [values, input] = children;
+  
+  switch (nbValues) {
+    case 1:
+      values = nbArray[0]?.label;
+      break;
+    case 2:
+      values = `${nbArray[0]?.label}, ${nbArray[1]?.label}`;
+      break;
+    default:
+      const otherCount = nbValues - 2;
+      values = <>{nbArray[0]?.label}, {nbArray[1]?.label},&nbsp;<span className='blue'>+{otherCount}</span></>;
+      break;
+  }
+  
+  if (!hasValue) {
+    return (
+      <components.ValueContainer {...props}>
+        {children}
+      </components.ValueContainer>
+    );
+  }
+  return (
+    <components.ValueContainer {...props}>
+      {values} {input}
+    </components.ValueContainer>
+  );
+};
+
 export default function ModifySearch(props) {
   const deviceInfo = useSelector((state) => state.commonResultReducer?.deviceInfo);
   const userInfo = useSelector((state) => state.commonResultReducer?.userInfo);
@@ -111,12 +144,12 @@ export default function ModifySearch(props) {
 
   const [isLoading, setIsLoading] = useState(false);
  
-  const [options, setOptions] = useState(props.HtlReq ? [{
-    cityName: props.HtlReq.destination[0]?.cityName, 
-    countryCode: props.HtlReq.destination[0]?.countryCode, 
-    countryName: props.HtlReq.destination[0]?.countryName,
-    destinationCode: props.HtlReq.destination[0]?.destinationCode,
-    predictiveText:  props.HtlReq.destination[0]?.predictiveText
+  const [options, setOptions] = useState(props.ModifyReq ? [{
+    cityName: props.ModifyReq.destination[0]?.cityName, 
+    countryCode: props.ModifyReq.destination[0]?.countryCode, 
+    countryName: props.ModifyReq.destination[0]?.countryName,
+    destinationCode: props.ModifyReq.destination[0]?.destinationCode,
+    predictiveText:  props.ModifyReq.destination[0]?.predictiveText
   }]
   :
   [{
@@ -129,9 +162,9 @@ export default function ModifySearch(props) {
   
   const [selectedDestination, setSelectedDestination] = useState(options);
   const [calNum, setCalNum] = useState(2);
-  const [chkIn, setChkIn] = useState(props.HtlReq !== '' ? new Date(props.HtlReq.chkIn) : new Date());
-  const [chkOut, setChkOut] = useState(props.HtlReq !== '' ? new Date(props.HtlReq.chkOut) : new Date(new Date().setDate(new Date().getDate() + 1)));
-  const [rmCountArr, setRmCountArr] = useState(props.HtlReq !== '' ? props.HtlReq.paxInfoArr : [
+  const [chkIn, setChkIn] = useState(props.ModifyReq !== '' ? new Date(props.ModifyReq.chkIn) : new Date());
+  const [chkOut, setChkOut] = useState(props.ModifyReq !== '' ? new Date(props.ModifyReq.chkOut) : new Date(new Date().setDate(new Date().getDate() + 1)));
+  const [rmCountArr, setRmCountArr] = useState(props.ModifyReq !== '' ? props.ModifyReq.paxInfoArr : [
     {
       idAdt: 'adt0',
       idChd: 'chd0',
@@ -173,8 +206,8 @@ export default function ModifySearch(props) {
 
   const [selectedStarOption, setSelectedStarOption] = useState(starOptions);
 
-  const [cusNationality, setCusNationality] = useState(props.HtlReq ? props.HtlReq.nationality : userInfo?.user?.countryCode);
-  const [cusXML, setCusXML] = useState(props.HtlReq ? props.HtlReq.activeSuppliers : []);
+  const [cusNationality, setCusNationality] = useState(props.ModifyReq ? props.ModifyReq.nationality : userInfo?.user?.countryCode);
+  const [cusXML, setCusXML] = useState(props.ModifyReq ? props.ModifyReq.activeSuppliers : []);
   
   //const [nationalityOptions, setNationalityOptions] = useState([]);
   const nationalityOptions = useSelector((state) => state.commonResultReducer?.country);
@@ -183,13 +216,13 @@ export default function ModifySearch(props) {
 
   const regionCodeSav = useSelector((state) => state.commonResultReducer?.regionCodeSaver);
   const [regionCode, setRegionCode] = useState(regionCodeSav ? regionCodeSav : '');
-  const [cusCurrency, setCusCurrency] = useState(props.HtlReq ? props.HtlReq.currency : '');
-  const [cusCode, setCusCode] = useState(props.HtlReq ? props.HtlReq.customerCode : null);
+  const [cusCurrency, setCusCurrency] = useState(props.ModifyReq ? props.ModifyReq.currency : '');
+  const [cusCode, setCusCode] = useState(props.ModifyReq ? props.ModifyReq.customerCode : null);
   
   const [waitLoad, setWaitLoad] = useState(false);
   const [isLoadingHtl, setIsLoadingHtl] = useState(false);
-  const [optionsHtl, setOptionsHtl] = useState(props.HtlReq ? props.HtlReq.hotelName : []);
-  const [selectedHotel, setSelectedHotel] = useState([]);
+  const [optionsHtl, setOptionsHtl] = useState(props.ModifyReq ? props.ModifyReq.hotelName : []);
+  const [selectedHotel, setSelectedHotel] = useState(props.ModifyReq ? props.ModifyReq.hotelName : []);
   const typeaheadHtlRef = useRef(null);
 
   const [nationOptions, setNationOptions] =  useState([]);
@@ -221,7 +254,7 @@ export default function ModifySearch(props) {
       setIsLoading(true);
       const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/DestinationsPrediction`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.ModifyReq ? props.ModifyReq.correlationId : userInfo.correlationId},
         body: JSON.stringify({
         "text": query,
         "customercode":process.env.NEXT_PUBLIC_SHORTCODE,
@@ -390,7 +423,7 @@ export default function ModifySearch(props) {
                       <label>&nbsp;Adults</label>
                       <div className="btn-group btn-group-sm w-100">
                         <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('adtMinus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].adtVal===1}>-</button>
-                        <button type="button" className="btn btn-outline-primary fw-semibold fs-6 py-0 text-dark" disabled>{rmCountArr[rmCntIndx].adtVal}</button>
+                        <button type="button" className="btn btn-outline-warning fw-semibold fs-6 py-0 text-dark" disabled>{rmCountArr[rmCntIndx].adtVal}</button>
                         <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('adtPlus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].adtVal===9}>+</button>
                       </div>
                   </div>
@@ -398,7 +431,7 @@ export default function ModifySearch(props) {
                       <label>&nbsp;Children</label>
                       <div className="btn-group btn-group-sm w-100">
                         <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('chdMinus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].chdVal===0}>-</button>
-                        <button type="button" className="btn btn-outline-primary fw-semibold fs-6 py-0 text-dark" disabled>{rmCountArr[rmCntIndx].chdVal}</button>
+                        <button type="button" className="btn btn-outline-warning fw-semibold fs-6 py-0 text-dark" disabled>{rmCountArr[rmCntIndx].chdVal}</button>
                         <button type="button" className="btn btn-warning fw-semibold fs-5 py-0" onClick={()=>calculatePasngr('chdPlus', rmCntIndx)} disabled={rmCountArr[rmCntIndx].chdVal===4}>+</button>
                       </div>
                   </div>
@@ -490,7 +523,7 @@ export default function ModifySearch(props) {
       setOptionsHtl([]);
       const res = await fetch(`${process.env.NEXT_PUBLIC_ROOT_API}/staticdata/HotelsPrediction`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId},
+        headers: {'Content-Type': 'application/json', 'domain': process.env.NEXT_PUBLIC_DOMAINNAME, 'correlation-id': props.ModifyReq ? props.ModifyReq.correlationId : userInfo.correlationId},
         body: JSON.stringify({
         "text": query,
         "destinationId":selectedDestination[0].destinationCode,
@@ -514,7 +547,7 @@ export default function ModifySearch(props) {
         nationalityReq();
       }
       if(!cusNationality){
-        setCusNationality(props.HtlReq ? props.HtlReq.nationality : userInfo?.user?.countryCode);
+        setCusNationality(props.ModifyReq ? props.ModifyReq.nationality : userInfo?.user?.countryCode);
       }
       if(!xmlOptions){
         xmlReq();
@@ -590,7 +623,7 @@ export default function ModifySearch(props) {
         "NationalityCode": cusNationality.split('-')[0],
         "CustomerCode": cusCode
       }
-      const responseRegion = await MasterService.doGetRegionBasedOnCustomerNationality(regionObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+      const responseRegion = await MasterService.doGetRegionBasedOnCustomerNationality(regionObj, props.ModifyReq ? props.ModifyReq.correlationId : userInfo.correlationId);
       const resRegion = responseRegion;
       dispatch(doRegionCode(resRegion));
       setRegionCode(resRegion);
@@ -693,16 +726,13 @@ export default function ModifySearch(props) {
         "Domain": process.env.NEXT_PUBLIC_DOMAINNAME,
         "ServiceCode": "1"
       }
-      const responseRecent = await MasterService.doGetRecentSearchListCustomerwise(reacentObj, props.HtlReq ? props.HtlReq.correlationId : userInfo.correlationId);
+      const responseRecent = await MasterService.doGetRecentSearchListCustomerwise(reacentObj, props.ModifyReq ? props.ModifyReq.correlationId : userInfo.correlationId);
       const resRecent = responseRecent;
       dispatch(doRecentSearch(resRecent));
     }
   }
 
-  
   const srchHtl = async(e) => {
-    dispatch(doHotelSearchOnLoad(null));
-    dispatch(doRoomDtls({}));
     let allowMe = validate();
     let userObj = userCustomersList?.filter(data => data?.customerCode == cusCode);
 
@@ -713,6 +743,8 @@ export default function ModifySearch(props) {
     }
    
     if(allowMe){
+      dispatch(doHotelSearchOnLoad(null));
+      dispatch(doRoomDtls({}));
       e.nativeEvent.target.disabled = true;
       e.nativeEvent.target.innerHTML = 'Searching...';
       
@@ -740,6 +772,7 @@ export default function ModifySearch(props) {
         "customerConsultantCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.customerConsultantCode : userObj[0]?.customerConsultantCode,
         "companyConsultantCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.companyConsultantCode : userObj[0]?.companyConsultantCode,
         "branchCode": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.branchCode : userObj[0]?.branchCode,
+        "onlineBooking": process.env.NEXT_PUBLIC_APPCODE === "1" ? userInfo?.user?.onlineBooking : userObj[0]?.onlineBooking,
         "paxInfoArr": rmCountArr
       }
       let encJson = AES.encrypt(JSON.stringify(qry), 'ekey').toString();
@@ -783,162 +816,168 @@ export default function ModifySearch(props) {
   <ToastContainer />
   {props?.Type === 'landing' ?
   <div className="searchPanel">  
-    <Image className="searchImage" src='/images/leftsearchAORYX-bg.jpg' alt='Aoryx' fill style={{objectFit:'cover', objectPosition:'top'}} priority />
+    <Image className="searchImage" src={`/images/leftsearch${process.env.NEXT_PUBLIC_SHORTCODE}-bg.jpg`} alt={process.env.NEXT_PUBLIC_SHORTCODE} fill style={{objectFit:'cover', objectPosition:'top'}} priority />
     <div className="searchBox">
       <div className="container">
         <ServiceNav />
-        <div className="searchColumn">
-            <div className="row gx-3">
-              <div className="col-lg-4 tFourInput bor-b">
-                <div className="mb-3">
-                  <label><FontAwesomeIcon icon={faLocationDot} className="fn12" /> Destination</label>
-                  <AsyncTypeahead 
-                    //defaultSelected={selectedDestination}
-                    filterBy={() => true}
-                    id="async-example"
-                    isLoading={isLoading}
-                    labelKey={(option) => option.predictiveText}
-                    //minLength={3}
-                    onSearch={handleSearch}
-                    options={options}
-                    placeholder='Please Enter Destination'
-                    className="typeHeadDropdown"
-                    //selected={selectedDestination}
-                    highlightOnlyResult={true}
-                    defaultSelected={options.slice(0, 1)}
-                    onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
-                    //clearButton={true}
-                    onFocus={(event)=> event.target.select()}
-                  />
-                
+        <div className="mainSearchColumn">
+          <div className="searchColumn">
+              <div className="row gx-3">
+                <div className="col-lg-4 tFourInput bor-b">
+                  <div className="mb-3 tInputBox">
+                    <label><FontAwesomeIcon icon={faLocationDot} className="fn12" /> Destination</label>
+                    <AsyncTypeahead 
+                      //defaultSelected={selectedDestination}
+                      filterBy={() => true}
+                      id="async-example"
+                      isLoading={isLoading}
+                      labelKey={(option) => option.predictiveText}
+                      //minLength={3}
+                      onSearch={handleSearch}
+                      options={options}
+                      placeholder='Please Enter Destination'
+                      className="typeHeadDropdown"
+                      //selected={selectedDestination}
+                      highlightOnlyResult={true}
+                      defaultSelected={options.slice(0, 1)}
+                      onChange={(e)=> (setSelectedDestination(e), typeaheadHtlRef.current.clear(), setOptionsHtl([]))}
+                      //clearButton={true}
+                      onFocus={(event)=> event.target.select()}
+                    />
+                  
+                  </div>
                 </div>
-              </div>
-              <div className="col-lg-4 tFourInput bor-s bor-b">
-                <div className="mb-3">
-                  <div className="row gx-3">
-                    <div className="col">
-                      <label><FontAwesomeIcon icon={faCalendarDays} className="fn12" /> Check In - Check Out Date</label>
-                      <div>
-                        <DatePicker className="form-control" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
-                        startDate={chkIn} endDate={chkOut}
-                        onChange={dateChange} 
-                        showMonthDropdown showYearDropdown />
-                        {/* <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" /> */}
+                <div className="col-lg-4 tFourInput bor-s bor-b">
+                  <div className="mb-3 tInputBox">
+                    <div className="row gx-3">
+                      <div className="col">
+                        <label><FontAwesomeIcon icon={faCalendarDays} className="fn12" /> Check In - Check Out Date</label>
+                        <div>
+                          <DatePicker className="form-control" calendarClassName="yearwiseCal" dateFormat="dd MMM yyyy" selectsRange={true} monthsShown={calNum} minDate={new Date()} maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))} 
+                          startDate={chkIn} endDate={chkOut}
+                          onChange={dateChange} 
+                          showMonthDropdown showYearDropdown />
+                          {/* <FontAwesomeIcon icon={faCalendarDays} className="calendarIcon blue" /> */}
+                        </div>
+                      </div>
+                      <div className="col-auto nightCol">
+                        <label>Night(s)</label>
+                        <input className="form-control" type="text" value={numNights} onChange={(e)=> nightChange(e.target.value)} />
                       </div>
                     </div>
-                    <div className="col-auto nightCol">
-                      <label>Night(s)</label>
-                      <input className="form-control" type="text" value={numNights} onChange={(e)=> nightChange(e.target.value)} />
+                  </div>
+                </div>
+                <div className="col-lg-4 tFourInput bor-s bor-b">
+                  <div className="mb-2 tInputBox">
+                    <label>Room Information</label>
+                    <div className="dropdown">
+                      <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{rmCountArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {rmCountArr.length} Room(s)</button>
+                      <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
+                        <PaxDropdown />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="col-lg-4 tFourInput bor-s bor-b">
-                <div className="mb-2">
-                  <label>Room Information</label>
-                  <div className="dropdown">
-                    <button className="form-control paxMainBtn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside">{rmCountArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {rmCountArr.length} Room(s)</button>
-                    <div className="dropdown-menu dropdown-menu-end paxDropdown px-2">
-                      <PaxDropdown />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
+              <div className="row gx-3">
+                <div className="col-lg-3 tFourInput">
+                  <div className="mb-3 tInputBox">
+                    <label>Nationality</label>
+                    {nationOptions?.length > 0 &&
+                    <Select
+                      id="nationality"
+                      instanceId="nationality"
+                      closeMenuOnSelect={true}
+                      onChange={(e) => setCusNationality(e.value)}
+                      options={nationOptions} 
+                      value={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                      //defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
+                      //defaultValue={{ label: "Select Dept", value: '91-IN' }}
+                      classNamePrefix="tFourMulti" />
+                    }
+                  </div>
+                </div>
+                <div className="col-lg-3 tFourInput bor-s">
+                  <div className="mb-3 tInputBox">
+                    <label>Star Rating</label>
+                    <Select
+                      id="selectstar"
+                      instanceId="selectstar"
+                      closeMenuOnSelect={false}
+                      hideSelectedOptions={false}
+                      defaultValue={selectedStarOption}
+                      onChange={setSelectedStarOption}
+                      options={starOptions}
+                      isMulti
+                      components={{
+                        MultiValueContainer: multiValueContainer,
+                        Option: InputOption
+                      }}
+                      classNamePrefix="tFourMulti"  />
+                  </div>
+                </div>
+                <div className="col-lg-3 tFourInput bor-s">
+                  <div className="mb-3 tInputBox">
+                    <label>Hotel Name</label>
+                    <AsyncTypeahead 
+                      filterBy={() => true}
+                      id="asyncExample"
+                      isLoading={isLoadingHtl}
+                      labelKey={(option) => option.hotelName}
+                      minLength={2}
+                      onSearch={handleHotel}
+                      options={optionsHtl}
+                      placeholder='Enter Hotel Name'
+                      className="typeHeadDropdown"
+                      highlightOnlyResult={true}
+                      defaultSelected={optionsHtl.slice(0, 1)}
+                      //onChange={setSelectedHotel}
+                      onChange={(e)=> selectedHotelBtn(e)}
+                      //clearButton={true}
+                      ref={typeaheadHtlRef}
+                      useCache={false}
+                    />
+                  </div>
+                </div>
+
+                {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
+                <div className="col-lg-3 tFourInput bor-s">
+                  <div className="mb-3 tInputBox">
+                    <label>XML Suppliers</label>
+                    <Select
+                      id="selectxml"
+                      instanceId="selectxml"
+                      closeMenuOnSelect={false}
+                      onChange={setCusXML}
+                      options={selectedXML} 
+                      value={cusXML}
+                      isMulti
+                      hideSelectedOptions={false}
+                      components={{
+                        ValueContainer
+                      }}
+                      classNamePrefix="tFourMulti" />
+                  </div>
+                </div>
+                }
+
+              </div>
+          </div>
+
+          <div className="searchColumn secondSearch">
             <div className="row gx-3">
-              <div className="col-lg-3 tFourInput">
-                <div className="mb-3">
-                  <label>Nationality</label>
-                  {nationOptions?.length > 0 &&
-                  <Select
-                    id="nationality"
-                    instanceId="nationality"
-                    closeMenuOnSelect={true}
-                    onChange={(e) => setCusNationality(e.value)}
-                    options={nationOptions} 
-                    value={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
-                    //defaultValue={nationOptions.map((e) => e.value === cusNationality ? { label: e.label, value: cusNationality } : null)}
-                    //defaultValue={{ label: "Select Dept", value: '91-IN' }}
-                    classNamePrefix="tFourMulti" />
+              <DefaultCustomer customerDetails={customerDetails} Type={'landing'} />
+            </div>
+            <div className="row gx-3">
+              <div className="col text-end">
+                <div className="mb-3 mt-lg-0 mt-3">
+                  {waitLoad ?
+                    <button type="button" className="btn btn-warning searchBtn px-4 py-2 fw-semibold" disabled>Wait...</button>
+                    :
+                    <button type="button" className="btn btn-warning searchBtn px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)} disabled={searchLoading}>{searchLoading ? 'Searching' : 'Search'}</button>
                   }
                 </div>
-              </div>
-              <div className="col-lg-3 tFourInput bor-s">
-                <div className="mb-3">
-                  <label>Star Rating</label>
-                  <Select
-                    id="selectstar"
-                    instanceId="selectstar"
-                    closeMenuOnSelect={false}
-                    hideSelectedOptions={false}
-                    defaultValue={selectedStarOption}
-                    onChange={setSelectedStarOption}
-                    options={starOptions}
-                    isMulti
-                    components={{
-                      MultiValueContainer: multiValueContainer,
-                      Option: InputOption
-                    }}
-                    classNamePrefix="tFourMulti"  />
-                </div>
-              </div>
-              <div className="col-lg-3 tFourInput bor-s">
-                <div className="mb-3">
-                  <label>Hotel Name</label>
-                  <AsyncTypeahead 
-                    filterBy={() => true}
-                    id="asyncExample"
-                    isLoading={isLoadingHtl}
-                    labelKey={(option) => option.hotelName}
-                    minLength={2}
-                    onSearch={handleHotel}
-                    options={optionsHtl}
-                    placeholder='Enter Hotel Name'
-                    className="typeHeadDropdown"
-                    highlightOnlyResult={true}
-                    defaultSelected={optionsHtl.slice(0, 1)}
-                    //onChange={setSelectedHotel}
-                    onChange={(e)=> selectedHotelBtn(e)}
-                    //clearButton={true}
-                    ref={typeaheadHtlRef}
-                    useCache={false}
-                  />
-                </div>
-              </div>
-
-              {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
-              <div className="col-lg-3 tFourInput bor-s">
-                <div className="mb-3">
-                  <label>XML Suppliers</label>
-                  <Select
-                    id="selectxml"
-                    instanceId="selectxml"
-                    closeMenuOnSelect={false}
-                    onChange={setCusXML}
-                    options={selectedXML} 
-                    value={cusXML}
-                    isMulti
-                    classNamePrefix="tFourMulti" />
-                </div>
-              </div>
-              }
-
-            </div>
-        </div>
-
-        <div className="searchColumn secondSearch">
-          <div className="row gx-3">
-            <DefaultCustomer customerDetails={customerDetails} Type={'landing'} />
-          </div>
-          <div className="row gx-3">
-            <div className="col text-end">
-              <div className="mb-3 mt-lg-0 mt-3">
-                {waitLoad ?
-                  <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" disabled>Wait...</button>
-                  :
-                  <button type="button" className="btn btn-warning px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)} disabled={searchLoading}>{searchLoading ? 'Searching' : 'Search'}</button>
-                }
               </div>
             </div>
           </div>
@@ -954,9 +993,9 @@ export default function ModifySearch(props) {
         : 
         <>
           <div className="fn15 d-lg-flex justify-content-between align-items-center d-none">
-            <div className="py-1">{props.HtlReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.HtlReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.HtlReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.HtlReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.HtlReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-light btn-sm" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6 blue" /> Modify Search</button></div>
+            <div className="py-1">{props.ModifyReq.destination[0]?.predictiveText} &nbsp;|&nbsp; {format(new Date(props.ModifyReq.chkIn), 'dd MMM yyyy')} to {format(new Date(props.ModifyReq.chkOut), 'dd MMM yyyy')} &nbsp;|&nbsp; {props.ModifyReq.paxInfoArr.reduce((totalGuest, guest) => totalGuest + parseInt(guest.adtVal) + parseInt(guest.chdVal), 0)} Guest(s) in {props.ModifyReq.paxInfoArr.length} Room(s) &nbsp; <button type="button" className="btn btn-light btn-sm modifyBtn" onClick={() => setModifyCollapse(!modifyCollapse)}><FontAwesomeIcon icon={faMagnifyingGlass} className="fs-6 blue" /> Modify Search</button></div>
             <div className="py-2">
-              <button type="button" className="btn btn-light btn-sm"><FontAwesomeIcon icon={faMap} className="fs-6 blue" /> Map View</button>
+              <button type="button" className="btn btn-light btn-sm modifyBtn"><FontAwesomeIcon icon={faMap} className="fs-6 blue" /> Map View</button>
             </div>
           </div>
 
@@ -1101,6 +1140,10 @@ export default function ModifySearch(props) {
                     options={selectedXML} 
                     value={cusXML}
                     isMulti
+                    hideSelectedOptions={false}
+                    components={{
+                      ValueContainer
+                    }}
                     classNamePrefix="tFourMulti" />
                 </div>
               </div>
@@ -1114,7 +1157,7 @@ export default function ModifySearch(props) {
             <div className="row gx-3">
               <div className="col text-end">
                 <div className="mb-3 mt-lg-0 mt-3">
-                  <button type="button" className="btn btn-light px-4 py-2 fw-semibold" onClick={(e) => srchHtl(e)}>Search</button>
+                  <button type="button" className="btn btn-light px-4 py-2 fw-semibold searchModifyBtn" onClick={(e) => srchHtl(e)}>Search</button>
                 </div>
               </div>
             </div>

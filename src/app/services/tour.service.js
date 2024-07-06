@@ -145,6 +145,87 @@ const TourService = {
     } catch (error) {console.log("error", error)}
   },
 
+  doCancellationPolicy: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/excursion/CancellationPolicy`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doLocalCancellationPolicy: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/localexcursion/CancellationPolicy`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("error", error)}
+  },
+
+  doBook: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/excursion/Book`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {
+      console.log("errorDoBook", error);
+    }
+  },
+
+  doLocalBook: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/localexcursion/Book`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {
+      console.log("errorDoLocalBook", error);
+    }
+  },
+
+  doCancel: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/excursion/Cancel`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorCancel", error)}
+  },
+
+  doLocalCancel: async function (reqObj, correlationId) {
+    try {
+      const response = await fetch(`${baseUrl}/localexcursion/Cancel`, {
+        method: 'POST',
+        body: JSON.stringify(reqObj),
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return response.json()
+    } catch (error) {console.log("errorLocalCancel", error)}
+  },
+
+  doPostBook: function (reqObj, correlationId) {
+    try {
+      const response = fetch(`${baseUrl}/excursion/PostBook?queryString=${reqObj}`, {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', 'domain': domainUrl, 'correlation-id': correlationId}
+      });
+      return 'Success'
+    } catch (error) {console.log("errorLocalCancel", error)}
+  },
+
+
 }
 
 export default TourService

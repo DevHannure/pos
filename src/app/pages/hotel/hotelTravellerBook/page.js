@@ -86,8 +86,8 @@ export default function HotelTravellerBook() {
   const [markUpAmount, setMarkUpAmount] = useState(null);
   const [dueDateStart, setDueDateStart] = useState(null);
   const [exchangeRate, setExchangeRate] = useState(null);
-
   const [roomObj, setRoomObj] = useState(null);
+  const [nrfDate, setNrfDate] = useState(true);
 
   useEffect(()=> {
     if(resReprice && resReprice.hotel && room1){
@@ -110,6 +110,8 @@ export default function HotelTravellerBook() {
         }
       });
       setDueDateStart(dueDateStartVar);
+      let nrfdateVar = format(new Date(dueDateStartVar[0]?.fromDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? format(new Date(dueDateStartVar[0]?.fromDate), 'yyyy-MM-dd') + ' ' + (dueDateStartVar[0]?.fromTime ? dueDateStartVar[0]?.fromTime : '00:00:00') : format(addDays(new Date(dueDateStartVar[0]?.fromDate), -2), 'yyyy-MM-dd') + ' ' + (dueDateStartVar[0]?.fromTime ? dueDateStartVar[0]?.fromTime : '00:00:00')
+      setNrfDate(new Date(nrfdateVar) >= new Date() ? false : true)
     }
   },[resReprice, room1]);
 
@@ -174,12 +176,14 @@ export default function HotelTravellerBook() {
 
     dispatch(doHotelReprice(resRepriceText));
     dispatch(doHotelDtl(resHtlDtl));
-
     if(!resRepriceText?.isBookable){
       soldOutBtn.current?.click();
     }
     else{
-      if(qry.rateType==='Non-Refundable' || qry.rateType==='Non Refundable' || qry.rateType==='non-refundable' || qry.rateType==='non refundable'){
+      // if(qry.rateType==='Non-Refundable' || qry.rateType==='Non Refundable' || qry.rateType==='non-refundable' || qry.rateType==='non refundable'){
+      //   noRefundBtn.current?.click();
+      // }
+      if(nrfDate){
         noRefundBtn.current?.click();
       }
     }
@@ -214,7 +218,8 @@ export default function HotelTravellerBook() {
         "RateTypeName": i===0 && room1[0]?.rateTypeName || i===1 && room2[0]?.rateTypeName || i===2 && room3[0]?.rateTypeName,
         "RateCategoryCode": qry?.supplierName?.toLowerCase()==="local" ? "1" : "0",
         "DetailsString": resReprice.hotel?.rooms?.room[i]?.detailsString ? resReprice.hotel?.rooms?.room[i]?.detailsString : "",
-        "CancelPolicyType": qry.rateType==='Refundable' || qry.rateType==='refundable' ? "R" : "N",
+        // "CancelPolicyType": qry.rateType==='Refundable' || qry.rateType==='refundable' ? "R" : "N",
+        "CancelPolicyType": nrfDate ? 'N' : 'R',
         "PaxDetails": [],
         "CancellationPolicyDetails": []
       };
@@ -261,7 +266,8 @@ export default function HotelTravellerBook() {
           "Nationality": qry.nationality.split('-')[1]+','+qry.nationality.split('-')[1],
           "LeadPax": false,
           "PaxAssgRoomNo": (i+1).toString(),
-          "AssociateId": ""
+          "AssociateId": "",
+          "Telephone":  ""
         }
         roomSingle.PaxDetails.push(adltObj)
       });
@@ -278,7 +284,8 @@ export default function HotelTravellerBook() {
           "Nationality": qry.nationality.split('-')[1]+','+qry.nationality.split('-')[1],
           "LeadPax": false,
           "PaxAssgRoomNo": (i+1).toString(),
-          "AssociateId": ""
+          "AssociateId": "",
+          "Telephone":  ""
         }
         roomSingle.PaxDetails.push(chldObj)
       });
@@ -471,13 +478,11 @@ export default function HotelTravellerBook() {
             "SupplierConsultantCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : "111", //For ADS 111 & Local 138
             "SupplierReferenceNo": resReprice.hotel?.rooms?.room[0]?.shortCode,
             "SupplierRemarks": "",
+            "ItineraryRemarks" : "",
             "SupplierCurrencyCode": resReprice.hotel?.rooms?.room[0]?.price.supplierCurrency,
             "SupplierExchangeRate":exchangeRate.toString(),
-            //"SupplierPayableAmount": Number(supplierNet).toFixed(2).toString(),
             "SupplierPayableAmount": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross).toFixed(2).toString() : Number(supplierNet).toFixed(2).toString(),
-            //"Rate":  Number(supplierGross * exchangeRate).toFixed(2).toString(),
             "Rate": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross * exchangeRate).toFixed(2).toString() : Number(supplierNet * exchangeRate).toFixed(2).toString(),
-            //"PayableAmount": Number(supplierGross * exchangeRate).toFixed(2).toString(),
             "PayableAmount": qry?.supplierName?.toLowerCase()==="local" ? Number(supplierGross * exchangeRate).toFixed(2).toString() : Number(supplierNet * exchangeRate).toFixed(2).toString(),
             "MarkupAmount": Number(markUpAmount*qry?.custCurrencyExchange).toFixed(2).toString(),
             "NetAmount": Number(net*qry?.custCurrencyExchange).toFixed(2).toString(),
@@ -493,7 +498,6 @@ export default function HotelTravellerBook() {
             "CustomerExchangeRate": qry?.custCurrencyExchange,
             "CustomerNetAmount": Number(net).toFixed(2).toString(),
             "XMLSupplierCode": qry?.supplierName?.toLowerCase()==="local" ? "138" : resReprice.hotel?.rooms?.room[0]?.groupCode.toString(),
-            //"XMLRateKey": qry.rateKey.map(item => item).join('splitter'),
             "XMLRateKey": resReprice.hotel?.rooms?.room.map(item => item.rateKey).join('splitter'),
             "XMLSessionId": qry?.sessionId,
             "CancellationPolicy": cancelPolicyHtml.current.innerHTML,
@@ -503,7 +507,7 @@ export default function HotelTravellerBook() {
             "AgesOfChildren": qry.childrenAges,
             "VoucherLink": "",
             "FairName": resReprice.hotel?.rooms?.room[0]?.fairName ? resReprice.hotel?.rooms?.room[0]?.fairName : "",
-            "NRF": qry.rateType==='Refundable' || qry.rateType==='refundable' ? false : true,
+            "NRF": nrfDate,
             "IsHidden": false,
             "ServiceDetails": roomObj,
           }
@@ -517,6 +521,7 @@ export default function HotelTravellerBook() {
           })
           setBookBtnLoad(false);
           setActiveItem(menuItem);
+          sessionStorage.setItem("addCart", true);
         }
         else{
           toast.error("Something Wrong !!",{theme: "colored"});
@@ -636,11 +641,6 @@ export default function HotelTravellerBook() {
                           <textarea className="form-control form-control-sm" rows="3" value={custRemarks} onChange={(e) => setCustRemarks(e.target.value)}></textarea>
                         </div>
                       </div>   
-
-                      {/* <div className='d-flex justify-content-between'>
-                        <button className='btn btn-light px-4 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button>
-                        <button className='btn btn-warning px-4 py-2' onClick={() => setActive('reviewColumn')}>Next <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button>
-                      </div> */}
                     </div>
                   }
 
@@ -706,17 +706,10 @@ export default function HotelTravellerBook() {
                     </div>
                   }
                   
-                  {/* {isActive('paymentColumn') &&
-                    <div>
-                    <BookingItinerarySub qry={bookItneryReq} />
-                    </div>
-                  } */}
                 </div>
                    
-                {/* <button className='btn btn-warning' onClick={bookBtn} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Continue'} <FontAwesomeIcon icon={faArrowRightLong} className='fn12' /></button> */}
 
                 <div className='p-2'>
-
                   <div className={"bg-warning bg-opacity-75 text-white rounded px-3 py-1 fs-5 mb-2 d-flex justify-content-between curpointer "+ (otherInfo ? '':'collapsed')} aria-expanded={otherInfo} onClick={()=> setOtherInfo(!otherInfo)}>
                     <strong>Cancellation Policy</strong>
                     <button className="btn btn-outline-light py-0 togglePlus" type="button"></button>    
@@ -748,17 +741,6 @@ export default function HotelTravellerBook() {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {/* <>
-                                  {k?.condition?.map((m, i) => (
-                                  <tr key={i}>
-                                    <td>{format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime}</td>
-                                    <td>{i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime}</td>
-                                    <td className="text-center">{m.percentage}</td>
-                                    <td className="text-center">{m.nights}</td>
-                                    <td>{parseFloat(m.fixed)?.toFixed(2)}</td>
-                                  </tr>
-                                  ))}
-                                  </> */}
                                   <>
                                   {k?.condition?.map((m, i) => (
                                     <React.Fragment key={i}>
@@ -933,12 +915,18 @@ export default function HotelTravellerBook() {
                   <div key={i} className='fw-semibold'>
                     <hr className='my-2' />
                     <div className='text-capitalize fn13 mb-1'><strong className='blue'>Room {i+1}:</strong> {v.roomName?.toLowerCase()} {v.meal ? <>with {v.meal?.toLowerCase()}</> : 'With Room Only'}
-                      {['Refundable', 'refundable'].includes(qry?.rateType) ?
+                      {nrfDate ? 
+                      <span className="nonrefund"> (Non-Refundable)</span> 
+                      :  
+                      <span className="refund"> (Refundable)</span>
+                      }
+
+                      {/* {['Refundable', 'refundable'].includes(qry?.rateType) ?
                       <span className="refund"> (Refundable)</span>:''
                       }
                       {['Non-Refundable', 'Non Refundable', 'non-refundable','non refundable'].includes(qry?.rateType) ?
                       <span className="nonrefund"> (Non-Refundable)</span>:''
-                      }
+                      } */}
                     </div>
                     {process.env.NEXT_PUBLIC_APPCODE!=='1' &&
                     <div className='fn12 mb-1'><strong >Supplier:</strong> {v.shortCode}</div>
@@ -979,95 +967,36 @@ export default function HotelTravellerBook() {
                 </div>
 
                 <div className="mt-4">
-                  {isActive('paxColumn') &&
-                  <div className='row gx-2'>
-                    <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button></div>
-                    <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('reviewColumn')}>Book <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
-                  </div>
-                  }
-
-                  {isActive('reviewColumn') &&
-                  <div className='row gx-2'>
-                    <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => setActive('paxColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Edit Pax Info</button></div>
-                    <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('paymentColumn')} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Payment'} <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
-                  </div>
-                  }
-
-                  {isActive('paymentColumn') &&
-                    <div>
-                      <BookingItinerarySub qry={bookItneryReq} />
+                  {qry?.onlineBooking === 2 ?
+                  <>
+                    {isActive('paxColumn') &&
+                    <div className='row gx-2'>
+                      <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => router.back()}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Back</button></div>
+                      <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('reviewColumn')}>Book <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
                     </div>
-                  }
-                </div>
+                    }
 
+                    {isActive('reviewColumn') &&
+                    <div className='row gx-2'>
+                      <div className="col"><button className='btn btn-light w-100 py-2' onClick={() => setActive('paxColumn')}><FontAwesomeIcon icon={faArrowLeftLong} className='fn14' /> Edit Pax Info</button></div>
+                      <div className="col"><button className='btn btn-warning w-100 py-2' onClick={() => setActive('paymentColumn')} disabled={bookBtnLoad}>{bookBtnLoad ? 'Processing...' : 'Payment'} <FontAwesomeIcon icon={faArrowRightLong} className='fn14' /></button></div>
+                    </div>
+                    }
+
+                    {isActive('paymentColumn') &&
+                      <div>
+                        <BookingItinerarySub qry={bookItneryReq} />
+                      </div>
+                    }
+                  </>
+                  : null
+                  }
+                  
+                </div>
               </div>
             </div>
 
-            {/* <div ref={cancelPolicyHtml} className='d-none'>
-              {resReprice.hotel?.rooms?.room &&
-              <>
-              {resReprice.hotel.rooms.room.map((v, i) => ( 
-              <React.Fragment key={i}>
-                {v.policies?.policy?.map((k, i) => (
-                <React.Fragment key={i}>
-                {k?.type ==='CAN' &&
-                <>
-                <div className="fn15 bold" style={{textTransform:'capitalize',marginTop:'10px'}}>Room {v.roomIdentifier}: {v.roomName?.toLowerCase()}</div><br />
-                <div className="fn15 bold">Cancellation Policy</div>
-                <hr className="mt5 mb10" />
-                {k?.condition?.map((m, i) => (
-                  <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry?.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
-                ))}
-                </>
-                }
             
-                {k?.type ==='MOD' && 
-                <>
-                  {k?.condition &&
-                  <>
-                  <div className="fn15 bold">Amendment Policy</div>
-                  <hr className="mt5 mb10" />
-                  {k?.condition?.map((m, i) => (
-                  <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry?.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
-                  ))}
-                  </>
-                  }
-                </>
-                }
-            
-                {k?.type ==='NOS' && 
-                <>
-                  {k?.condition &&
-                  <>
-                  <div className="fn15 bold">No Show Policy</div>
-                  <hr className="mt5 mb10" />
-                  {k?.condition?.map((m, i) => (
-                  <React.Fragment key={i}>From {format(new Date(m.fromDate), 'dd MMM yyyy') === format(new Date(), 'dd MMM yyyy') ? format(new Date(m.fromDate), 'dd MMM yyyy') : format(addDays(new Date(m.fromDate), -2), 'dd MMM yyyy') } &nbsp;{m.fromTime} 
-                  &nbsp;to {i === k?.condition.length -1 ? format(new Date(m.toDate), 'dd MMM yyyy') : format(addDays(new Date(m.toDate), -2), 'dd MMM yyyy')}  &nbsp;{m.toTime} 
-                  &nbsp;charge is {m.percentage ==="0" && m.nights ==="0" && m.fixed ==="0" ? '--NIL--' : m.percentage !=="0" ? m.percentage + '%':'' || m.nights !=="0" ? m.nights + ' Night(s)' : '' || m.fixed !=="0" ? qry?.currency + ' ' + m.fixed :'' } <br/></React.Fragment>
-                  ))}
-                  </>
-                  }
-                </>
-                }
-                </React.Fragment> 
-                ))}
-              
-                {v.remarks?.remark?.map((p, i) => ( 
-                <React.Fragment key={i}>
-                  <div className="fn15 bold text-capitalize">{p?.type?.toLowerCase().replace('_',' ') }:</div>
-                  <div dangerouslySetInnerHTML={{ __html:p?.text}}></div>
-                </React.Fragment>
-                ))}
-              </React.Fragment>
-              ))}
-              </>
-              }
-            </div> */}
             <div ref={cancelPolicyHtml} className='d-none'>
               <div>
                 {resReprice.hotel?.rooms?.room &&

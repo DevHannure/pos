@@ -1,7 +1,8 @@
 "use client"
 import React, {useEffect} from 'react';
 import {format} from 'date-fns';
-import HotelBookingItinerary from '@/app/components/booking/hotelBookingItinerary/HotelBookingItinerary';
+import HotelBookingItinerary from '@/app/components/booking/itinerary/HotelBookingItinerary';
+import TourBookingItinerary from '@/app/components/booking/itinerary/TourBookingItinerary';
 
 export default function BookingDetails(props) {
   const bkngDetails = props?.res;
@@ -85,15 +86,22 @@ export default function BookingDetails(props) {
 
                 {bkngDetails?.ReservationDetail?.Services?.map((s, i) => (
                   <React.Fragment key={i}>
-                  {s.ServiceCode === "1" &&
                     <div id={`serviceDetails${i}`}>
-                    {/* Hotel Service Start */}
                       {(masterCode==='key'+s.ServiceMasterCode || masterCode===null || masterCode==="" || typeof masterCode !=='undefined') &&
-                        <HotelBookingItinerary response={s} bookingDetail={bkngDetails?.ReservationDetail?.BookingDetail} />
+                      <>
+                        {s.ServiceCode === "1" ?
+                          <HotelBookingItinerary response={s} bookingDetail={bkngDetails?.ReservationDetail?.BookingDetail} />
+                          :
+                          s.ServiceCode === "4" ?
+                          <TourBookingItinerary response={s} bookingDetail={bkngDetails?.ReservationDetail?.BookingDetail} />
+                          :
+                          null
+                        }
+                        
+                      </>
                       }
-                    {/* Hotel Service End */}
                     </div>
-                  }
+                  
                   </React.Fragment>
                 ))}
               </td>
@@ -109,12 +117,16 @@ export default function BookingDetails(props) {
       </>
       :
       <div className='text-center blue py-5'>
+        {qry?.btype !=="O" ?
+        <>
         <span className="fs-5 align-middle d-inline-block"><strong>Loading...</strong></span>&nbsp; 
         <div className="dumwave align-middle">
           <div className="anim anim1" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
           <div className="anim anim2" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
           <div className="anim anim3" style={{backgroundColor:"#06448f",marginRight:"3px"}}></div>
         </div>
+        </> : null
+        }
       </div>
       }
     </div>

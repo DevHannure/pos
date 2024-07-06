@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef} from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCaretRight, faCheck, faArrowRightLong } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faCaretRight, faCheck, faArrowRightLong, faHouseCircleCheck, faImage, faMapLocationDot} from "@fortawesome/free-solid-svg-icons";
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
@@ -29,7 +29,7 @@ export default function HotelResult(props) {
   const noRefundBtn = useRef(null);
   const soldOutBtn = useRef(null);
   const router = useRouter();
-  const qry = props.HtlReq;
+  const qry = props.ModifyReq;
   const _ = require("lodash");
 
   const dispatch = useDispatch();
@@ -106,8 +106,13 @@ export default function HotelResult(props) {
   const [htlCollapse, setHtlCollapse] = useState('');
   const [systemIdVar, setSystemIdVar] = useState('');
   const [fltrRoomData, setFltrRoomData] = useState(null);
+
+  const [roomRunning, setRoomRunning] = useState(false);
+  const [roomCounter, setRoomCounter] = useState(0);
   
   const roomDetail = async(v) => {
+    setRoomCounter(0);
+    setRoomRunning(true);
     let hotelCollapseCode = '#room'+v.systemId;
     setSystemIdVar(v.systemId);
 
@@ -243,7 +248,6 @@ export default function HotelResult(props) {
           }
           if(qry.paxInfoArr?.length < v?.length){
             const uniqueRoom = [...new Map(v.map(k => [k.roomIdentifier, k])).values()]
-            //console.log("uniqueRoom", uniqueRoom)
             const numAscending = [...uniqueRoom].sort((a, b) => a.roomIdentifier - b.roomIdentifier);
             newArr.push(numAscending)
           }
@@ -258,7 +262,21 @@ export default function HotelResult(props) {
       //setRoomData(roomItems)
     }
     setFltrRoomData(roomItems?.[v.systemId]);
+    setRoomRunning(false);
   }
+
+  useEffect(() => {
+    let interval;
+    if (!roomRunning) {
+      return () => {};
+    }
+    interval = setInterval(() => {
+      setRoomCounter((roomCounter) => roomCounter + 1);
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [roomRunning]);
 
   const srtVal = (val) =>{
     let htlFilterSort = {
@@ -368,7 +386,7 @@ export default function HotelResult(props) {
       id: "buttonCell",
       cell: (row) => (
         // <div><Link href="/pages/hotelItinerary" className="btn btn-warning py-1">Book</Link></div>
-        <button type="button" className="btn btn-warning text-nowrap w-100 h-100 rounded-0" onClick={(e) => bookNow(e,row)}> Book Now </button>
+        <button type="button" className="btn btn-warning text-nowrap w-100 htlBookBtn" onClick={(e) => bookNow(e,row)}> Book Now </button>
       )
     }
   ];
@@ -561,10 +579,12 @@ export default function HotelResult(props) {
       "systemId": systemIdVar,
       "rateType": val.item[0].rateType,
       "productCode": val.item[0].productCode,
+      "rateBasisName": val.item[0].roomBasisName,
       "custCurrencyExchange": qry.custCurrencyExchange,
       "customerConsultantCode": qry.customerConsultantCode,
       "companyConsultantCode": qry.companyConsultantCode,
       "branchCode": qry.branchCode,
+      "onlineBooking": qry.onlineBooking,
       "sessionId": val.item[0].local ? getOrgHtlResult?.generalInfo?.localSessionId : getOrgHtlResult?.generalInfo?.sessionId
     };
 
@@ -679,7 +699,7 @@ export default function HotelResult(props) {
     <>
     {getHtlRes?.hotels?.b2BHotel?.length ?  
     <>
-      <div className="d-lg-table-cell align-top rightResult border-start">
+      <div className="d-lg-table-cell align-top rightResult">
 
         <div className="row g-2 mb-3 align-items-center">
           <div className="col-lg-2">
@@ -724,60 +744,97 @@ export default function HotelResult(props) {
             <div key={v.systemId} className="htlboxcol rounded mb-3 shadow-sm">
               <div className={"row gx-2 " + (htlCollapse==='#room'+v.systemId ? 'colOpen':'collapsed')} aria-expanded={htlCollapse==='#room'+v.systemId}>
                 <div className="col-lg-7">
-                  <div className="d-flex flex-row">
+                  <div className="d-flex flex-row h-100">
                     <div className="hotelImg rounded-start bg-light">
                       <a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold" onClick={()=> htlDetail(v.systemId)}>
                         {v.thumbnailImage ?
-                        <Image src={`https://static.giinfotech.ae/medianew/${v.thumbnailImage}`} alt={v.productName} width={140} height={90} priority={true} />
+                        <Image src={`https://static.giinfotech.ae/medianew/${v.thumbnailImage}`} alt={v.productName} fill style={{objectFit:'cover', objectPosition:'top'}} priority />
                         :
-                        <Image src='/images/noHotelThumbnail.jpg' alt={v.productName} width={140} height={90} priority={true} />
+                        <Image src='/images/noHotelThumbnail.jpg' alt={v.productName} fill style={{objectFit:'cover', objectPosition:'top'}} priority />
                         }
                       </a>
                     </div>
-                    <div className="ps-3 pt-2">
+                    <div className="ps-3 pt-2 w-100">
                       <div className="blue fw-semibold fs-6 text-capitalize">{v.productName?.toLowerCase()}</div>
                       <div className='fn13'><strong>Address:</strong> {v.address}</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-lg-3 align-self-center">
-                  <div className="d-flex px-lg-0 px-1">
-                    <div>
-                      {Array.apply(null, { length:5}).map((e, i) => (
-                      <span key={i}>
-                        {i+1 > parseInt(v.starRating) ?
-                        <FontAwesomeIcon key={i} icon={faStar} className="starBlank" />
-                        :
-                        <FontAwesomeIcon key={i} icon={faStar} className="starGold" />
-                        }
-                      </span>
-                      ))
+                    
+                      {process.env.NEXT_PUBLIC_SHORTCODE === "UDTN" &&
+                        <div className='my-2'>
+                          <div className="d-flex px-lg-0 px-1">
+                            <div>
+                              {Array.apply(null, { length:5}).map((e, i) => (
+                              <span key={i}>
+                                {i+1 > parseInt(v.starRating) ?
+                                <FontAwesomeIcon key={i} icon={faStar} className="starBlank" />
+                                :
+                                <FontAwesomeIcon key={i} icon={faStar} className="starGold" />
+                                }
+                              </span>
+                              ))
+                              }
+                            </div>
+                            <div className="ms-1"><Image src={`https://tripadvisor.com/img/cdsi/img2/ratings/traveler/${Number(v.tripAdvisorRating).toFixed(1)}-13387-4.png`} alt="rating" width={100} height={17} priority={true} /></div>
+                          </div>
+                          <div className="mt-2 px-2 py-1 bg-primary bg-opacity-5 rounded">
+                            <a href="#htlDtlModal" data-bs-toggle="modal" className="text-dark fw-semibold me-5" onClick={()=> (htlDetail(v.systemId), setHtlTab('Amenities'))}><FontAwesomeIcon icon={faHouseCircleCheck} className="blue" /> Amenities &amp; Info.</a>
+                            <a href="#htlDtlModal" data-bs-toggle="modal" className="text-dark fw-semibold me-5" onClick={()=> (htlDetail(v.systemId), setHtlTab('Amenities'))}><FontAwesomeIcon icon={faImage} className="blue" /> Photos</a>
+                            <a href="#htlDtlModal" data-bs-toggle="modal" className="text-dark fw-semibold" onClick={()=> (htlDetail(v.systemId), setHtlTab('Map'))}><FontAwesomeIcon icon={faMapLocationDot} className="blue" /> Map View</a>
+                          </div>
+                        </div>
                       }
                     </div>
-                    <div className="ms-1"><Image src={`https://tripadvisor.com/img/cdsi/img2/ratings/traveler/${Number(v.tripAdvisorRating).toFixed(1)}-13387-4.png`} alt="rating" width={100} height={17} priority={true} /></div>
+
+                    
                   </div>
-                  <div className="mt-1 px-lg-0 px-1"><a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold" onClick={()=> htlDetail(v.systemId)}><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> More Details</a></div>
                 </div>
+                
+                <div className="col-lg-3 align-self-center">
+                  {process.env.NEXT_PUBLIC_SHORTCODE !== "UDTN" &&
+                    <div>
+                      <div className="d-flex px-lg-0 px-1">
+                        <div>
+                          {Array.apply(null, { length:5}).map((e, i) => (
+                          <span key={i}>
+                            {i+1 > parseInt(v.starRating) ?
+                            <FontAwesomeIcon key={i} icon={faStar} className="starBlank" />
+                            :
+                            <FontAwesomeIcon key={i} icon={faStar} className="starGold" />
+                            }
+                          </span>
+                          ))
+                          }
+                        </div>
+                        <div className="ms-1"><Image src={`https://tripadvisor.com/img/cdsi/img2/ratings/traveler/${Number(v.tripAdvisorRating).toFixed(1)}-13387-4.png`} alt="rating" width={100} height={17} priority={true} /></div>
+                      </div>
+                      <div className="mt-1 px-lg-0 px-1">
+                        <a href="#htlDtlModal" data-bs-toggle="modal" className="blue fw-semibold" onClick={()=> htlDetail(v.systemId)}><FontAwesomeIcon icon={faCaretRight} className="text-secondary" /> More Details</a>
+                      </div>
+                    </div>
+                  }
+                </div>
+
                 <div className="col-lg-2 align-self-center">
                   <div className='d-flex d-lg-block justify-content-between text-center px-lg-0 px-1'>
-                    <div>
-                      {process.env.NEXT_PUBLIC_APPCODE === "0" &&
-                      <div className='fn12 text-danger'>Cheapest with {v.supplierName}</div>
+                    <div className='mt-2'>
+                      {process.env.NEXT_PUBLIC_APPCODE === "2" &&
+                      <div className='fn12 mb-2'><span className='text-warning bg-light rounded px-2 d-inline-block fw-semibold'>Cheapest with {process.env.NEXT_PUBLIC_SHORTCODE === "AORYX" ? <>{v.supplierName?.toLowerCase() === 'local' ? 'ArabianOryx' : v.supplierName }</> : v.supplierName}</span></div>
                       }
-                      <div className="blue fw-semibold fs-6 mt-n1 mb-1">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
+                      <div className="blue fw-semibold fn18 mt-n1 mb-1">{qry?.currency} {parseFloat(v.minPrice).toFixed(2)}</div>
                     </div>
                     <div>
-                      <button className="btn btn-success togglePlus px-3 py-1" type="button" onClick={() => roomDetail(v)}>&nbsp;Select</button>
+                      <button className="btn btn-warning togglePlus px-3 py-1 fw-semibold border-2 mb-2" type="button" onClick={() => roomDetail(v)}>&nbsp;Select</button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              
               <div className={`collapse room${v.systemId} `+ (htlCollapse==='#room'+v.systemId ? 'show':'')}>
                 <div>
                   <div className="fn13 roomColumn">
-                    <div className="fs-6 fw-semibold mx-2 mt-1">Room Rates: {qry.paxInfoArr?.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div>
+                    <div className="fs-6 fw-semibold mx-2 mt-1 d-flex justify-content-between">
+                      <div>Room Rates: {qry.paxInfoArr?.length} Room(s) | {qry.paxInfoArr.reduce((totalAdlt, adlt) => totalAdlt + adlt.adtVal, 0)} Adult(s) <span>| {qry.paxInfoArr.reduce((totalChd, chd) => totalChd + chd.chdVal, 0)} Child(ren)</span></div> 
+                      <div className='fn12'>Result Time: {roomCounter}</div>
+                    </div>
                     {roomData?.[v.systemId] ?
                     <>
                     {roomData?.[v.systemId]?.length ?
@@ -803,6 +860,7 @@ export default function HotelResult(props) {
                         <DataTable columns={columns} data={fltrRoomData} pagination className="dataScroll" highlightOnHover  />
                         : null
                       }
+                      
                       
                       </>
                       {/* <RoomSection roomData={roomData?.[v.systemId]} /> */}
@@ -1298,7 +1356,7 @@ export default function HotelResult(props) {
 
     </>
     :
-    <div className="d-lg-table-cell align-top rightResult border-start"> 
+    <div className="d-lg-table-cell align-top rightResult"> 
       <div className="text-center my-5">
         <div><Image src="/images/noResult.png" alt="No Result Found" width={464} height={344} priority={true} /></div>
         <div className="fs-3 fw-semibold mt-1">No Result Found</div>

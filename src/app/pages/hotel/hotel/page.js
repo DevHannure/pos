@@ -4,7 +4,7 @@ import RecentSearch from '@/app/components/default/RecentSearch';
 export default function Hotel() {
   return (
     <DefaultLayout>
-      <ModifySearch Type={'landing'} HtlReq={''} />
+      <ModifySearch Type={'landing'} ModifyReq={''} />
       <RecentSearch />
     </DefaultLayout>
   )
